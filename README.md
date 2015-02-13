@@ -6,7 +6,7 @@ API.
 
 ### Build status
 
-[![Circle CI](https://circleci.com/gh/spotify/folsom/tree/master.svg?style=svg)](https://circleci.com/gh/spotify/folsom/tree/master)
+[![Travis](https://api.travis-ci.org/spotify/folsom.svg?branch=master)](https://travis-ci.org/spotify/folsom)
 
 ### Build dependencies
 
