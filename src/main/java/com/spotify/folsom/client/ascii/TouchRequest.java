@@ -37,7 +37,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
     // <command name> <key> <value> [noreply]\r\n
     dst.put(CMD);
     Utils.writeKeyString(dst, key);
-    dst.put((byte) ' ');
+    dst.put(SPACE_BYTES);
     dst.put(String.valueOf(ttl).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);

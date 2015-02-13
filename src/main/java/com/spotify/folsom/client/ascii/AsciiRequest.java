@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 
 public abstract class AsciiRequest<T> extends Request<T> {
   protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(Charsets.US_ASCII);
+  protected static final byte SPACE_BYTES = ' ';
 
   public AsciiRequest(String key) {
     super(key, 0);
