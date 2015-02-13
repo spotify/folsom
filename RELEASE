@@ -1,0 +1,33 @@
+How to release:
+
+Add this to ~/.m2/settings.xml
+
+Needed:
+<settings>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>Spotify</username>
+      <password>your-jira-pwd</password>
+    </server>
+  </servers>
+</settings>
+
+
+Optional:
+  <profiles>
+    <profile>
+      <id>ossrh</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <gpg.executable>gpg</gpg.executable>
+        <gpg.passphrase>PASSPHRASE</gpg.passphrase>
+      </properties>
+    </profile>
+  </profiles>
+
+$ mvn release:clean release:prepare
+$ mvn release:perform
+
