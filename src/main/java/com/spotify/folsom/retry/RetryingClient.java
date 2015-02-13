@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) 2014-2015 Spotify AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.spotify.folsom.retry;
+
+import com.google.common.util.concurrent.FutureFallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.folsom.MemcacheClosedException;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * A simple wrapping client that retries once (but only for MemcacheClosedException's).
+ * This helps avoid some transient problems when a node suddenly stops. It's mostly useful
+ * in combination with a client that internally routes to multiple nodes such as
+ * the Ketama client or RoundRobin client. It won't prevent all MemcacheClosedException's from
+ * propagating, it will just reduce the frequency in some cases.
+ *
+ * The retrying is intentionally strict about when to retry and how many times to retries in order
+ * to minimize risk of causing more problems then it would solve.
+ */
+public class RetryingClient implements RawMemcacheClient {
+
+  private final Logger log = LoggerFactory.getLogger(RetryingClient.class);
+
+  private final RawMemcacheClient delegate;
+
+  public RetryingClient(final RawMemcacheClient delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public <T> ListenableFuture<T> send(final Request<T> request) {
+    final ListenableFuture<T> future = delegate.send(request);
+    return Futures.withFallback(future, new FutureFallback<T>() {
+      @Override
+      public ListenableFuture<T> create(final Throwable t) throws Exception {
+        if (t instanceof MemcacheClosedException && delegate.isConnected()) {
+          return delegate.send(request);
+        } else {
+          return Futures.immediateFailedFuture(t);
+        }
+      }
+    });
+  }
+
+  @Override
+  public ListenableFuture<Void> shutdown() {
+    return delegate.shutdown();
+  }
+
+  @Override
+  public boolean isConnected() {
+    return delegate.isConnected();
+  }
+
+  @Override
+  public String toString() {
+    return "Retrying(" + delegate + ")";
+  }
+}

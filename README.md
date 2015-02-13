@@ -1,0 +1,100 @@
+Folsom
+======
+
+Folsom is an attempt at a small and stable memcache client. Folsom is fully
+asynchronous, based on Netty and uses Guava's ListenableFuture through-out the
+API.
+
+Build dependencies
+------------
+
+* Java 7 or higher
+* Maven
+
+Runtime dependencies
+--------------------
+* Netty 4
+* Yammer metrics
+* Google Guava
+
+Example usage
+-------------
+
+```Java
+final MemcacheClient<String> client = new MemcacheClientBuilder<>(new StringTranscoder(Charsets.UTF_8));
+    .withAddresses(Collections.singletonList(host))
+    .connectAscii();
+
+client.set("key", "value", 10000).get();
+client.get("key").get();
+
+client.shutdown();
+```
+
+Clients are single use, after `shutdown` has been invoked the client can no
+longer be used.
+
+Design goals
+------------
+* Robustness - If you request something, the future you get back should always complete at some point.
+* Error detection - If something goes wrong (the memcache server is behaving incorrectly or some internal bug occurs),
+  we try to detect it and drop the connection to prevent further problems.
+* Simplicity - The code base is intended to be small and well abstracted.
+  We prefer simple solutions that solve the major usecases and avoid implementing optimizations
+  that would give small returns.
+* Fail-fast - If something happens (the memcached service is slow or gets disconnected) we try to fail as fast as possible.
+  How to handle the error is up to you, and you probably want to know about the error as soon as possible.
+* Modularity - The complex client code is isolated in a single class, and all the extra functionality are in composable modules:
+  (ketama, reconnecting, retry, roundrobin)
+* Efficiency - We want to support a high traffic throughput without using too much CPU or memory resources.
+* Asynchronous - We fully support the idea of writing asynchronous code instead of blocking threads, and this is
+  achieved through Guava futures.
+* Low amount of synchronization - Code that uses a lot of synchronization primitives is more likely to have
+  race condition bugs and deadlocks. We try to isolate that as much as possible to minimize the risk,
+  and most of the code base doesn't have to care.
+
+Futures
+-------
+All request operations return a Guava ListenableFuture.
+
+Protocol
+--------
+Folsom implements both the binary and ascii protocol.
+They share a common interface but also extend it with their own specializations.
+
+Which protocol to use depends on your use case. With a regular memcached backend,
+the ascii protocol is much more efficient. The binary protocol is a bit chattier
+but also makes error detection easier.
+
+```Java
+interface MemcacheClient<T> {}
+interface AsciiMemcacheClient<T> extends MemcacheClient<T> {}
+interface BinaryMemcacheClient<T> extends MemcacheClient<T> {}
+```
+
+Features
+--------
+
+### Ketama
+
+Folsom support Ketama for sharing across a set of memcache servers. Note that
+the caching algorithm (currently) doesn't attempt to provide compatibility with
+other memcache clients, and thus when switching client implementation you will
+get a period of low cache hit ratio.
+
+### Yammer metrics
+
+You can optionally choose to track performance using yammer metrics.
+
+Building
+--------
+
+```
+mvn package
+```
+
+References
+----------
+https://code.google.com/p/memcached/wiki/BinaryProtocolRevamped
+https://github.com/memcached/memcached/blob/master/doc/protocol.txt
+
