@@ -21,8 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A simple wrapping client that retries once (but only for MemcacheClosedException's).
@@ -35,8 +33,6 @@ import org.slf4j.LoggerFactory;
  * to minimize risk of causing more problems then it would solve.
  */
 public class RetryingClient implements RawMemcacheClient {
-
-  private final Logger log = LoggerFactory.getLogger(RetryingClient.class);
 
   private final RawMemcacheClient delegate;
 
