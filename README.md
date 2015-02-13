@@ -8,6 +8,11 @@ API.
 
 [![Travis](https://api.travis-ci.org/spotify/folsom.svg?branch=master)](https://travis-ci.org/spotify/folsom)
 
+### Maven central
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.spotify/folsom/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/folsom)
+
+
 ### Build dependencies
 
 * Java 7 or higher
