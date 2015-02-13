@@ -5,6 +5,10 @@ Folsom is an attempt at a small and stable memcache client. Folsom is fully
 asynchronous, based on Netty and uses Guava's ListenableFuture through-out the
 API.
 
+Build status
+------------
+[![Circle CI](https://circleci.com/gh/spotify/folsom/tree/master.svg?style=svg)](https://circleci.com/gh/spotify/folsom/tree/master)
+
 Build dependencies
 ------------
 
