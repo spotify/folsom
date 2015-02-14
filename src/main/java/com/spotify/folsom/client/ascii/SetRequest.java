@@ -79,10 +79,10 @@ public class SetRequest
     Utils.writeKeyString(dst, key);
     dst.put(FLAGS);
     dst.put(String.valueOf(ttl).getBytes());
-    dst.put((byte) ' ');
+    dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value.length).getBytes());
     if (operation == Operation.CAS) {
-      dst.put((byte) ' ');
+      dst.put(SPACE_BYTES);
       dst.put(String.valueOf(cas).getBytes());
     }
     dst.put(NEWLINE_BYTES);

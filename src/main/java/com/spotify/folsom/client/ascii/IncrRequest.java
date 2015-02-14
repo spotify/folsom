@@ -61,7 +61,7 @@ public class IncrRequest extends AsciiRequest<Long> {
     // <command name> <key> <value> [noreply]\r\n
     dst.put(CMD.get(operation));
     Utils.writeKeyString(dst, key);
-    dst.put((byte) ' ');
+    dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);

@@ -61,7 +61,7 @@ public class MultigetRequest
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     dst.put(cmd);
     for (final String key : keys) {
-      dst.put((byte) ' ');
+      dst.put(SPACE_BYTES);
       Utils.writeKeyString(dst, key);
     }
     dst.put(NEWLINE_BYTES);
