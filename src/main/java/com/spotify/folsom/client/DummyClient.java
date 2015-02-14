@@ -22,6 +22,8 @@ import com.spotify.folsom.RawMemcacheClient;
 
 public class DummyClient implements RawMemcacheClient {
 
+  public static final DummyClient DUMMY_CLIENT = new DummyClient();
+
   @Override
   public <T> ListenableFuture<T> send(final Request<T> request) {
     return fail();

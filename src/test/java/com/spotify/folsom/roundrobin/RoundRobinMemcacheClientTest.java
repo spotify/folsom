@@ -16,6 +16,7 @@
 package com.spotify.folsom.roundrobin;
 
 import com.spotify.folsom.FakeRawMemcacheClient;
+import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
@@ -25,8 +26,11 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RoundRobinMemcacheClientTest {
 
@@ -53,7 +57,7 @@ public class RoundRobinMemcacheClientTest {
     for (RawMemcacheClient client : clientList) {
       assertEquals(true, client.isConnected());
     }
-    roundRobinMemcacheClient.shutdown();
+    roundRobinMemcacheClient.shutdown().get();
     for (RawMemcacheClient client : clientList) {
       assertEquals(false, client.isConnected());
     }
@@ -71,6 +75,44 @@ public class RoundRobinMemcacheClientTest {
 
     for (int i = 0; i < clientList.size() * 1000; i++) {
       assertEquals("value" + i, memcacheClient.get("key" + i).get());
+    }
+  }
+
+  @Test
+  public void testAvoidDisconnected() throws Exception {
+    for (int i = 0; i < 3000; i++) {
+      memcacheClient.set("key" + i, "value" + i, 0).get();
+    }
+
+    assertEquals(1000, client1.getMap().size());
+    assertEquals(1000, client2.getMap().size());
+    assertEquals(1000, client3.getMap().size());
+
+    assertTrue(memcacheClient.isConnected());
+    client2.shutdown().get();
+
+    for (int i = 0; i < 3000; i++) {
+      memcacheClient.set("key2-" + i, "value2-" + i, 0).get();
+    }
+
+    assertEquals(2500, client1.getMap().size());
+    assertEquals(1000, client2.getMap().size());
+    assertEquals(2500, client3.getMap().size());
+
+    client1.shutdown().get();
+    client3.shutdown().get();
+    assertFalse(memcacheClient.isConnected());
+  }
+
+  @Test(expected = MemcacheClosedException.class)
+  public void testAllDisconnected() throws Throwable {
+    client1.shutdown().get();
+    client2.shutdown().get();
+    client3.shutdown().get();
+    try {
+      memcacheClient.set("key", "value", 0).get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
     }
   }
 }
