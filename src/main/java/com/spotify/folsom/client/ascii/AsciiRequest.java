@@ -18,25 +18,14 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.client.Request;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public abstract class AsciiRequest<T> extends Request<T> {
   protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(Charsets.US_ASCII);
 
   public AsciiRequest(String key) {
     super(key, 0);
-  }
-
-  protected static ByteBuf toBufferWithValueAndNewLine(final ByteBufAllocator alloc, ByteBuffer dst,
-                                                       byte[] value) {
-    ByteBuf buffer = toBuffer(alloc, dst, value.length + NEWLINE_BYTES.length);
-    buffer.writeBytes(value);
-    buffer.writeBytes(NEWLINE_BYTES);
-    return buffer;
   }
 
   @Override
