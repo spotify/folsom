@@ -19,3 +19,4 @@ after_success:
 services:
   - memcached
 
+sudo: false
