@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class FakeRawMemcacheClient implements RawMemcacheClient {
 
-  private final boolean connected = true;
+  private boolean connected = true;
   private final Map<String, byte[]> map = Maps.newHashMap();
 
   @Override
@@ -70,11 +70,16 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
 
   @Override
   public ListenableFuture<Void> shutdown() {
+    connected = false;
     return Futures.immediateFuture(null);
   }
 
   @Override
   public boolean isConnected() {
     return connected;
+  }
+
+  public Map<String, byte[]> getMap() {
+    return map;
   }
 }
