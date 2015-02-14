@@ -19,8 +19,6 @@ package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
 
-import java.util.Arrays;
-
 public class ResponsePacket {
   public final byte opcode;
   public final MemcacheStatus status;
@@ -39,17 +37,4 @@ public class ResponsePacket {
     this.cas = cas;
     this.value = value;
   }
-
-  // CHECKSTYLE:OFF
-  @Override
-  public String toString() {
-    return "ResponsePacket{" +
-            ", opcode=" + opcode +
-            ", status=" + status +
-            ", opaque=" + opaque +
-            ", cas=" + cas +
-            ", value=" + Arrays.toString(value) +
-            '}';
-  }
-  // CHECKSTYLE:ON
 }
