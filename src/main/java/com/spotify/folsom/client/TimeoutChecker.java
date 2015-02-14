@@ -46,10 +46,6 @@ class TimeoutChecker<T> {
     return nowNanos - timestamp > timeoutNanos;
   }
 
-  public long timeoutNanos() {
-    return timeoutNanos;
-  }
-
   public static <T> TimeoutChecker<T> create(final TimeUnit unit, final long timeout) {
     return new TimeoutChecker<>(unit, timeout);
   }
