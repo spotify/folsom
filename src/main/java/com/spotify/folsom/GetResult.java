@@ -17,7 +17,6 @@
 package com.spotify.folsom;
 
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 public class GetResult<V> {
@@ -41,14 +40,6 @@ public class GetResult<V> {
 
   public long getCas() {
     return cas;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-            .add("value", value)
-            .add("cas", cas)
-            .toString();
   }
 
   // CHECKSTYLE:OFF
