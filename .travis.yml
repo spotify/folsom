@@ -1,3 +1,8 @@
+# Generated with these instructions: http://docs.travis-ci.com/user/encryption-keys/
+# gem install travis
+# travis encrypt COVERALLS_TOKEN=<the token from coveralls>
+secure: "H4tUL1Greyj588Kb1/FnRapFT/57KaApQYAZx2KRORkddYSzPq2tovI1S8AnqzCHpVtfjingmB7RX/lhtNldiS9hGhcashWjqQLVng1t7ekFqVOhNfQ7wmQOZm/B50lUgeDH2Mu7LCm3TR+h18hJQ6VZCsq8CtWuiOczIcz06+U="
+
 language: java
 
 jdk:
@@ -8,5 +13,9 @@ jdk:
 install:
   - mvn install -DskipTests=true -Dgpg.skip=true
 
+after_success:
+  - mvn clean cobertura:cobertura coveralls:report -Dcoveralls.token=${COVERALLS_TOKEN}
+
 services:
   - memcached
+
