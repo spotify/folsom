@@ -19,6 +19,7 @@ package com.spotify.folsom.roundrobin;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
+import com.spotify.folsom.client.DummyClient;
 import com.spotify.folsom.client.Request;
 
 import java.util.List;
@@ -30,8 +31,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * host/port which might be a reasonable thing to do if the IO operations is a bottleneck.
  */
 public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
-  private static final int MAX_COUNTER = Integer.MAX_VALUE / 2;
-
   private final AtomicInteger counter = new AtomicInteger(0);
   private final List<RawMemcacheClient> clients;
   private final int numClients;
@@ -48,22 +47,16 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
   }
 
   private RawMemcacheClient getClient() {
-    int index = counter.incrementAndGet();
-    if (index > MAX_COUNTER || index < 0) {
-      // To avoid overflow, we reset the counter when it grows too large.
-      // There might be a race that makes it reset too often, but it doesn't
-      // really matter since it happens so rarely.
-
-      // Don't just set it to zero since that would give bias to the first client.
-      index = Math.abs(index) % numClients;
-      counter.set(index);
-    }
     for (int i = 0; i < numClients; i++) {
-      final RawMemcacheClient client = clients.get((index + i) % numClients);
+      // Make sure it stays positive
+      int c = counter.incrementAndGet() & 0x7FFFFFFF;
+
+      int index = c % numClients;
+      RawMemcacheClient client = clients.get(index);
       if (client.isConnected()) {
         return client;
       }
     }
-    return clients.get(index % numClients);
+    return DummyClient.DUMMY_CLIENT;
   }
 }

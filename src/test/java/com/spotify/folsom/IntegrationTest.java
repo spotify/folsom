@@ -49,6 +49,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -191,6 +192,13 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL).get();
 
     assertEquals(VALUE1, client.get(KEY1).get());
+  }
+
+  @Test
+  public void testLargeSet() throws Exception {
+    String value = Collections.nCopies(1000, "Hello world ").toString();
+    client.set(KEY1, value, TTL).get();
+    assertEquals(value, client.get(KEY1).get());
   }
 
   @Test
