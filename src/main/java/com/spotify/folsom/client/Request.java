@@ -38,13 +38,6 @@ public abstract class Request<V> extends AbstractFuture<V> {
     return toBuffer(alloc, dst, 0);
   }
 
-  protected static ByteBuf toBufferWithValue(final ByteBufAllocator alloc, ByteBuffer dst,
-                                             byte[] value) {
-    ByteBuf buffer = toBuffer(alloc, dst, value.length);
-    buffer.writeBytes(value);
-    return buffer;
-  }
-
   public String getKey() {
     return key;
   }

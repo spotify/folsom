@@ -196,7 +196,7 @@ public class IntegrationTest {
 
   @Test
   public void testLargeSet() throws Exception {
-    String value = Collections.nCopies(1000, "Hello world ").toString();
+    String value = Collections.nCopies(10000, "Hello world ").toString();
     client.set(KEY1, value, TTL).get();
     assertEquals(value, client.get(KEY1).get());
   }

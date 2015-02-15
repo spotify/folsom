@@ -75,6 +75,13 @@ public class SetRequest
     }
   }
 
+  private static ByteBuf toBufferWithValue(final ByteBufAllocator alloc, ByteBuffer dst,
+                                           byte[] value) {
+    ByteBuf buffer = toBuffer(alloc, dst, value.length);
+    buffer.writeBytes(value);
+    return buffer;
+  }
+
   @Override
   public void handle(final BinaryResponse replies) throws IOException {
     ResponsePacket reply = handleSingleReply(replies);
