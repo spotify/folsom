@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.spotify.folsom.client.YammerMetrics;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
@@ -513,15 +512,15 @@ public class IntegrationTest {
     }
   }
 
-  protected void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
+  static void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
     checkKeyNotFound(future);
   }
 
-  protected void checkKeyNotFound(final ListenableFuture<?> future) throws Throwable {
+  static void checkKeyNotFound(final ListenableFuture<?> future) throws Throwable {
     checkStatus(future, MemcacheStatus.KEY_NOT_FOUND);
   }
 
-  protected void checkStatus(final ListenableFuture<?> future, final MemcacheStatus... expected)
+  static void checkStatus(final ListenableFuture<?> future, final MemcacheStatus... expected)
       throws Throwable {
     final Set<MemcacheStatus> expectedSet = Sets.newHashSet(expected);
     try {
