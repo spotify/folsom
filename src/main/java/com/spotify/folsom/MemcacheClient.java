@@ -130,4 +130,17 @@ public interface MemcacheClient<V> {
    * @return true if the client is connected
    */
   boolean isConnected();
+
+  /**
+   * How many actual socket connections do we have, including currently disconnected clients.
+   * @return the number of total connections
+   */
+  int numTotalConnections();
+
+  /**
+   * How many active socket connections do we have (i.e. not disconnected)
+   * @return the number of active connections
+   */
+  int numActiveConnections();
+
 }

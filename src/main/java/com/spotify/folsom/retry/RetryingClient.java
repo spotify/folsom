@@ -66,6 +66,16 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
+  public int numTotalConnections() {
+    return delegate.numTotalConnections();
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return delegate.numActiveConnections();
+  }
+
+  @Override
   public String toString() {
     return "Retrying(" + delegate + ")";
   }

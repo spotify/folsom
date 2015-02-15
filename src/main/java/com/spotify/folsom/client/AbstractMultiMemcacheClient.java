@@ -63,6 +63,24 @@ public abstract class AbstractMultiMemcacheClient implements RawMemcacheClient {
   }
 
   @Override
+  public int numTotalConnections() {
+    int sum = 0;
+    for (RawMemcacheClient client : clients) {
+      sum += client.numTotalConnections();
+    }
+    return sum;
+  }
+
+  @Override
+  public int numActiveConnections() {
+    int sum = 0;
+    for (RawMemcacheClient client : clients) {
+      sum += client.numActiveConnections();
+    }
+    return sum;
+  }
+
+  @Override
   public String toString() {
     return getClass().getSimpleName() + "(" + clients + ")";
   }

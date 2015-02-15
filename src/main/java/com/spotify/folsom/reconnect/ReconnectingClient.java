@@ -99,6 +99,16 @@ public class ReconnectingClient implements RawMemcacheClient {
     return client.isConnected();
   }
 
+  @Override
+  public int numTotalConnections() {
+    return client.numTotalConnections();
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return client.numActiveConnections();
+  }
+
   private void retry() {
     try {
       final ListenableFuture<RawMemcacheClient> future = connector.connect();

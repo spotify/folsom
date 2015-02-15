@@ -325,6 +325,16 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   @Override
+  public int numTotalConnections() {
+    return rawMemcacheClient.numTotalConnections();
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return rawMemcacheClient.numActiveConnections();
+  }
+
+  @Override
   public String toString() {
     return "BinaryMemcacheClient(" + rawMemcacheClient + ")";
   }

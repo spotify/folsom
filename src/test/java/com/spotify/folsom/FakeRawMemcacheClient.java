@@ -79,6 +79,16 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
     return connected;
   }
 
+  @Override
+  public int numTotalConnections() {
+    return 1;
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return connected ? 1 : 0;
+  }
+
   public Map<String, byte[]> getMap() {
     return map;
   }

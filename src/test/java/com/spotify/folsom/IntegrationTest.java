@@ -132,7 +132,7 @@ public class IntegrationTest {
   }
 
   public static void awaitConnected(final MemcacheClient<?> client) {
-    while (client != null && !client.isConnected()) {
+    while (client != null && client.numActiveConnections() < client.numTotalConnections()) {
       Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
     }
   }

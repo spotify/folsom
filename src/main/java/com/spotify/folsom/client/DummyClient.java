@@ -39,6 +39,16 @@ public class DummyClient implements RawMemcacheClient {
     return false;
   }
 
+  @Override
+  public int numTotalConnections() {
+    return 1;
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return 0;
+  }
+
   private <T> ListenableFuture<T> fail() {
     return Futures.immediateFailedFuture(new MemcacheClosedException());
   }

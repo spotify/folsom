@@ -212,6 +212,16 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     return channel.isActive();
   }
 
+  @Override
+  public int numTotalConnections() {
+    return 1;
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return isConnected() ? 1 : 0;
+  }
+
   /**
    * Handles a channel connected to the address specified in the constructor.
    */

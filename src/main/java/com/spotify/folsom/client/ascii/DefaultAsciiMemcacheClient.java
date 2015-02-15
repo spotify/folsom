@@ -224,6 +224,16 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
+  public int numTotalConnections() {
+    return rawMemcacheClient.numTotalConnections();
+  }
+
+  @Override
+  public int numActiveConnections() {
+    return rawMemcacheClient.numActiveConnections();
+  }
+
+  @Override
   public String toString() {
     return "AsciiMemcacheClient(" + rawMemcacheClient + ")";
   }
