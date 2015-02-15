@@ -24,7 +24,9 @@ import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
+import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.client.YammerMetrics;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
@@ -32,7 +34,6 @@ import com.thimbleware.jmemcached.MemCacheDaemon;
 import com.thimbleware.jmemcached.storage.CacheStorage;
 import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
 import junit.framework.AssertionFailedError;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -144,23 +145,37 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-
+    boolean ascii;
     if (protocol.equals("ascii")) {
-      asciiClient = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", isEmbedded() ? asciiPort : 11211))
-              .connectAscii();
-      binaryClient = null;
-      client = asciiClient;
+      ascii = true;
     } else if (protocol.equals("binary")) {
-      binaryClient = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", isEmbedded() ? binaryPort : 11211))
-              .connectBinary();
-      asciiClient = null;
-      client = binaryClient;
+      ascii = false;
     } else {
       throw new IllegalArgumentException(protocol);
     }
+    int embeddedPort = ascii ? asciiPort : binaryPort;
+    int port = isEmbedded() ? embeddedPort : 11211;
+
+    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
+            .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+            .withConnections(1)
+            .withMaxOutstandingRequests(100)
+            .withMetrics(NoopMetrics.INSTANCE)
+            .withRetry(false)
+            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
+            .withRequestTimeoutMillis(100);
+
+    if (ascii) {
+      asciiClient = builder.connectAscii();
+      binaryClient = null;
+      client = asciiClient;
+    } else {
+      binaryClient = builder.connectBinary();
+      asciiClient = null;
+      client = binaryClient;
+    }
     awaitConnected(client);
+    System.out.println("Using client: " + client + ", protocol: " + protocol + " and port: " + port);
     cleanup();
   }
 
