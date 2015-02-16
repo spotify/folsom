@@ -21,25 +21,11 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
-import java.util.Queue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -55,7 +41,18 @@ import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DecoderException;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.util.Queue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -80,6 +77,8 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
   private final HostAndPort address;
   private final Executor executor;
   private final long timeoutMillis;
+
+  private String disconnectReason;
 
   public static ListenableFuture<RawMemcacheClient> connect(
       final HostAndPort address,
@@ -151,6 +150,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     this.channel = checkNotNull(channel, "channel");
     this.flusher = new BatchFlusher(channel);
     this.outstandingRequestLimit = outstandingRequestLimit;
+    disconnectReason = "Disconnected";
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
     if (!channel.isOpen()) {
@@ -203,6 +203,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
   public ListenableFuture<Void> shutdown() {
     // TODO disconnect nicely
     //send(new QuitRequest());
+    disconnectReason = "Closed";
     channel.close();
     return onExecutor(Futures.<Void>immediateFuture(null));
   }
@@ -244,6 +245,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
           }
           if (timeoutChecker.check(head)) {
             log.error("Request timeout: {} {}", channel, head);
+            disconnectReason = "Timeout";
             channel.close();
           }
         }
@@ -270,7 +272,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
         if (request == null) {
           break;
         }
-        request.fail(new MemcacheClosedException("disconnected"));
+        request.fail(new MemcacheClosedException(disconnectReason));
       }
       DefaultRawMemcacheClient.this.close();
     }
@@ -284,29 +286,26 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
       pendingCounter.decrementAndGet();
       try {
         request.handle(msg);
-      } catch (final IOException exception) {
+      } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
+        disconnectReason = exception.getMessage();
         request.fail(exception);
         ctx.channel().close();
-      } catch (final Exception exception) {
-        request.fail(exception);
-        throw exception;
       }
     }
 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
         throws Exception {
-      if (cause instanceof ClosedChannelException) {
-        // Do nothing
-      } else if (isLostConnection(cause)) {
-        ctx.close();
-      } else {
+      if (cause instanceof DecoderException) {
+        disconnectReason = cause.getCause().getMessage();
+      } else if (!isLostConnection(cause)) {
         // default to the safe option of closing the connection on unhandled exceptions
         // use a ReconnectingClient to keep the connection going
         log.error("Unexpected error, closing connection", cause);
-        ctx.close();
+        disconnectReason = cause.getMessage();
       }
+      ctx.close();
     }
   }
 
@@ -340,7 +339,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     return "DefaultRawMemcacheClient(" + address + ")";
   }
 
-  private static class RequestWritePromise extends DefaultChannelPromise {
+  private class RequestWritePromise extends DefaultChannelPromise {
 
     private final Request<?> request;
 
@@ -352,14 +351,14 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     @Override
     public ChannelPromise setFailure(final Throwable cause) {
       super.setFailure(cause);
-      request.fail(new MemcacheClosedException(cause));
+      request.fail(new MemcacheClosedException(disconnectReason));
       return this;
     }
 
     @Override
     public boolean tryFailure(final Throwable cause) {
       if (super.tryFailure(cause)) {
-        request.fail(new MemcacheClosedException(cause));
+        request.fail(new MemcacheClosedException(disconnectReason));
         return true;
       }
       return false;
