@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -371,14 +370,9 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
   }
 
   private void setDisconnectReason(Throwable cause) {
-    String message;
-    if (cause instanceof ClosedChannelException) {
-      message = "Disconnected";
-    } else {
-      message = cause.getMessage();
-      if (message == null) {
-        message = cause.getClass().getSimpleName();
-      }
+    String message = cause.getMessage();
+    if (message == null) {
+      message = cause.getClass().getSimpleName();
     }
     disconnectReason.compareAndSet(null, message);
   }
