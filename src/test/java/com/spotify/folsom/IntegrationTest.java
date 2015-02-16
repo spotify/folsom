@@ -24,7 +24,8 @@ import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
+import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.Utils;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
@@ -32,7 +33,6 @@ import com.thimbleware.jmemcached.MemCacheDaemon;
 import com.thimbleware.jmemcached.storage.CacheStorage;
 import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
 import junit.framework.AssertionFailedError;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -131,7 +131,7 @@ public class IntegrationTest {
   }
 
   public static void awaitConnected(final MemcacheClient<?> client) {
-    while (client != null && !client.isConnected()) {
+    while (client != null && client.numActiveConnections() < client.numTotalConnections()) {
       Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
     }
   }
@@ -144,23 +144,37 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-
+    boolean ascii;
     if (protocol.equals("ascii")) {
-      asciiClient = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", isEmbedded() ? asciiPort : 11211))
-              .connectAscii();
-      binaryClient = null;
-      client = asciiClient;
+      ascii = true;
     } else if (protocol.equals("binary")) {
-      binaryClient = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", isEmbedded() ? binaryPort : 11211))
-              .connectBinary();
-      asciiClient = null;
-      client = binaryClient;
+      ascii = false;
     } else {
       throw new IllegalArgumentException(protocol);
     }
+    int embeddedPort = ascii ? asciiPort : binaryPort;
+    int port = isEmbedded() ? embeddedPort : 11211;
+
+    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
+            .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+            .withConnections(1)
+            .withMaxOutstandingRequests(100)
+            .withMetrics(NoopMetrics.INSTANCE)
+            .withRetry(false)
+            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
+            .withRequestTimeoutMillis(100);
+
+    if (ascii) {
+      asciiClient = builder.connectAscii();
+      binaryClient = null;
+      client = asciiClient;
+    } else {
+      binaryClient = builder.connectBinary();
+      asciiClient = null;
+      client = binaryClient;
+    }
     awaitConnected(client);
+    System.out.println("Using client: " + client + ", protocol: " + protocol + " and port: " + port);
     cleanup();
   }
 
@@ -196,7 +210,7 @@ public class IntegrationTest {
 
   @Test
   public void testLargeSet() throws Exception {
-    String value = Collections.nCopies(1000, "Hello world ").toString();
+    String value = Collections.nCopies(10000, "Hello world ").toString();
     client.set(KEY1, value, TTL).get();
     assertEquals(value, client.get(KEY1).get());
   }
@@ -498,15 +512,15 @@ public class IntegrationTest {
     }
   }
 
-  protected void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
+  static void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
     checkKeyNotFound(future);
   }
 
-  protected void checkKeyNotFound(final ListenableFuture<?> future) throws Throwable {
+  static void checkKeyNotFound(final ListenableFuture<?> future) throws Throwable {
     checkStatus(future, MemcacheStatus.KEY_NOT_FOUND);
   }
 
-  protected void checkStatus(final ListenableFuture<?> future, final MemcacheStatus... expected)
+  static void checkStatus(final ListenableFuture<?> future, final MemcacheStatus... expected)
       throws Throwable {
     final Set<MemcacheStatus> expectedSet = Sets.newHashSet(expected);
     try {
