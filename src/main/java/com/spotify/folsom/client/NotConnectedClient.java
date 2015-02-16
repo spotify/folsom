@@ -20,9 +20,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 
-public class DummyClient implements RawMemcacheClient {
+public class NotConnectedClient implements RawMemcacheClient {
 
-  public static final DummyClient DUMMY_CLIENT = new DummyClient();
+  public static final NotConnectedClient INSTANCE = new NotConnectedClient();
+
+  private NotConnectedClient() {
+  }
 
   @Override
   public <T> ListenableFuture<T> send(final Request<T> request) {

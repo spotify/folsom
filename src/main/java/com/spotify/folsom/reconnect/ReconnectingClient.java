@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.folsom.BackoffFunction;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
-import com.spotify.folsom.client.DummyClient;
+import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class ReconnectingClient implements RawMemcacheClient {
   private final Connector connector;
   private final HostAndPort address;
 
-  private volatile RawMemcacheClient client = new DummyClient();
+  private volatile RawMemcacheClient client = NotConnectedClient.INSTANCE;
   private volatile int reconnectCount = 0;
   private volatile boolean stayConnected = true;
 

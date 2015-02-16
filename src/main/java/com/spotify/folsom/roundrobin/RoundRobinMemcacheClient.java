@@ -19,7 +19,7 @@ package com.spotify.folsom.roundrobin;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
-import com.spotify.folsom.client.DummyClient;
+import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 
 import java.util.List;
@@ -57,6 +57,6 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
         return client;
       }
     }
-    return DummyClient.DUMMY_CLIENT;
+    return NotConnectedClient.INSTANCE;
   }
 }
