@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -287,7 +288,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
         request.handle(msg);
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
-        disconnectReason.compareAndSet(null, exception.getMessage());
+        setDisconnectReason(exception);
         request.fail(new MemcacheClosedException(disconnectReason.get()));
         ctx.channel().close();
       }
@@ -297,12 +298,12 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
         throws Exception {
       if (cause instanceof DecoderException) {
-        disconnectReason.compareAndSet(null, cause.getCause().getMessage());
+        setDisconnectReason(cause.getCause());
       } else if (!isLostConnection(cause)) {
         // default to the safe option of closing the connection on unhandled exceptions
         // use a ReconnectingClient to keep the connection going
         log.error("Unexpected error, closing connection", cause);
-        disconnectReason.compareAndSet(null, cause.getMessage());
+        setDisconnectReason(cause);
       }
       ctx.close();
     }
@@ -364,8 +365,21 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     }
 
     private void fail(Throwable cause) {
-      disconnectReason.compareAndSet(null, cause.getMessage());
+      setDisconnectReason(cause);
       request.fail(new MemcacheClosedException(disconnectReason.get()));
     }
+  }
+
+  private void setDisconnectReason(Throwable cause) {
+    String message;
+    if (cause instanceof ClosedChannelException) {
+      message = "Disconnected";
+    } else {
+      message = cause.getMessage();
+      if (message == null) {
+        message = cause.getClass().getSimpleName();
+      }
+    }
+    disconnectReason.compareAndSet(null, message);
   }
 }
