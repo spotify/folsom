@@ -79,8 +79,9 @@ public class IntegrationTest {
     }
   }
 
-  private static final int asciiPort = findFreePort();
-  private static final int binaryPort = findFreePort();
+  private static int asciiPort;
+  private static int binaryPort;
+
   public static int findFreePort() {
     try (ServerSocket tmpSocket = new ServerSocket(0)) {
       return tmpSocket.getLocalPort();
@@ -113,7 +114,10 @@ public class IntegrationTest {
   @BeforeClass
   public static void setUpClass() throws Exception {
     // create daemon and start it
+    asciiPort = findFreePort();
     createEmbeddedServer(asciiEmbeddedServer, false, asciiPort);
+
+    binaryPort = findFreePort();
     createEmbeddedServer(binaryEmbeddedServer, true, binaryPort);
   }
 
