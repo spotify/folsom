@@ -19,12 +19,9 @@ package com.spotify.folsom;
 import com.google.common.base.Charsets;
 import com.google.common.net.HostAndPort;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,15 +33,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class MisbehavingServerTest {
-  private static Server server;
+  private Server server;
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
+  @Before
+  public void setup() throws Exception {
     server = new Server();
   }
 
-  @AfterClass
-  public static void tearDownClass() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     server.stop();
   }
 
