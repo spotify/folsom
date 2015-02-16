@@ -154,7 +154,7 @@ public class DefaultRawMemcacheClientTest {
       }).get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals("disconnected", e.getCause().getMessage());
+      assertEquals("Unexpected line: CLIENT_ERROR", e.getCause().getMessage());
     }
   }
 

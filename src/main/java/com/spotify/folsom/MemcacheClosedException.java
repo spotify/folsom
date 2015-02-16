@@ -21,11 +21,4 @@ public class MemcacheClosedException extends Exception {
   public MemcacheClosedException(final String message) {
     super(message);
   }
-
-  public MemcacheClosedException() {
-  }
-
-  public MemcacheClosedException(final Throwable cause) {
-    super(cause);
-  }
 }

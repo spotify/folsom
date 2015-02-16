@@ -105,21 +105,21 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
 
           final int flagsStart = keyEnd + 1;
           final int flagsEnd = endIndex(line, flagsStart);
-          if (flagsEnd == flagsStart) {
+          if (flagsEnd <= flagsStart) {
             throw new IOException("Unexpected line: " + line);
           }
 
           final int sizeStart = flagsEnd + 1;
           final int sizeEnd = endIndex(line, sizeStart);
-          final int size = (int) parseLong(line, sizeStart, sizeEnd);
-          if (size < 0) {
+          if (sizeEnd <= sizeStart) {
             throw new IOException("Unexpected line: " + line);
           }
+          final int size = (int) parseLong(line, sizeStart, sizeEnd);
 
           final int casStart = sizeEnd + 1;
           final int casEnd = endIndex(line, casStart);
           long cas = 0;
-          if (casStart != casEnd) {
+          if (casStart < casEnd) {
             cas = parseLong(line, casStart, casEnd);
           }
           this.key = key;
@@ -134,12 +134,10 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             expect(line, "STORED");
             out.add(AsciiResponse.STORED);
             return;
-          } else if (firstChar == 'E') {
+          } else {
             expect(line, "EXISTS");
             out.add(AsciiResponse.EXISTS);
             return;
-          } else {
-            throw new IOException("Unexpected line: " + line);
           }
         } else if (firstEnd == 7) {
           if (firstChar == 'T') {
@@ -176,9 +174,6 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   }
 
   private long parseLong(final StringBuilder line, final int from, final int to) {
-    if (from == to) {
-      return -1;
-    }
     long res = 0;
     for (int i = from; i < to; i++) {
       final int digit = line.charAt(i) - '0';

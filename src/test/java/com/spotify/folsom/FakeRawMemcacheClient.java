@@ -35,7 +35,7 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
   @Override
   public <T> ListenableFuture<T> send(Request<T> request) {
     if (!connected) {
-      return Futures.immediateFailedFuture(new MemcacheClosedException());
+      return Futures.immediateFailedFuture(new MemcacheClosedException("Disconnected"));
     }
 
     if (request instanceof SetRequest) {

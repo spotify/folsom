@@ -50,6 +50,6 @@ public class DummyClient implements RawMemcacheClient {
   }
 
   private <T> ListenableFuture<T> fail() {
-    return Futures.immediateFailedFuture(new MemcacheClosedException());
+    return Futures.immediateFailedFuture(new MemcacheClosedException("Not connected"));
   }
 }
