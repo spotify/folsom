@@ -54,10 +54,9 @@ public class MemcacheClientStressTest {
   private static final byte[] VALUE = "myvalue".getBytes();
 
   public static final int N = 1000;
-  private final MemCacheDaemon<LocalCacheElement> daemon = new MemCacheDaemon<>();
+  private final EmbeddedServer daemon = new EmbeddedServer(false);
   private ExecutorService workerExecutor;
   private MemcacheClient<byte[]> client;
-  private int port;
 
   @Before
   public void setUp() throws Exception {
@@ -65,19 +64,8 @@ public class MemcacheClientStressTest {
     lc.getLogger(MemcachedCommandHandler.class).setLevel(Level.ERROR);
     workerExecutor = Executors.newFixedThreadPool(100);
 
-    // create daemon and start it
-    final int maxItems = 1492;
-    final int maxBytes = 1024 * 1000;
-    final CacheStorage<Key, LocalCacheElement> storage =
-        ConcurrentLinkedHashMap.create(ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
-    daemon.setCache(new CacheImpl(storage));
-    daemon.setBinary(false);
-    daemon.setVerbose(true);
-    port = IntegrationTest.findFreePort();
-    daemon.setAddr(new InetSocketAddress("127.0.0.1", port));
-    daemon.start();
     client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+        .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
         .connectAscii();
     IntegrationTest.awaitConnected(client);
   }
@@ -108,7 +96,7 @@ public class MemcacheClientStressTest {
 
       client.shutdown().get();
       client = MemcacheClientBuilder.newByteArrayClient()
-          .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+          .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
           .connectBinary();
       Futures.successfulAsList(futures).get();
 

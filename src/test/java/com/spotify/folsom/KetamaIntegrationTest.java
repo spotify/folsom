@@ -22,12 +22,6 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.thimbleware.jmemcached.CacheImpl;
-import com.thimbleware.jmemcached.Key;
-import com.thimbleware.jmemcached.LocalCacheElement;
-import com.thimbleware.jmemcached.MemCacheDaemon;
-import com.thimbleware.jmemcached.storage.CacheStorage;
-import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -36,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -218,41 +211,27 @@ public class KetamaIntegrationTest {
       }
       assertEquals(expectedValues, client.get(keys).get());
     }
-    for (MemCacheDaemon daemon : servers.daemons) {
+    for (EmbeddedServer daemon : servers.daemons) {
       assertTrue(daemon.getCache().getCurrentItems() > 10);
     }
   }
 
   public static class Servers {
-    private final List<MemCacheDaemon> daemons;
+    private final List<EmbeddedServer> daemons;
     private final List<HostAndPort> addresses;
 
     public Servers(int instances, boolean binary) {
       daemons = Lists.newArrayList();
       addresses = Lists.newArrayList();
       for (int i = 0; i < instances; i++) {
-        int port = IntegrationTest.findFreePort();
-
-        MemCacheDaemon daemon = new MemCacheDaemon();
-
-        final int maxItems = 1492;
-        final int maxBytes = 1024 * 1000;
-        final CacheStorage<Key, LocalCacheElement> storage =
-                ConcurrentLinkedHashMap.create(ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
-        daemon.setCache(new CacheImpl(storage));
-        daemon.setBinary(binary);
-        daemon.setVerbose(false);
-        InetSocketAddress embeddedAddress = new InetSocketAddress(port);
-        daemon.setAddr(embeddedAddress);
-        daemon.start();
-
+        EmbeddedServer daemon = new EmbeddedServer(binary);
         daemons.add(daemon);
-        addresses.add(HostAndPort.fromParts("localhost", port));
+        addresses.add(HostAndPort.fromParts("localhost", daemon.getPort()));
       }
     }
 
     public void stop() {
-      for (MemCacheDaemon daemon : daemons) {
+      for (EmbeddedServer daemon : daemons) {
         daemon.stop();
       }
     }
@@ -262,8 +241,8 @@ public class KetamaIntegrationTest {
     }
 
     public void flush() {
-      for (MemCacheDaemon daemon : daemons) {
-        daemon.getCache().flush_all();
+      for (EmbeddedServer daemon : daemons) {
+        daemon.flush();
       }
     }
   }
