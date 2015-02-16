@@ -37,7 +37,6 @@ public class MisbehavingServerTest {
 
   @Before
   public void setup() throws Exception {
-    server = new Server();
   }
 
   @After
@@ -97,7 +96,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testBadAsciiGet5() throws Throwable {
-    testAsciiGet("VALUE key 123 456\r\n", "Disconnected");
+    testAsciiGet("VALUE key 123 456\r\n", "Timeout");
   }
 
   @Test
@@ -123,9 +122,11 @@ public class MisbehavingServerTest {
   }
 
   private MemcacheClient<String> setupAscii(String response) throws IOException {
-    server.setAsciiResponse(response);
+    server = new Server(response);
     MemcacheClient<String> client = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
             .withAddress(HostAndPort.fromParts("localhost", server.port))
+            .withRequestTimeoutMillis(100L)
+            .withRetry(false)
             .connectAscii();
     IntegrationTest.awaitConnected(client);
     return client;
@@ -136,58 +137,49 @@ public class MisbehavingServerTest {
     private final ServerSocket serverSocket;
     private final Thread thread;
 
-    private boolean binary;
-    private byte[] response;
-    private Socket socket;
+    private volatile Throwable failure;
+    private volatile Socket socket;
 
-    private Server() throws IOException {
+    private Server(String responseString) throws IOException {
+      final byte[] response = responseString.getBytes(Charsets.UTF_8);
       serverSocket = new ServerSocket(0);
       port = serverSocket.getLocalPort();
       thread = new Thread(new Runnable() {
         @Override
         public void run() {
-          while (!serverSocket.isClosed()) {
-            try {
-              socket = serverSocket.accept();
-              handleConnection(socket);
-            } catch (IOException e) {
-              e.printStackTrace();
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
+          try {
+            socket = serverSocket.accept();
+            handleConnection(socket);
+          } catch (Throwable e) {
+            failure = e;
+            failure.printStackTrace();
           }
         }
 
-        private void handleConnection(Socket socket) throws IOException, InterruptedException {
-          try {
-            if (!binary) {
-              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
-              while (reader.ready()) {
-                reader.readLine();
-              }
-            } else {
-              throw new RuntimeException("not implemented");
-            }
-            socket.getOutputStream().write(response);
-            socket.getOutputStream().flush();
-          } finally {
-            socket.close();
+        private void handleConnection(Socket socket) throws Exception {
+          BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
+          String s = reader.readLine();
+          if (s.startsWith("get ")) {
+            // Don't need to read any more lines
+          } else {
+            throw new RuntimeException("Unhandled command: " + s);
           }
+          socket.getOutputStream().write(response);
+          socket.getOutputStream().flush();
         }
       });
       thread.start();
     }
 
-    public void stop() throws IOException {
+    public void stop() throws Exception {
+      thread.join();
       serverSocket.close();
-    }
-
-    public void setAsciiResponse(String s) throws IOException {
       if (socket != null) {
         socket.close();
       }
-      binary = false;
-      response = s.getBytes(Charsets.UTF_8);
+      if (failure != null) {
+        fail(failure.getClass().getSimpleName() + ": " + failure.getMessage());
+      }
     }
   }
 }
