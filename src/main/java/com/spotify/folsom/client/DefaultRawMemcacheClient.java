@@ -288,7 +288,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
         disconnectReason.compareAndSet(null, exception.getMessage());
-        request.fail(exception);
+        request.fail(new MemcacheClosedException(disconnectReason.get()));
         ctx.channel().close();
       }
     }
