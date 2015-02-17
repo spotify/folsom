@@ -124,7 +124,7 @@ public class SetRequest
         }
         return;
       default:
-        throw new IOException("Unexpected response type: " + response.type);
+        throw new IOException("Unexpected line: " + response.type);
     }
   }
 

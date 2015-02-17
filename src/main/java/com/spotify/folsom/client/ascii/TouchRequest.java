@@ -51,7 +51,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
     } else if (type == AsciiResponse.Type.NOT_FOUND) {
       succeed(MemcacheStatus.KEY_NOT_FOUND);
     } else {
-      throw new IOException("Unexpected response: " + type);
+      throw new IOException("Unexpected line: " + type);
     }
   }
 }
