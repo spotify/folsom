@@ -31,12 +31,6 @@ public abstract class AsciiRequest<T> extends Request<T> {
 
   @Override
   public void handle(Object response) throws IOException {
-    if (response == null) {
-      throw new NullPointerException("response");
-    }
-    if (!(response instanceof AsciiResponse)) {
-      throw new IOException("Unknown response type: " + response.getClass());
-    }
     handle((AsciiResponse) response);
   }
 
