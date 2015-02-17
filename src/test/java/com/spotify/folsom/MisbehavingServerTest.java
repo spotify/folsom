@@ -157,7 +157,7 @@ public class MisbehavingServerTest {
 
   private MemcacheClient<String> setupAscii(String response) throws IOException {
     server = new Server(response);
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts("localhost", server.port))
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
