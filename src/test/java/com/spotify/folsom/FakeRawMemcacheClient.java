@@ -23,6 +23,9 @@ import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.SetRequest;
+import com.spotify.folsom.client.ascii.DeleteRequest;
+import com.spotify.folsom.client.ascii.IncrRequest;
+import com.spotify.folsom.client.ascii.TouchRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -63,6 +66,29 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
         }
       }
       return (ListenableFuture<T>) Futures.<List<GetResult<byte[]>>>immediateFuture(result);
+    }
+
+    // Don't actually do anything here
+    if (request instanceof TouchRequest) {
+      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
+    }
+
+    if (request instanceof IncrRequest) {
+      IncrRequest incrRequest = (IncrRequest) request;
+      String key = request.getKey();
+      byte[] value = map.get(key);
+      if (value == null) {
+        return (ListenableFuture<T>) Futures.<Long>immediateFuture(null);
+      }
+      long longValue = Long.parseLong(new String(value));
+      long newValue = longValue + incrRequest.multiplier() * incrRequest.getBy();
+      map.put(key, Long.toString(newValue).getBytes());
+      return (ListenableFuture<T>) Futures.<Long>immediateFuture(newValue);
+    }
+
+    if (request instanceof DeleteRequest) {
+      map.remove(request.getKey());
+      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
     }
 
     throw new RuntimeException("Unsupported operation: " + request.getClass());

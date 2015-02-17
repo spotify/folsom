@@ -36,7 +36,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class YammerMetrics implements Metrics {
 
-  private static final String GROUP = "com.spotify.folsom";
+  public static final String GROUP = "com.spotify.folsom";
 
   private final Timer gets;
   private final Meter getHits;
@@ -231,5 +231,85 @@ public class YammerMetrics implements Metrics {
       }
     };
     Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+  }
+
+  public Timer getGets() {
+    return gets;
+  }
+
+  public Meter getGetHits() {
+    return getHits;
+  }
+
+  public Meter getGetMisses() {
+    return getMisses;
+  }
+
+  public Meter getGetSuccesses() {
+    return getSuccesses;
+  }
+
+  public Meter getGetFailures() {
+    return getFailures;
+  }
+
+  public Timer getMultigets() {
+    return multigets;
+  }
+
+  public Meter getMultigetSuccesses() {
+    return multigetSuccesses;
+  }
+
+  public Meter getMultigetFailures() {
+    return multigetFailures;
+  }
+
+  public Timer getSets() {
+    return sets;
+  }
+
+  public Meter getSetSuccesses() {
+    return setSuccesses;
+  }
+
+  public Meter getSetFailures() {
+    return setFailures;
+  }
+
+  public Timer getDeletes() {
+    return deletes;
+  }
+
+  public Meter getDeleteSuccesses() {
+    return deleteSuccesses;
+  }
+
+  public Meter getDeleteFailures() {
+    return deleteFailures;
+  }
+
+  public Timer getIncrDecrs() {
+    return incrDecrs;
+  }
+
+  public Meter getIncrDecrSuccesses() {
+    return incrDecrSuccesses;
+  }
+
+  public Meter getIncrDecrFailures() {
+    return incrDecrFailures;
+  }
+
+  public Timer getTouches() {
+    return touches;
+  }
+
+  public Meter getTouchSuccesses() {
+    return touchSuccesses;
+  }
+
+  public Meter getTouchFailures() {
+    return touchFailures;
   }
 }

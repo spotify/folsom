@@ -31,14 +31,14 @@ public class IncrRequest extends AsciiRequest<Long> {
   private  static final byte[] DECR_CMD = "decr ".getBytes(Charsets.US_ASCII);
 
   private final byte[] operation;
-  private final long value;
+  private final long by;
 
   private IncrRequest(final byte[] operation,
                       final String key,
-                      final long value) {
+                      final long by) {
     super(key);
     this.operation = operation;
-    this.value = value;
+    this.by = by;
   }
 
   public static IncrRequest createIncr(final String key, final long value) {
@@ -55,7 +55,7 @@ public class IncrRequest extends AsciiRequest<Long> {
     dst.put(operation);
     Utils.writeKeyString(dst, key);
     dst.put(SPACE_BYTES);
-    dst.put(String.valueOf(value).getBytes());
+    dst.put(String.valueOf(by).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }
@@ -69,5 +69,13 @@ public class IncrRequest extends AsciiRequest<Long> {
     } else {
       throw new IOException("Unexpected response type: " + response.type);
     }
+  }
+
+  public long getBy() {
+    return by;
+  }
+
+  public long multiplier() {
+    return operation == INCR_CMD ? 1 : -1;
   }
 }
