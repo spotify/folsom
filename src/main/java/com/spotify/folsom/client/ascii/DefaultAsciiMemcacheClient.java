@@ -132,7 +132,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   @Override
   public ListenableFuture<Long> incr(String key, long by) {
     final String keyBytes = encodeKey(key);
-    IncrRequest request = IncrRequest.create(IncrRequest.Operation.INCR, keyBytes, by);
+    IncrRequest request = IncrRequest.createIncr(keyBytes, by);
     ListenableFuture<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;
@@ -141,7 +141,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   @Override
   public ListenableFuture<Long> decr(String key, long by) {
     final String keyBytes = encodeKey(key);
-    IncrRequest request = IncrRequest.create(IncrRequest.Operation.DECR, keyBytes, by);
+    IncrRequest request = IncrRequest.createDecr(keyBytes, by);
     ListenableFuture<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;

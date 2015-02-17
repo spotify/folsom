@@ -19,27 +19,21 @@ package com.spotify.folsom.client.ascii;
 import com.google.common.base.Charsets;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.EnumMap;
 
 public class IncrRequest extends AsciiRequest<Long> {
 
-  private static final EnumMap<Operation, byte[]> CMD;
-  static {
-    CMD = new EnumMap<>(Operation.class);
-    CMD.put(Operation.INCR, "incr ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.DECR, "decr ".getBytes(Charsets.US_ASCII));
-  }
+  private static final byte[] INCR_CMD = "incr ".getBytes(Charsets.US_ASCII);
+  private  static final byte[] DECR_CMD = "decr ".getBytes(Charsets.US_ASCII);
 
-  private final Operation operation;
+  private final byte[] operation;
   private final long value;
 
-  private IncrRequest(final Operation operation,
+  private IncrRequest(final byte[] operation,
                       final String key,
                       final long value) {
     super(key);
@@ -47,19 +41,18 @@ public class IncrRequest extends AsciiRequest<Long> {
     this.value = value;
   }
 
-  public static IncrRequest create(final Operation operation,
-                                   final String key,
-                                   final long value) {
-    if (operation == null) {
-      throw new IllegalArgumentException("Invalid operation: " + operation);
-    }
-    return new IncrRequest(operation, key, value);
+  public static IncrRequest createIncr(final String key, final long value) {
+    return new IncrRequest(INCR_CMD, key, value);
+  }
+
+  public static IncrRequest createDecr(final String key, final long value) {
+    return new IncrRequest(DECR_CMD, key, value);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     // <command name> <key> <value> [noreply]\r\n
-    dst.put(CMD.get(operation));
+    dst.put(operation);
     Utils.writeKeyString(dst, key);
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value).getBytes());
@@ -76,9 +69,5 @@ public class IncrRequest extends AsciiRequest<Long> {
     } else {
       throw new IOException("Unexpected response type: " + response.type);
     }
-  }
-
-  public enum Operation {
-    INCR, DECR
   }
 }
