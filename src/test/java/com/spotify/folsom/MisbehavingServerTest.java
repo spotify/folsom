@@ -114,6 +114,11 @@ public class MisbehavingServerTest {
     testAsciiTouch("STORED\r\n", "Unexpected line: STORED");
   }
 
+  @Test
+  public void testBadAsciiSet() throws Throwable {
+    testAsciiSet("TOUCHED\r\n", "Unexpected line: TOUCHED");
+  }
+
   private void testAsciiGet(String response, String expectedError) throws InterruptedException, IOException {
     MemcacheClient<String> client = setupAscii(response);
     try {
@@ -130,6 +135,18 @@ public class MisbehavingServerTest {
     MemcacheClient<String> client = setupAscii(response);
     try {
       client.touch("key", 123).get();
+      fail();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertEquals(MemcacheClosedException.class, cause.getClass());
+      assertEquals(expectedError, cause.getMessage());
+    }
+  }
+
+  private void testAsciiSet(String response, String expectedError) throws InterruptedException, IOException {
+    MemcacheClient<String> client = setupAscii(response);
+    try {
+      client.set("key", "value", 123).get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -178,6 +195,9 @@ public class MisbehavingServerTest {
           String s = reader.readLine();
           if (s.startsWith("get ") || s.startsWith("touch ")) {
             // Don't need to read any more lines
+          } else if (s.startsWith("set ")) {
+            // Read the value too
+            reader.readLine();
           } else {
             throw new RuntimeException("Unhandled command: " + s);
           }
