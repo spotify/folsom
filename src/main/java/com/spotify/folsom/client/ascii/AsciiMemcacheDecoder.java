@@ -173,12 +173,13 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
     }
   }
 
-  private long parseLong(final StringBuilder line, final int from, final int to) {
+  private long parseLong(final StringBuilder line,
+                         final int from, final int to) throws IOException {
     long res = 0;
     for (int i = from; i < to; i++) {
       final int digit = line.charAt(i) - '0';
       if (digit < 0 || digit > 9) {
-        return -1;
+        throw new IOException("Unexpected line: " + line);
       }
       res *= 10;
       res += digit;

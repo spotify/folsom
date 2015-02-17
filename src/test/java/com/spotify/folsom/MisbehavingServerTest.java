@@ -110,6 +110,11 @@ public class MisbehavingServerTest {
   }
 
   @Test
+  public void testBadAsciiGet8() throws Throwable {
+    testAsciiGet("VALUE key 123 1a3\r\n", "Unexpected line: VALUE key 123 1a3");
+  }
+
+  @Test
   public void testBadAsciiTouch() throws Throwable {
     testAsciiTouch("STORED\r\n", "Unexpected line: STORED");
   }
