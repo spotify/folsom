@@ -16,8 +16,6 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.spotify.folsom.client.ascii.IncrRequest.Operation;
-
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,23 +28,19 @@ public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
   public void testIncrRequest() throws Exception {
-    assertIncrRequest(Operation.INCR, "incr");
+    IncrRequest req = IncrRequest.createIncr("foo", 2);
+    assertRequest(req, "incr" + " foo 2\r\n");
   }
 
   @Test
   public void testDecrRequest() throws Exception {
-    assertIncrRequest(Operation.DECR, "decr");
-  }
-
-  private void assertIncrRequest(Operation operation, String expectedCmd) {
-    IncrRequest req = IncrRequest.create(operation, "foo", 2);
-
-    assertRequest(req, expectedCmd + " foo 2\r\n");
+    IncrRequest req = IncrRequest.createDecr("foo", 2);
+    assertRequest(req, "decr" + " foo 2\r\n");
   }
 
   @Test
   public void testResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.create(Operation.INCR, "foo", 2);
+    IncrRequest req = IncrRequest.createIncr("foo", 2);
 
     AsciiResponse response = new NumericAsciiResponse(123);
     req.handle(response);
@@ -56,7 +50,7 @@ public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
   public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.create(Operation.INCR, "foo", 2);
+    IncrRequest req = IncrRequest.createIncr("foo", 2);
 
     req.handle(AsciiResponse.NOT_FOUND);
     assertEquals(null, req.get());
