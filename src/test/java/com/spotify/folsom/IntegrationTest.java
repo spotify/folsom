@@ -330,6 +330,20 @@ public class IntegrationTest {
   }
 
   @Test
+  public void testMultiGetWithCas() throws Throwable {
+    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY2, VALUE2, TTL).get();
+
+    long cas1 = client.casGet(KEY1).get().getCas();
+    long cas2 = client.casGet(KEY2).get().getCas();
+
+    List<GetResult<String>> expected = asList(
+            GetResult.success(VALUE1, cas1),
+            GetResult.success(VALUE2, cas2));
+    assertEquals(expected, client.casGet(asList(KEY1, KEY2)).get());
+  }
+
+  @Test
   public void testMultiGetKeyMissing() throws Throwable {
     if (isEmbedded() && isBinary()) {
       // returns "" instead of NOT_FOUND on embedded server
