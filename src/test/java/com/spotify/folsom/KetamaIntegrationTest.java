@@ -215,6 +215,31 @@ public class KetamaIntegrationTest {
     }
   }
 
+  @Test
+  public void testFlushAll() throws Exception {
+    assertEquals(null, client.get(KEY1).get());
+    assertEquals(null, client.get(KEY2).get());
+    assertEquals(null, client.get(KEY3).get());
+
+    client.set(KEY1, VALUE1, TTL).get();
+    client.flushAll(0);
+    assertEquals(null, client.get(KEY1).get());
+    assertEquals(null, client.get(KEY2).get());
+    assertEquals(null, client.get(KEY3).get());
+
+    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY2, VALUE2, TTL).get();
+    client.set(KEY3, VALUE2, TTL).get();
+    client.flushAll(5);
+    assertEquals(VALUE1, client.get(KEY1).get());
+    assertEquals(VALUE2, client.get(KEY2).get());
+    assertEquals(VALUE2, client.get(KEY3).get());
+    Thread.sleep(5000);
+    assertEquals(null, client.get(KEY1).get());
+    assertEquals(null, client.get(KEY2).get());
+    assertEquals(null, client.get(KEY3).get());
+  }
+
   public static class Servers {
     private final List<EmbeddedServer> daemons;
     private final List<HostAndPort> addresses;
