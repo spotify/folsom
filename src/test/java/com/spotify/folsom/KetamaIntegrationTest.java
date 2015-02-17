@@ -89,7 +89,7 @@ public class KetamaIntegrationTest {
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
-            .withRequestTimeoutMillis(100);
+            .withRequestTimeoutMillis(10*1000);
 
     if (ascii) {
       client = builder.connectAscii();
