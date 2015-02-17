@@ -303,6 +303,25 @@ public class IntegrationTest {
     assertGetKeyNotFound(client.get(KEY1));
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testTooLargeMultiget() throws Exception {
+    List<String> keys = Lists.newArrayList();
+    for (int i = 0; i < 1000; i++) {
+      keys.add("key-" + i);
+    }
+    client.get(keys);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testTooLongKey() throws Exception {
+    client.get(String.format("key-%300d", 1));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidKey() throws Exception {
+    client.get("key with spaces");
+  }
+
   @Test
   public void testMultiGetAllKeysExistsIterable() throws Throwable {
     client.set(KEY1, VALUE1, TTL).get();
