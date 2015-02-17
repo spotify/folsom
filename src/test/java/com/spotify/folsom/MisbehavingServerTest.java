@@ -115,6 +115,27 @@ public class MisbehavingServerTest {
   }
 
   @Test
+  public void testWrongAsciiKey() throws Throwable {
+    testAsciiGet("VALUE otherkey 123 0\r\n\r\nEND\r\n", "Expected key key but got otherkey");
+  }
+
+  @Test
+  public void testTooManyAsciiValues() throws Throwable {
+    testAsciiGet("" +
+            "VALUE key 123 0\r\n" +
+            "\r\n" +
+            "VALUE key 123 0\r\n" +
+            "\r\n" +
+            "END\r\n",
+            "Too many responses, expected 1 but got 2");
+  }
+
+  @Test
+  public void testAsciiWrongResponseType() throws Throwable {
+    testAsciiGet("1234\r\n", "Unexpected response type: NUMERIC_VALUE");
+  }
+
+  @Test
   public void testBadAsciiTouch() throws Throwable {
     testAsciiTouch("STORED\r\n", "Unexpected line: STORED");
   }
