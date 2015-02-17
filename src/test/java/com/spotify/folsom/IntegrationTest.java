@@ -26,12 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.thimbleware.jmemcached.CacheImpl;
-import com.thimbleware.jmemcached.Key;
-import com.thimbleware.jmemcached.LocalCacheElement;
-import com.thimbleware.jmemcached.MemCacheDaemon;
-import com.thimbleware.jmemcached.storage.CacheStorage;
-import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -44,7 +38,6 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,8 +57,8 @@ import static org.junit.Assert.assertNotNull;
 public class IntegrationTest {
 
   private static final HostAndPort SERVER_ADDRESS = HostAndPort.fromParts("127.0.0.1", 11211);
-  private static final MemCacheDaemon<LocalCacheElement> asciiEmbeddedServer = new MemCacheDaemon<>();
-  private static final MemCacheDaemon<LocalCacheElement> binaryEmbeddedServer = new MemCacheDaemon<>();
+  private static EmbeddedServer asciiEmbeddedServer;
+  private static EmbeddedServer binaryEmbeddedServer;
 
   private static boolean memcachedRunning() {
     try (Socket socket = new Socket()) {
@@ -74,16 +67,6 @@ public class IntegrationTest {
     } catch (ConnectException e) {
       System.err.println("memcached not running, disabling test");
       return false;
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private static final int asciiPort = findFreePort();
-  private static final int binaryPort = findFreePort();
-  public static int findFreePort() {
-    try (ServerSocket tmpSocket = new ServerSocket(0)) {
-      return tmpSocket.getLocalPort();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -112,34 +95,20 @@ public class IntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    // create daemon and start it
-    createEmbeddedServer(asciiEmbeddedServer, false, asciiPort);
-    createEmbeddedServer(binaryEmbeddedServer, true, binaryPort);
-  }
-
-  private static void createEmbeddedServer(MemCacheDaemon<LocalCacheElement> embeddedServer, boolean binary, int port) {
-    final int maxItems = 1492;
-    final int maxBytes = 1024 * 1000;
-    final CacheStorage<Key, LocalCacheElement> storage =
-            ConcurrentLinkedHashMap.create(ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
-    embeddedServer.setCache(new CacheImpl(storage));
-    embeddedServer.setBinary(binary);
-    embeddedServer.setVerbose(true);
-    InetSocketAddress embeddedAddress = new InetSocketAddress(port);
-    embeddedServer.setAddr(embeddedAddress);
-    embeddedServer.start();
-  }
-
-  public static void awaitConnected(final MemcacheClient<?> client) {
-    while (client != null && client.numActiveConnections() < client.numTotalConnections()) {
-      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
-    }
+    asciiEmbeddedServer = new EmbeddedServer(false);
+    binaryEmbeddedServer = new EmbeddedServer(true);
   }
 
   @AfterClass
   public static void tearDownClass() throws Exception {
     binaryEmbeddedServer.stop();
     asciiEmbeddedServer.stop();
+  }
+
+  public static void awaitConnected(final MemcacheClient<?> client) {
+    while (client != null && client.numActiveConnections() < client.numTotalConnections()) {
+      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
+    }
   }
 
   @Before
@@ -152,7 +121,7 @@ public class IntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
-    int embeddedPort = ascii ? asciiPort : binaryPort;
+    int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
     int port = isEmbedded() ? embeddedPort : 11211;
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)

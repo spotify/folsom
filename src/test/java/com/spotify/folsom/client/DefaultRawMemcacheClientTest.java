@@ -16,11 +16,10 @@
 package com.spotify.folsom.client;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
-
+import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiRequest;
@@ -28,19 +27,13 @@ import com.spotify.folsom.client.ascii.AsciiResponse;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-import com.thimbleware.jmemcached.CacheImpl;
-import com.thimbleware.jmemcached.Key;
-import com.thimbleware.jmemcached.LocalCacheElement;
-import com.thimbleware.jmemcached.MemCacheDaemon;
-import com.thimbleware.jmemcached.storage.CacheStorage;
-import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -49,39 +42,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DefaultRawMemcacheClientTest {
-  private static final MemCacheDaemon<LocalCacheElement> embeddedServer = new MemCacheDaemon<>();
-
-  private static final int embeddedPort = findFreePort();
-  private static int findFreePort() {
-    try (ServerSocket tmpSocket = new ServerSocket(0)) {
-      return tmpSocket.getLocalPort();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
+  private static final EmbeddedServer embeddedServer = new EmbeddedServer(false);
 
   @Before
   public void setUp() throws Exception {
-    // create daemon and start it
-    final int maxItems = 1492;
-    final int maxBytes = 1024 * 1000;
-    final CacheStorage<Key, LocalCacheElement> storage =
-            ConcurrentLinkedHashMap.create(ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
-    embeddedServer.setCache(new CacheImpl(storage));
-    embeddedServer.setBinary(false);
-    embeddedServer.setVerbose(true);
-    InetSocketAddress embeddedAddress = new InetSocketAddress(embeddedPort);
-    embeddedServer.setAddr(embeddedAddress);
-    embeddedServer.start();
   }
 
   @After
@@ -94,7 +64,7 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("localhost", embeddedPort), 5000, false, null, 3000).get();
+        HostAndPort.fromParts("localhost", embeddedServer.getPort()), 5000, false, null, 3000).get();
 
     DefaultAsciiMemcacheClient<String> asciiClient = new DefaultAsciiMemcacheClient<>(rawClient, new NoopMetrics(), new StringTranscoder(Charsets.UTF_8));
 
