@@ -61,13 +61,6 @@ public abstract class BinaryRequest<V> extends Request<V> {
 
   @Override
   public void handle(Object response) throws IOException {
-    if (response == null) {
-      throw new NullPointerException("response");
-    }
-    if (!(response instanceof BinaryResponse)) {
-      throw new IOException("Unknown response type: " + response.getClass());
-    }
-
     handle((BinaryResponse) response);
   }
 
