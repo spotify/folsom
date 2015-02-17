@@ -19,7 +19,6 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
@@ -28,7 +27,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
@@ -84,7 +82,7 @@ public class SimpleMemcacheClientBenchmark {
       };
       spyClient = new MemcachedClient(defaultConnectionFactory, Collections.nCopies(NUM_CLIENT_CONNECTIONS, new InetSocketAddress("localhost", 11211)));
     } else {
-      client = MemcacheClientBuilder.newStringClient(Charsets.US_ASCII)
+      client = MemcacheClientBuilder.newStringClient()
               .withMaxOutstandingRequests(100000)
               .withAddress(HostAndPort.fromParts("127.0.0.1", 11211))
               .withConnections(NUM_CLIENT_CONNECTIONS)

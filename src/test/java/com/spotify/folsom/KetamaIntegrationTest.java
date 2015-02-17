@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
@@ -83,7 +82,7 @@ public class KetamaIntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
+    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withAddresses(servers.getAddresses())
             .withConnections(1)
             .withMaxOutstandingRequests(100)

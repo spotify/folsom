@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -124,7 +123,7 @@ public class IntegrationTest {
     int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
     int port = isEmbedded() ? embeddedPort : 11211;
 
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient(Charsets.UTF_8)
+    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts("127.0.0.1", port))
             .withConnections(1)
             .withMaxOutstandingRequests(100)

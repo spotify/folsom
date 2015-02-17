@@ -16,6 +16,7 @@
 
 package com.spotify.folsom;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -82,13 +83,26 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Create a client builder with a basic string transcoder.
-   * @param charset the charser to use for encoding/decoding strings
+   * Create a client builder with a basic string transcoder using the UTF-8
+   * Charset.
+   *
    * @return The builder
    */
-  public static MemcacheClientBuilder<String> newStringClient(final Charset charset) {
+  public static MemcacheClientBuilder<String> newStringClient() {
+    return newStringClient(Charsets.UTF_8);
+  }
+
+  /**
+   * Create a client builder with a basic string transcoder using the supplied
+   * Charset.
+   *
+   * @param charset the Charset to encode and decode String objects with.
+   * @return The builder
+   */
+  public static MemcacheClientBuilder<String> newStringClient(Charset charset) {
     return new MemcacheClientBuilder<>(new StringTranscoder(charset));
   }
+
 
   /**
    * Create a client builder with the provided value transcoder.
