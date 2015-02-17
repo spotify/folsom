@@ -27,10 +27,10 @@ public interface RawMemcacheClient {
   <T> ListenableFuture<T> send(Request<T> request);
 
   /**
-   * Shut down the client. After the completion of this, the client is no longer possible to use
-   * @return A future representing completion of the request
+   * Shut down the client. Use {@link #registerForConnectionChanges(ConnectionChangeListener)} to
+   * to get notified when it has (possibly) finished shutting down
    */
-  ListenableFuture<Void> shutdown();
+  void shutdown();
 
   /**
    * Is the client connected to a server?
@@ -49,4 +49,17 @@ public interface RawMemcacheClient {
    * @return the number of active connections
    */
   int numActiveConnections();
+
+  /**
+   * Register for connection change events. This should trigger at least once for every
+   * connection change. You should immediately get an initial callback.
+   * @param listener
+   */
+  void registerForConnectionChanges(ConnectionChangeListener listener);
+
+  /**
+   * Unregister for connection change events.
+   * @param listener
+   */
+  void unregisterForConnectionChanges(ConnectionChangeListener listener);
 }

@@ -103,7 +103,7 @@ public class KetamaIntegrationTest {
 
   @After
   public void tearDown() throws Exception {
-    client.shutdown().get();
+    client.shutdown();
   }
 
   protected static final String KEY1 = "folsomtest:key1";

@@ -48,7 +48,7 @@ public class KetamaRunner {
       System.out.println(client.get(key).get());
     }
 
-    client.shutdown().get(100000, MILLISECONDS);
+    client.shutdown();
   }
 
   private static void checkKeyOkOrNotFound(final ListenableFuture<?> future) throws Throwable {

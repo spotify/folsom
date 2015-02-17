@@ -155,7 +155,7 @@ public class IntegrationTest {
   @After
   public void tearDown() throws Exception {
     cleanup();
-    client.shutdown().get();
+    client.shutdown();
   }
 
   protected static final String KEY1 = "folsomtest:key1";

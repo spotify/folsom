@@ -94,7 +94,7 @@ public class MemcacheClientStressTest {
         addRequest(client, futures, successes, failures);
       }
 
-      client.shutdown().get();
+      client.shutdown();
       client = MemcacheClientBuilder.newByteArrayClient()
           .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
           .connectBinary();
@@ -141,7 +141,7 @@ public class MemcacheClientStressTest {
 
   @After
   public void tearDown() throws ExecutionException, InterruptedException {
-    client.shutdown().get();
+    client.shutdown();
     daemon.stop();
     workerExecutor.shutdown();
   }

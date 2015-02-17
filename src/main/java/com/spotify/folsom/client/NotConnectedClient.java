@@ -17,10 +17,10 @@ package com.spotify.folsom.client;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
-import com.spotify.folsom.RawMemcacheClient;
 
-public class NotConnectedClient implements RawMemcacheClient {
+public class NotConnectedClient extends AbstractRawMemcacheClient {
 
   public static final NotConnectedClient INSTANCE = new NotConnectedClient();
 
@@ -33,8 +33,8 @@ public class NotConnectedClient implements RawMemcacheClient {
   }
 
   @Override
-  public ListenableFuture<Void> shutdown() {
-    return Futures.immediateFuture(null);
+  public void shutdown() {
+    notifyConnectionChange();
   }
 
   @Override

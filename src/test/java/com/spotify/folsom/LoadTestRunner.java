@@ -89,6 +89,6 @@ public class LoadTestRunner {
     System.out.println(failed + " failed of " + asserts.size());
 
 
-    client.shutdown().get(100000, MILLISECONDS);
+    client.shutdown();
   }
 }

@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2014-2015 Spotify AB
  *
@@ -20,7 +21,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
+import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
@@ -34,7 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ReconnectingClient implements RawMemcacheClient {
+public class ReconnectingClient extends AbstractRawMemcacheClient {
 
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE =
           Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder()
@@ -81,7 +84,6 @@ public class ReconnectingClient implements RawMemcacheClient {
     this.connector = connector;
 
     this.address = address;
-
     retry();
   }
 
@@ -91,9 +93,9 @@ public class ReconnectingClient implements RawMemcacheClient {
   }
 
   @Override
-  public ListenableFuture<Void> shutdown() {
+  public void shutdown() {
     stayConnected = false;
-    return client.shutdown();
+    client.shutdown();
   }
 
   @Override
@@ -120,9 +122,8 @@ public class ReconnectingClient implements RawMemcacheClient {
           log.info("Successfully connected to {}", address);
           reconnectCount = 0;
           client = result;
-          final ListenableFuture<Void> closeFuture =
-                  ((DefaultRawMemcacheClient) result).getCloseFuture();
-          Futures.addCallback(closeFuture, new FutureCallback<Void>() {
+          notifyConnectionChange();
+          Futures.addCallback(ConnectFuture.disconnectFuture(result), new FutureCallback<Void>() {
             @Override
             public void onSuccess(final Void ignore) {
               log.info("Lost connection to {}", address);
@@ -131,7 +132,7 @@ public class ReconnectingClient implements RawMemcacheClient {
 
             @Override
             public void onFailure(final Throwable t) {
-              retry();
+              throw new RuntimeException("Programmer bug - this should be unreachable");
             }
           });
         }
