@@ -15,30 +15,37 @@
  */
 package com.spotify.folsom.client;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class Request<V> extends AbstractFuture<V> {
-  protected final String key;
+  protected final byte[] key;
   protected final int opaque;
 
-  public Request(String key, int opaque) {
-    this.key = checkNotNull(key, "key");
+  protected Request(String key, Charset charset, int opaque) {
+    this(encodeKey(key, charset), opaque);
+  }
+
+  protected Request(byte[] key, int opaque) {
+    this.key = key;
     this.opaque = (opaque << 8) & 0xFFFFFF00;
-    Utils.validateKey(key);
   }
 
   protected static ByteBuf toBuffer(final ByteBufAllocator alloc, ByteBuffer dst) {
     return toBuffer(alloc, dst, 0);
   }
 
-  public String getKey() {
+  public byte[] getKey() {
     return key;
   }
 
@@ -64,5 +71,33 @@ public abstract class Request<V> extends AbstractFuture<V> {
 
   public int getOpaque() {
     return opaque;
+  }
+
+  @VisibleForTesting
+  static byte[] encodeKey(String key, Charset charset) {
+    checkNotNull(key, "key");
+    byte[] keyBytes = key.getBytes(charset);
+    int length = keyBytes.length;
+    if (length > 250) {
+      throw new IllegalArgumentException("Key is too long: " + key);
+    }
+    if (length <= 0) {
+      throw new IllegalArgumentException("Key is empty");
+    }
+    for (int i = 0; i < length; i++) {
+      final byte c = keyBytes[i];
+      if (c >= 0 && c <= 32) {
+        throw new IllegalArgumentException("Invalid key: " + key);
+      }
+    }
+    return keyBytes;
+  }
+
+  protected static List<byte[]> encodeKeys(List<String> keys, Charset charset) {
+    List<byte[]> res = Lists.newArrayListWithCapacity(keys.size());
+    for (String key : keys) {
+      res.add(encodeKey(key, charset));
+    }
+    return res;
   }
 }

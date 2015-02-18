@@ -16,7 +16,6 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.AsciiMemcacheClient;
@@ -27,6 +26,7 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.TransformerUtil;
 
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,24 +43,26 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   private final Metrics metrics;
   private final Transcoder<V> valueTranscoder;
   private final TransformerUtil<V> transformerUtil;
+  private final Charset charset;
 
   public DefaultAsciiMemcacheClient(final RawMemcacheClient rawMemcacheClient,
                                     final Metrics metrics,
-                                    final Transcoder<V> valueTranscoder
-  ) {
+                                    final Transcoder<V> valueTranscoder,
+                                    Charset charset) {
     this.rawMemcacheClient = rawMemcacheClient;
     this.metrics = metrics;
     this.valueTranscoder = valueTranscoder;
+    this.charset = charset;
     this.transformerUtil = new TransformerUtil<>(valueTranscoder);
   }
 
   @Override
   public ListenableFuture<MemcacheStatus> set(final String key, final V value, final int ttl) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(SetRequest.Operation.SET, keyBytes, valueBytes, ttl);
+    SetRequest request = SetRequest.create(
+            SetRequest.Operation.SET, key, charset, valueBytes, ttl);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -68,10 +70,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> set(String key, V value, int ttl, long cas) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.casSet(keyBytes, valueBytes, ttl, cas);
+    SetRequest request = SetRequest.casSet(key, charset, valueBytes, ttl, cas);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -79,18 +80,18 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> delete(final String key) {
-    final String keyBytes = encodeKey(key);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(new DeleteRequest(keyBytes));
+    DeleteRequest request = new DeleteRequest(key, charset);
+    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
     return future;
   }
 
   @Override
   public ListenableFuture<MemcacheStatus> add(String key, V value, int ttl) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(SetRequest.Operation.ADD, keyBytes, valueBytes, ttl);
+    SetRequest request = SetRequest.create(
+            SetRequest.Operation.ADD, key, charset, valueBytes, ttl);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -98,10 +99,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> replace(String key, V value, int ttl) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(SetRequest.Operation.REPLACE, keyBytes, valueBytes, ttl);
+    SetRequest request = SetRequest.create(
+            SetRequest.Operation.REPLACE, key, charset, valueBytes, ttl);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -109,10 +110,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> append(String key, V value) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(SetRequest.Operation.APPEND, keyBytes, valueBytes, 0);
+    SetRequest request = SetRequest.create(
+            SetRequest.Operation.APPEND, key, charset, valueBytes, 0);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -120,10 +121,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> prepend(String key, V value) {
-    final String keyBytes = encodeKey(key);
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(SetRequest.Operation.PREPEND, keyBytes, valueBytes, 0);
+    SetRequest request = SetRequest.create(
+            SetRequest.Operation.PREPEND, key, charset, valueBytes, 0);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -131,8 +132,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<Long> incr(String key, long by) {
-    final String keyBytes = encodeKey(key);
-    IncrRequest request = IncrRequest.createIncr(keyBytes, by);
+    IncrRequest request = IncrRequest.createIncr(key, charset, by);
     ListenableFuture<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;
@@ -140,8 +140,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<Long> decr(String key, long by) {
-    final String keyBytes = encodeKey(key);
-    IncrRequest request = IncrRequest.createDecr(keyBytes, by);
+    IncrRequest request = IncrRequest.createDecr(key, charset, by);
     ListenableFuture<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;
@@ -158,10 +157,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   private ListenableFuture<GetResult<V>> get(final String key, final boolean withCas) {
-    final String keyBytes = encodeKey(key);
 
     final ListenableFuture<GetResult<byte[]>> future =
-            rawMemcacheClient.send(new GetRequest(keyBytes, withCas));
+            rawMemcacheClient.send(new GetRequest(key, charset, withCas));
 
     metrics.measureGetFuture(future);
     return transformerUtil.decode(future);
@@ -179,8 +177,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public ListenableFuture<MemcacheStatus> touch(String key, int ttl) {
-    final String keyBytes = encodeKey(key);
-    TouchRequest request = new TouchRequest(keyBytes, ttl);
+    TouchRequest request = new TouchRequest(key, charset, ttl);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
     return future;
@@ -192,19 +189,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
       return Futures.immediateFuture(Collections.<GetResult<V>>emptyList());
     }
 
-    final List<String> rawKeys = Lists.newArrayList();
-    for (final String key : keys) {
-      rawKeys.add(encodeKey(key));
-    }
-    MultigetRequest request = MultigetRequest.create(rawKeys, withCas);
+    MultigetRequest request = MultigetRequest.create(keys, charset, withCas);
     final ListenableFuture<List<GetResult<byte[]>>> future = rawMemcacheClient.send(request);
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);
-  }
-
-  private String encodeKey(final String key) {
-    checkNotNull(key, "key may not be null");
-    return key;
   }
 
   /*

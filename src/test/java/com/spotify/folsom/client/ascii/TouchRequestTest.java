@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.ascii;
 
+import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import org.junit.Test;
 
@@ -27,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TouchRequestTest extends RequestTestTemplate {
 
-  private TouchRequest req = new TouchRequest("foo", 123);
+  private TouchRequest req = new TouchRequest("foo", Charsets.UTF_8, 123);
 
   @Test
   public void testRequest() throws Exception {

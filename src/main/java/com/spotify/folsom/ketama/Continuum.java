@@ -44,7 +44,7 @@ public class Continuum {
     for (final AddressAndClient client : clients) {
       final String address = client.getAddress().toString();
 
-      byte[] hash = toBytes(address);
+      byte[] hash = addressToBytes(address);
       for (int i = 0; i < VNODE_RATIO; i++) {
         final HashCode hashCode = Hasher.hash(hash);
         hash = hashCode.asBytes();
@@ -54,8 +54,8 @@ public class Continuum {
     return r;
   }
 
-  public RawMemcacheClient findClient(final String key) {
-    final int keyHash = Hasher.hash(toBytes(key)).asInt();
+  public RawMemcacheClient findClient(final byte[] key) {
+    final int keyHash = Hasher.hash(key).asInt();
 
     Entry<Integer, RawMemcacheClient> entry = ringOfFire.ceilingEntry(keyHash);
     if (entry == null) {
@@ -83,7 +83,7 @@ public class Continuum {
     return entry.getValue();
   }
 
-  private static byte[] toBytes(final String s) {
+  private static byte[] addressToBytes(final String s) {
     final int length = s.length();
     final byte[] bytes = new byte[length];
     for (int i = 0; i < length; i++) {

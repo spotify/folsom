@@ -24,6 +24,7 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class IncrRequest extends BinaryRequest<Long> {
   private final byte opcode;
@@ -32,12 +33,13 @@ public class IncrRequest extends BinaryRequest<Long> {
   private final int ttl;
 
   public IncrRequest(final String key,
+                     final Charset charset,
                      final byte opcode,
                      final long by,
                      final long initial,
                      final int ttl,
                      final int opaque) {
-    super(key, opaque);
+    super(key, charset, opaque);
     this.opcode = opcode;
     this.by = by;
     this.initial = initial;
@@ -48,17 +50,13 @@ public class IncrRequest extends BinaryRequest<Long> {
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     final int expiration = Utils.ttlToExpiration(ttl);
 
-    final int keyLength = key.length();
-
     final int extraLength = 8 + 8 + 4; // by + initial + expiration
 
-    final int totalLength = keyLength + extraLength;
-
-    writeBinaryHeader(dst, opcode, keyLength, extraLength, totalLength, 0, opaque);
+    writeHeader(dst, opcode, extraLength, 0, 0, opaque);
     dst.putLong(by);
     dst.putLong(initial);
     dst.putInt(expiration);
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     return toBuffer(alloc, dst);
   }
 

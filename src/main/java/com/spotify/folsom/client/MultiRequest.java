@@ -18,6 +18,6 @@ package com.spotify.folsom.client;
 import java.util.List;
 
 public interface MultiRequest<T> {
-  List<String> getKeys();
-  Request<List<T>> create(List<String> keys);
+  List<byte[]> getKeys();
+  Request<List<T>> create(List<byte[]> keys);
 }

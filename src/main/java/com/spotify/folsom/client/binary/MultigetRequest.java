@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.List;
 
 // TODO: return a list instead of map for performance reasons
@@ -36,25 +37,22 @@ public class MultigetRequest
         implements MultiRequest<GetResult<byte[]>> {
 
   private final int ttl;
-  private final List<String> keys;
+  private final List<byte[]> keys;
 
-  private MultigetRequest(final List<String> keys,
+  private MultigetRequest(final List<byte[]> keys,
                           final int ttl, final int opaque) {
     super(keys.get(0), opaque);
     this.keys = keys;
     this.ttl = ttl;
   }
 
-  public static MultigetRequest create(final List<String> keys,
+  public static MultigetRequest create(final List<String> keys, Charset charset,
                                        final int ttl, final int opaque) {
-    for (int i = 1; i < keys.size(); i++) {
-      Utils.validateKey(keys.get(i));
-    }
     final int size = keys.size();
     if (size >= 256) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(keys, ttl, opaque);
+    return new MultigetRequest(encodeKeys(keys, charset), ttl, opaque);
   }
 
   @Override
@@ -73,8 +71,8 @@ public class MultigetRequest
     }
 
     int sequenceNumber = numKeys;
-    for (final String key : keys) {
-      final int keyLength = key.length();
+    for (final byte[] key : keys) {
+      final int keyLength = key.length;
       final int totalLength = keyLength + extrasLength;
 
       final int opaque = this.opaque | --sequenceNumber;
@@ -92,7 +90,7 @@ public class MultigetRequest
       if (hasTTL) {
         dst.putInt(expiration);
       }
-      Utils.writeKeyString(dst, key);
+      dst.put(key);
     }
 
     return toBuffer(alloc, dst);
@@ -132,12 +130,14 @@ public class MultigetRequest
   }
 
   @Override
-  public List<String> getKeys() {
+  public List<byte[]> getKeys() {
     return keys;
   }
 
+
   @Override
-  public Request<List<GetResult<byte[]>>> create(List<String> keys) {
+  public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
+    // TODO: remove this null
     return new MultigetRequest(keys, ttl, opaque);
   }
 }

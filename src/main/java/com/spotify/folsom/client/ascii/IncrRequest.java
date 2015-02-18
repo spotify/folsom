@@ -17,13 +17,13 @@
 package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
-import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class IncrRequest extends AsciiRequest<Long> {
 
@@ -35,25 +35,25 @@ public class IncrRequest extends AsciiRequest<Long> {
 
   private IncrRequest(final byte[] operation,
                       final String key,
-                      final long by) {
-    super(key);
+                      final long by, Charset charset) {
+    super(key, charset);
     this.operation = operation;
     this.by = by;
   }
 
-  public static IncrRequest createIncr(final String key, final long value) {
-    return new IncrRequest(INCR_CMD, key, value);
+  public static IncrRequest createIncr(final String key, Charset charset, final long value) {
+    return new IncrRequest(INCR_CMD, key, value, charset);
   }
 
-  public static IncrRequest createDecr(final String key, final long value) {
-    return new IncrRequest(DECR_CMD, key, value);
+  public static IncrRequest createDecr(final String key, Charset charset, final long value) {
+    return new IncrRequest(DECR_CMD, key, value, charset);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     // <command name> <key> <value> [noreply]\r\n
     dst.put(operation);
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(by).getBytes());
     dst.put(NEWLINE_BYTES);

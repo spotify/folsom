@@ -25,29 +25,28 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class TouchRequest extends BinaryRequest<MemcacheStatus> {
 
   private final int ttl;
 
   public TouchRequest(final String key,
+                      final Charset charset,
                       final int ttl,
                       final int opaque) {
-    super(key, opaque);
+    super(key, charset, opaque);
     this.ttl = ttl;
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int keyLength = key.length();
-
     final int expiration = Utils.ttlToExpiration(ttl);
     final int extrasLength = 4;
-    final int totalLength = keyLength + extrasLength;
 
-    writeBinaryHeader(dst, OpCode.TOUCH, keyLength, extrasLength, totalLength, 0, opaque);
+    writeHeader(dst, OpCode.TOUCH, extrasLength, 0, 0, opaque);
     dst.putInt(expiration);
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
 
     return toBuffer(alloc, dst);
   }

@@ -71,6 +71,7 @@ public class MemcacheClientBuilder<V> {
   private int connections = 1;
   private boolean retry = true;
   private Executor executor;
+  private Charset charset = Charsets.UTF_8;
 
   private long timeoutMillis = 3000;
 
@@ -110,6 +111,16 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder(final Transcoder<V> valueTranscoder) {
     this.valueTranscoder = valueTranscoder;
+  }
+
+  /**
+   * Define the charset encoding for keys.
+   * @param charset The charset encoding for keys. The default is UTF-8.
+   * @return itself
+  */
+  public MemcacheClientBuilder<V> withKeyCharset(final Charset charset) {
+    this.charset = checkNotNull(charset);
+    return this;
   }
 
   /**
@@ -232,7 +243,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
-    return new DefaultBinaryMemcacheClient<>(connectRaw(true), metrics, valueTranscoder);
+    return new DefaultBinaryMemcacheClient<>(connectRaw(true), metrics, valueTranscoder, charset);
   }
 
   /**
@@ -240,7 +251,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
-    return new DefaultAsciiMemcacheClient<>(connectRaw(false), metrics, valueTranscoder);
+    return new DefaultAsciiMemcacheClient<>(connectRaw(false), metrics, valueTranscoder, charset);
   }
 
   /**
@@ -303,6 +314,6 @@ public class MemcacheClientBuilder<V> {
         maxOutstandingRequests,
         binary,
         executor,
-        timeoutMillis);
+        timeoutMillis, charset);
   }
 }

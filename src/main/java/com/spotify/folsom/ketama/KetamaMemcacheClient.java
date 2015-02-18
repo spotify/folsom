@@ -54,7 +54,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     this.continuum = new Continuum(clients);
   }
 
-  private RawMemcacheClient getClient(final String key) {
+  private RawMemcacheClient getClient(final byte[] key) {
     return continuum.findClient(key);
   }
 
@@ -74,13 +74,13 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
   }
 
   private <T> ListenableFuture<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
-    final List<String> keys = multiRequest.getKeys();
+    final List<byte[]> keys = multiRequest.getKeys();
 
-    final Map<RawMemcacheClient, List<String>> routing = Maps.newIdentityHashMap();
+    final Map<RawMemcacheClient, List<byte[]>> routing = Maps.newIdentityHashMap();
     final List<RawMemcacheClient> routing2 = Lists.newArrayListWithCapacity(keys.size());
-    for (final String key : keys) {
+    for (final byte[] key : keys) {
       final RawMemcacheClient client = getClient(key);
-      List<String> subKeys = routing.get(client);
+      List<byte[]> subKeys = routing.get(client);
       if (subKeys == null) {
         subKeys = Lists.newArrayList();
         routing.put(client, subKeys);
@@ -91,8 +91,8 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
     final Map<RawMemcacheClient, ListenableFuture<List<T>>> futures = Maps.newIdentityHashMap();
 
-    for (final Map.Entry<RawMemcacheClient, List<String>> entry : routing.entrySet()) {
-      final List<String> subKeys = entry.getValue();
+    for (final Map.Entry<RawMemcacheClient, List<byte[]>> entry : routing.entrySet()) {
+      final List<byte[]> subKeys = entry.getValue();
       final Request<List<T>> subRequest = multiRequest.create(subKeys);
       final RawMemcacheClient client = entry.getKey();
       ListenableFuture<List<T>> send = client.send(subRequest);

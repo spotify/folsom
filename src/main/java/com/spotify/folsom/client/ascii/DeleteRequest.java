@@ -18,25 +18,25 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class DeleteRequest extends AsciiRequest<MemcacheStatus> {
 
   private static final byte[] CMD_BYTES = "delete ".getBytes(Charsets.US_ASCII);
 
-  public DeleteRequest(final String key) {
-    super(key);
+  public DeleteRequest(final String key, final Charset charset) {
+    super(key, charset);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     dst.put(CMD_BYTES);
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }

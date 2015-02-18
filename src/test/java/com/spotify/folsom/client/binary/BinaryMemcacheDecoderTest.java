@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
@@ -45,7 +46,7 @@ public class BinaryMemcacheDecoderTest {
 
   @Test
   public void test() throws Exception {
-    GetRequest request = new GetRequest(KEY, OpCode.GET, 123, OPAQUE);
+    GetRequest request = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123, OPAQUE);
     BinaryMemcacheDecoder decoder = new BinaryMemcacheDecoder();
 
     ByteBuf cb = Unpooled.buffer(30);

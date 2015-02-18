@@ -21,20 +21,32 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.List;
 
 public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
 
-  private final StringBuilder line = new StringBuilder();
-  private boolean consumed = false;
+  private static final int MAX_RESPONSE_LINE = 500;
+
+  private final ByteBuffer line = ByteBuffer.allocate(MAX_RESPONSE_LINE);
+  private final ByteBuffer token = ByteBuffer.allocate(MAX_RESPONSE_LINE);
+  private final Charset charset;
+
   private boolean valueMode = false;
 
   private ValueAsciiResponse valueResponse = new ValueAsciiResponse();
 
-  private String key = null;
+  private boolean consumed;
+
+  private byte[] key = null;
   private byte[] value = null;
   private long cas = 0;
   private int valueOffset;
+
+  public AsciiMemcacheDecoder(Charset charset) {
+    this.charset = charset;
+  }
 
   @Override
   protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf,
@@ -55,131 +67,169 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             return;
           }
         }
-        final StringBuilder line = readLine(buf, readableBytes);
+        final ByteBuffer line = readLine(buf, readableBytes);
         if (line == null) {
           return;
         }
-        if (line.length() > 0) {
-          throw new IOException(String.format("Unexpected end of data block: %s", line));
+        if (line.remaining() > 0) {
+          throw new IOException(String.format("Unexpected end of data block: %s", lineToString()));
         }
         valueResponse.addGetResult(key, value, cas);
         key = null;
         value = null;
         cas = 0;
       } else {
-        final StringBuilder line = readLine(buf, readableBytes);
+        final ByteBuffer line = readLine(buf, readableBytes);
         if (line == null) {
           return;
         }
-
-        final int firstEnd = endIndex(line, 0);
-        if (firstEnd < 1) {
-          throw new IOException("Unexpected line: " + line);
+        readNextToken();
+        int tokenLength = token.remaining();
+        if (tokenLength < 1) {
+          throw fail();
         }
 
-        final char firstChar = line.charAt(0);
+        final byte firstChar = token.get();
 
         if (Character.isDigit(firstChar)) {
           try {
-            long numeric = Long.valueOf(line.toString());
+            long numeric = parseLong(firstChar, token);
             out.add(new NumericAsciiResponse(numeric));
           } catch (NumberFormatException e) {
             throw new IOException("Unexpected line: " + line, e);
           }
-        } else if (firstEnd == 3) {
-          expect(line, "END");
+        } else if (tokenLength == 3) {
+          expect(firstChar, "END");
           out.add(valueResponse);
           valueResponse = new ValueAsciiResponse();
           valueMode = false;
           return;
-        } else if (firstEnd == 5) {
-          expect(line, "VALUE");
+        } else if (tokenLength == 5) {
+          expect(firstChar, "VALUE");
           valueMode = true;
           // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
-          final int keyStart = firstEnd + 1;
-          final int keyEnd = endIndex(line, keyStart);
-          final String key = line.substring(keyStart, keyEnd);
-          if (key.isEmpty()) {
-            throw new IOException("Unexpected line: " + line);
+
+          // key
+          readNextToken();
+          int keyLen = token.remaining();
+          if (keyLen <= 0) {
+            throw fail();
+          }
+          byte[] key = new byte[token.remaining()];
+          token.get(key);
+
+          // flags
+          readNextToken();
+          int flagLen = token.remaining();
+          if (flagLen <= 0) {
+            throw fail();
           }
 
-          final int flagsStart = keyEnd + 1;
-          final int flagsEnd = endIndex(line, flagsStart);
-          if (flagsEnd <= flagsStart) {
-            throw new IOException("Unexpected line: " + line);
+          // size
+          readNextToken();
+          int sizeLen = token.remaining();
+          if (sizeLen <= 0) {
+            throw fail();
           }
+          final int size = (int) parseLong(token.get(), token);
 
-          final int sizeStart = flagsEnd + 1;
-          final int sizeEnd = endIndex(line, sizeStart);
-          if (sizeEnd <= sizeStart) {
-            throw new IOException("Unexpected line: " + line);
-          }
-          final int size = (int) parseLong(line, sizeStart, sizeEnd);
-
-          final int casStart = sizeEnd + 1;
-          final int casEnd = endIndex(line, casStart);
+          // cas
+          readNextToken();
+          int casLen = token.remaining();
           long cas = 0;
-          if (casStart < casEnd) {
-            cas = parseLong(line, casStart, casEnd);
+          if (casLen > 0) {
+            cas = parseLong(token.get(), token);
           }
+
           this.key = key;
           this.value = new byte[size];
           this.valueOffset = 0;
           this.cas = cas;
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"
-          throw new IOException("Unexpected line: " + line);
-        } else if (firstEnd == 6) {
+          throw fail();
+        } else if (tokenLength == 6) {
           if (firstChar == 'S') {
-            expect(line, "STORED");
+            expect(firstChar, "STORED");
             out.add(AsciiResponse.STORED);
             return;
           } else {
-            expect(line, "EXISTS");
+            expect(firstChar, "EXISTS");
             out.add(AsciiResponse.EXISTS);
             return;
           }
-        } else if (firstEnd == 7) {
+        } else if (tokenLength == 7) {
           if (firstChar == 'T') {
-            expect(line, "TOUCHED");
+            expect(firstChar, "TOUCHED");
             out.add(AsciiResponse.TOUCHED);
             return;
           } else {
-            expect(line, "DELETED");
+            expect(firstChar, "DELETED");
             out.add(AsciiResponse.DELETED);
             return;
           }
-        } else if (firstEnd == 9) {
-          expect(line, "NOT_FOUND");
+        } else if (tokenLength == 9) {
+          expect(firstChar, "NOT_FOUND");
           out.add(AsciiResponse.NOT_FOUND);
           return;
-        } else if (firstEnd == 10) {
-          expect(line, "NOT_STORED");
+        } else if (tokenLength == 10) {
+          expect(firstChar, "NOT_STORED");
           out.add(AsciiResponse.NOT_STORED);
           return;
         } else {
-          throw new IOException("Unexpected line: " + line);
+          throw fail();
         }
       }
     }
   }
 
-  private void expect(final StringBuilder line, final String compareTo) throws IOException {
-    final int length = compareTo.length();
-    for (int i = 0; i < length; i++) {
-      if (line.charAt(i) != compareTo.charAt(i)) {
-        throw new IOException("Unexpected line: " + line);
+  private void readNextToken() {
+    token.clear();
+    while (line.hasRemaining()) {
+      byte b = line.get();
+      if (b == ' ') {
+        break;
       }
+      token.put(b);
+    }
+    token.flip();
+  }
+
+  private IOException fail() {
+    return new IOException("Unexpected line: " + lineToString());
+  }
+
+  private String lineToString() {
+    line.rewind();
+    return new String(line.array(), 0, line.remaining(), charset);
+  }
+
+  private void expect(byte firstChar, final String compareTo) throws IOException {
+    if (firstChar != compareTo.charAt(0)) {
+      throw fail();
+    }
+    final int length = compareTo.length();
+    if (length != token.remaining() + 1) {
+      throw fail();
+    }
+    for (int i = 1; i < length; i++) {
+      if (token.get() != compareTo.charAt(i)) {
+        throw fail();
+      }
+
     }
   }
 
-  private long parseLong(final StringBuilder line,
-                         final int from, final int to) throws IOException {
-    long res = 0;
-    for (int i = from; i < to; i++) {
-      final int digit = line.charAt(i) - '0';
+  private long parseLong(byte firstChar, ByteBuffer token) throws IOException {
+    // firstChar must be guarantee to be a digit.
+    long res = firstChar - '0';
+    if (res < 0 || res > 9) {
+      throw fail();
+    }
+    while (token.hasRemaining()) {
+      final int digit = token.get() - '0';
       if (digit < 0 || digit > 9) {
-        throw new IOException("Unexpected line: " + line);
+        throw fail();
       }
       res *= 10;
       res += digit;
@@ -187,33 +237,23 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
     return res;
   }
 
-  private int endIndex(final StringBuilder line, final int from) {
-    final int length = line.length();
-    for (int i = from; i < length; i++) {
-      if (line.charAt(i) == ' ') {
-        return i;
-      }
-    }
-    return length;
-  }
-
-  private StringBuilder readLine(final ByteBuf buf, final int available) throws IOException {
+  private ByteBuffer readLine(final ByteBuf buf, final int available) throws IOException {
     if (consumed) {
-      line.setLength(0);
       consumed = false;
+      line.clear();
     }
     for (int i = 0; i < available - 1; i++) {
-      final char b = (char) buf.readUnsignedByte();
+      final byte b = buf.readByte();
       if (b == '\r') {
-        if (buf.readUnsignedByte() == '\n') {
+        if (buf.readByte() == '\n') {
           consumed = true;
+          line.flip();
           return line;
         }
         throw new IOException("Expected newline, got something else");
       }
-      line.append(b);
+      line.put(b);
     }
     return null;
   }
-
 }

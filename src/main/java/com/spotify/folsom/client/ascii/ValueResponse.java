@@ -16,11 +16,11 @@
 package com.spotify.folsom.client.ascii;
 
 public class ValueResponse {
-  public final String key;
+  public final byte[] key;
   public final byte[] value;
   public final long cas;
 
-  public ValueResponse(String key, byte[] value, long cas) {
+  public ValueResponse(byte[] key, byte[] value, long cas) {
     this.cas = cas;
     this.value = value;
     this.key = key;

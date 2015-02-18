@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.retry;
 
+import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.Futures;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
@@ -36,8 +37,10 @@ public class RetryingClientTest {
 
   private static final int OPAQUE = 123;
 
-  public static final GetRequest GET_REQUEST = new GetRequest("key1", OpCode.GET, -1, OPAQUE);
-  public static final GetRequest FAIL_REQUEST = new GetRequest("key2", OpCode.GET, -1, OPAQUE);
+  public static final GetRequest GET_REQUEST = new GetRequest(
+          "key1", Charsets.UTF_8, OpCode.GET, -1, OPAQUE);
+  public static final GetRequest FAIL_REQUEST = new GetRequest(
+          "key2", Charsets.UTF_8, OpCode.GET, -1, OPAQUE);
 
   @Test
   public void testSimple() throws Exception {

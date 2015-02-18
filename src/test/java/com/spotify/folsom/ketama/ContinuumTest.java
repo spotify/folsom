@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.ketama;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.spotify.folsom.RawMemcacheClient;
@@ -80,9 +81,9 @@ public class ContinuumTest {
     Continuum c = new Continuum(clients);
 
     List<RawMemcacheClient> actual = Arrays.asList(
-            c.findClient(KEY1),
-            c.findClient(KEY2),
-            c.findClient(KEY3));
+            c.findClient(bytes(KEY1)),
+            c.findClient(bytes(KEY2)),
+            c.findClient(bytes(KEY3)));
 
     // all keys to the same client
     List<RawMemcacheClient> expected = Arrays.asList(CLIENT1, CLIENT1, CLIENT1);
@@ -96,12 +97,12 @@ public class ContinuumTest {
     Continuum c = new Continuum(clients);
 
     List<RawMemcacheClient> actual = Arrays.asList(
-            c.findClient(KEY1),
-            c.findClient(KEY2),
-            c.findClient(KEY3),
-            c.findClient(KEY4),
-            c.findClient(KEY5),
-            c.findClient(KEY6));
+            c.findClient(bytes(KEY1)),
+            c.findClient(bytes(KEY2)),
+            c.findClient(bytes(KEY3)),
+            c.findClient(bytes(KEY4)),
+            c.findClient(bytes(KEY5)),
+            c.findClient(bytes(KEY6)));
 
     List<RawMemcacheClient> expected = Arrays.asList(
             CLIENT1,
@@ -119,16 +120,16 @@ public class ContinuumTest {
     Continuum c = new Continuum(clients);
 
     List<RawMemcacheClient> actual = Arrays.asList(
-            c.findClient(KEY1),
-            c.findClient(KEY2),
-            c.findClient(KEY3),
-            c.findClient(KEY4),
-            c.findClient(KEY5),
-            c.findClient(KEY6),
-            c.findClient(KEY7),
-            c.findClient(KEY8),
-            c.findClient(KEY9),
-            c.findClient(KEY10)
+            c.findClient(bytes(KEY1)),
+            c.findClient(bytes(KEY2)),
+            c.findClient(bytes(KEY3)),
+            c.findClient(bytes(KEY4)),
+            c.findClient(bytes(KEY5)),
+            c.findClient(bytes(KEY6)),
+            c.findClient(bytes(KEY7)),
+            c.findClient(bytes(KEY8)),
+            c.findClient(bytes(KEY9)),
+            c.findClient(bytes(KEY10))
     );
 
 
@@ -148,16 +149,16 @@ public class ContinuumTest {
     when(CLIENT1.isConnected()).thenReturn(false);
 
     actual = Arrays.asList(
-            c.findClient(KEY1),
-            c.findClient(KEY2),
-            c.findClient(KEY3),
-            c.findClient(KEY4),
-            c.findClient(KEY5),
-            c.findClient(KEY6),
-            c.findClient(KEY7),
-            c.findClient(KEY8),
-            c.findClient(KEY9),
-            c.findClient(KEY10)
+            c.findClient(bytes(KEY1)),
+            c.findClient(bytes(KEY2)),
+            c.findClient(bytes(KEY3)),
+            c.findClient(bytes(KEY4)),
+            c.findClient(bytes(KEY5)),
+            c.findClient(bytes(KEY6)),
+            c.findClient(bytes(KEY7)),
+            c.findClient(bytes(KEY8)),
+            c.findClient(bytes(KEY9)),
+            c.findClient(bytes(KEY10))
     );
 
 
@@ -183,7 +184,7 @@ public class ContinuumTest {
     final List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
     final Continuum c = new Continuum(clients);
 
-    List<RawMemcacheClient> actual = Arrays.asList(c.findClient("key321"), c.findClient("key477"));
+    List<RawMemcacheClient> actual = Arrays.asList(c.findClient(bytes("key321")), c.findClient(bytes("key477")));
     List<RawMemcacheClient> expected = Arrays.asList(CLIENT2, CLIENT3);
     assertEquals(expected, actual);
   }
@@ -196,9 +197,13 @@ public class ContinuumTest {
     final List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
     final Continuum c = new Continuum(clients);
 
-    assertSame(CLIENT1, c.findClient("key1561"));
+    assertSame(CLIENT1, c.findClient(bytes("key1561")));
 
     when(CLIENT1.isConnected()).thenReturn(false);
-    assertSame(CLIENT2, c.findClient("key1561"));
+    assertSame(CLIENT2, c.findClient(bytes("key1561")));
+  }
+
+  private static byte[] bytes(String key) {
+    return key.getBytes(Charsets.US_ASCII);
   }
 }

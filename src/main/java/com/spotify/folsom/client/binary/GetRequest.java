@@ -25,6 +25,7 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,37 +36,32 @@ public class GetRequest
   private final int ttl;
 
   public GetRequest(final String key,
+                    final Charset charset,
                     final byte opcode,
                     final int ttl,
                     final int opaque) {
-    super(key, opaque);
+    super(key, charset, opaque);
     this.opcode = checkNotNull(opcode, "opcode");
     this.ttl = checkNotNull(ttl, "ttl");
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int keyLength = key.length();
-
     int expiration;
     int extrasLength;
-    int totalLength;
     if (ttl > 0) {
       expiration = Utils.ttlToExpiration(ttl);
       extrasLength = 4;
-      totalLength = keyLength + 4;
     } else {
       expiration = 0;
       extrasLength = 0;
-      totalLength = keyLength;
     }
 
-    writeBinaryHeader(dst, opcode, keyLength, extrasLength, totalLength, 0, opaque);
+    writeHeader(dst, opcode, extrasLength, 0, 0, opaque);
     if (ttl > 0) {
       dst.putInt(expiration);
     }
-
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     return toBuffer(alloc, dst);
   }
 

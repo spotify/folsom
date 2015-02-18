@@ -18,24 +18,25 @@ package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
-  public DeleteRequest(final String key, final int opaque) {
-    super(key, opaque);
+  public DeleteRequest(final String key,
+                       final Charset charset,
+                       final int opaque) {
+    super(key, charset, opaque);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int keyLength = key.length();
-    writeBinaryHeader(dst, OpCode.DELETE, (short) keyLength, (byte) 0, keyLength, 0L, opaque);
-    Utils.writeKeyString(dst, key);
+    writeHeader(dst, OpCode.DELETE, (byte) 0, 0, 0L, opaque);
+    dst.put(key);
     return toBuffer(alloc, dst);
   }
 
