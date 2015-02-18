@@ -145,6 +145,11 @@ public class MisbehavingServerTest {
     testAsciiSet("TOUCHED\r\n", "Unexpected line: TOUCHED");
   }
 
+  @Test
+  public void testBadAsciiFlush() throws Throwable {
+    testAsciiFlush("TOUCHED\r\n", "Unexpected line: TOUCHED");
+  }
+
   private void testAsciiGet(String response, String expectedError) throws InterruptedException, IOException {
     MemcacheClient<String> client = setupAscii(response);
     try {
@@ -180,6 +185,18 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     }
   }
+
+  public void testAsciiFlush(String response, String expectedError) throws IOException, InterruptedException {
+    MemcacheClient<String> client = setupAscii(response);
+    try {
+      client.flushAll(0).get();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertEquals(MemcacheClosedException.class, cause.getClass());
+      assertEquals(expectedError, cause.getMessage());
+    }
+  }
+
 
   private MemcacheClient<String> setupAscii(String response) throws IOException {
     server = new Server(response);
@@ -219,7 +236,7 @@ public class MisbehavingServerTest {
         private void handleConnection(Socket socket) throws Exception {
           BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
           String s = reader.readLine();
-          if (s.startsWith("get ") || s.startsWith("touch ")) {
+          if (s.startsWith("get ") || s.startsWith("touch ") || s.startsWith("flush_all")) {
             // Don't need to read any more lines
           } else if (s.startsWith("set ")) {
             // Read the value too
