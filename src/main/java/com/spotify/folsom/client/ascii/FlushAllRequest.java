@@ -16,13 +16,15 @@
 
 package com.spotify.folsom.client.ascii;
 
+import com.spotify.folsom.client.FanoutRequest;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-public class FlushAllRequest extends AsciiRequest<Void> {
+public class FlushAllRequest extends AsciiRequest<Void> implements FanoutRequest {
   private static final byte[] CMD = "flush_all ".getBytes();
   private final int delay;
 

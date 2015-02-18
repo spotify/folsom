@@ -15,9 +15,5 @@
  */
 package com.spotify.folsom.client;
 
-import java.util.List;
-
-public interface MultiRequest<T> {
-  List<String> getKeys();
-  Request<List<T>> create(List<String> keys);
+public interface FanoutRequest {
 }

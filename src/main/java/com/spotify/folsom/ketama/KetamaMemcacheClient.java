@@ -24,8 +24,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
+import com.spotify.folsom.client.FanoutRequest;
 import com.spotify.folsom.client.Request;
-import com.spotify.folsom.client.MultiRequest;
+import com.spotify.folsom.client.ShardedRequest;
 import com.spotify.folsom.client.Utils;
 
 import java.util.Collection;
@@ -60,21 +61,39 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
   @Override
   public <T> ListenableFuture<T> send(final Request<T> request) {
-    if (request instanceof MultiRequest) {
+    if (request instanceof ShardedRequest) {
       // T for Request should always be List<GetResult<byte[]>> here
       // which means that MultiRequest should have T = GetResult<byte[]>
-      final MultiRequest<GetResult<byte[]>> multiRequest =
-              (MultiRequest<GetResult<byte[]>>) request;
-      if (multiRequest.getKeys().size() > 1) {
-        return (ListenableFuture<T>) sendSplitRequest(multiRequest);
+      final ShardedRequest<GetResult<byte[]>> shardedRequest =
+              (ShardedRequest<GetResult<byte[]>>) request;
+      if (shardedRequest.getKeys().size() > 1) {
+        return (ListenableFuture<T>) sendSplitRequest(shardedRequest);
       }
+    } else if (request instanceof FanoutRequest) {
+      // T for Request should always be Void here
+      final Request<Void> fanoutRequest = (Request<Void>) request;
+      return (ListenableFuture<T>) sendFanoutRequest(fanoutRequest);
     }
 
     return getClient(request.getKey()).send(request);
   }
 
-  private <T> ListenableFuture<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
-    final List<String> keys = multiRequest.getKeys();
+  private ListenableFuture<Void> sendFanoutRequest(final Request<Void> fanoutRequest) {
+    List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(clients.size());
+    for (RawMemcacheClient client : clients) {
+      futures.add(client.send(fanoutRequest));
+    }
+    ListenableFuture<List<Void>> allFutures = Futures.successfulAsList(futures);
+    return Futures.transform(allFutures, new Function<List<Void>, Void>() {
+      @Override
+      public Void apply(final List<Void> input) {
+        return null;
+      }
+    });
+  }
+
+  private <T> ListenableFuture<List<T>> sendSplitRequest(final ShardedRequest<T> shardedRequest) {
+    final List<String> keys = shardedRequest.getKeys();
 
     final Map<RawMemcacheClient, List<String>> routing = Maps.newIdentityHashMap();
     final List<RawMemcacheClient> routing2 = Lists.newArrayListWithCapacity(keys.size());
@@ -93,7 +112,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
     for (final Map.Entry<RawMemcacheClient, List<String>> entry : routing.entrySet()) {
       final List<String> subKeys = entry.getValue();
-      final Request<List<T>> subRequest = multiRequest.create(subKeys);
+      final Request<List<T>> subRequest = shardedRequest.create(subKeys);
       final RawMemcacheClient client = entry.getKey();
       ListenableFuture<List<T>> send = client.send(subRequest);
       futures.put(client, send);

@@ -19,7 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.spotify.folsom.client.MultiRequest;
+import com.spotify.folsom.client.ShardedRequest;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.SetRequest;
@@ -54,10 +54,10 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
       return (ListenableFuture<T>) Futures.immediateFuture(GetResult.success(value, 0L));
     }
 
-    if (request instanceof MultiRequest) {
+    if (request instanceof ShardedRequest) {
       List<GetResult<byte[]>> result = Lists.newArrayList();
-      MultiRequest<?> multiRequest = (MultiRequest<?>) request;
-      for (String key : multiRequest.getKeys()) {
+      ShardedRequest<?> shardedRequest = (ShardedRequest<?>) request;
+      for (String key : shardedRequest.getKeys()) {
         byte[] value = map.get(key);
         if (value != null) {
           result.add(GetResult.success(value, 0));

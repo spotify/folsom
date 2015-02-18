@@ -18,20 +18,22 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+
 import com.spotify.folsom.GetResult;
-import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.ShardedRequest;
 import com.spotify.folsom.client.Utils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
 public class MultigetRequest
         extends AsciiRequest<List<GetResult<byte[]>>>
-        implements MultiRequest<GetResult<byte[]>> {
+        implements ShardedRequest<GetResult<byte[]>> {
 
   private static final byte[] GET = "get ".getBytes(Charsets.US_ASCII);
   private static final byte[] CAS_GET = "gets ".getBytes(Charsets.US_ASCII);

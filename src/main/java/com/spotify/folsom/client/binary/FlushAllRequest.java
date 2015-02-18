@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.FanoutRequest;
 import com.spotify.folsom.client.OpCode;
 
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.nio.ByteBuffer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-public class FlushAllRequest extends BinaryRequest<Void> {
+public class FlushAllRequest extends BinaryRequest<Void> implements FanoutRequest {
   private final int delay;
 
   public FlushAllRequest(final int delay, final int opaque) {

@@ -17,23 +17,25 @@
 package com.spotify.folsom.client.binary;
 
 import com.google.common.collect.Lists;
+
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.ShardedRequest;
 import com.spotify.folsom.client.Utils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
 // TODO: return a list instead of map for performance reasons
 public class MultigetRequest
         extends BinaryRequest<List<GetResult<byte[]>>>
-        implements MultiRequest<GetResult<byte[]>> {
+        implements ShardedRequest<GetResult<byte[]>> {
 
   private final int ttl;
   private final List<String> keys;

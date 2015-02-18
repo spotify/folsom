@@ -17,14 +17,16 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.FanoutRequest;
 import com.spotify.folsom.client.OpCode;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class NoopRequest extends BinaryRequest<Void> {
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
+public class NoopRequest extends BinaryRequest<Void> implements FanoutRequest {
 
   public NoopRequest(final int opaque) {
     super("", opaque);
