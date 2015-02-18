@@ -13,11 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.spotify.folsom.client;
 
-import java.util.List;
+package com.spotify.folsom.client.ascii;
 
-public interface MultiRequest<T> {
-  List<String> getKeys();
-  Request<List<T>> create(List<String> keys);
+import org.junit.Test;
+
+
+public class FlushAllRequestTest extends RequestTestTemplate {
+
+  private FlushAllRequest req = new FlushAllRequest(123);
+
+  @Test
+  public void testRequest() throws Exception {
+    assertRequest(req, "flush_all 123\r\n");
+  }
 }

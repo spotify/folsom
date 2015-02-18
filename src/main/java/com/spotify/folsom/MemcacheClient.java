@@ -118,6 +118,13 @@ public interface MemcacheClient<V> {
   ListenableFuture<MemcacheStatus> touch(String key, int ttl);
 
   /**
+   * Invalidate every key after a delay.
+   * @param delay the delay, in seconds
+   * @return A future representing completion of the request
+   */
+  ListenableFuture<Void> flushAll(int delay);
+
+  /**
    * Shut down the client. After the completion of this, the client is no longer possible to use
    *
    * @return A future representing completion of the request
@@ -142,5 +149,4 @@ public interface MemcacheClient<V> {
    * @return the number of active connections
    */
   int numActiveConnections();
-
 }

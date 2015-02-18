@@ -301,6 +301,14 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#flushAll(int delay)
+   */
+  @Override
+  public ListenableFuture<Void> flushAll(final int delay) {
+    return rawMemcacheClient.send(new FlushAllRequest(delay, makeOpaque()));
+  }
+
+  /*
    * @see com.spotify.folsom.BinaryMemcacheClient#noop()
    */
   @Override

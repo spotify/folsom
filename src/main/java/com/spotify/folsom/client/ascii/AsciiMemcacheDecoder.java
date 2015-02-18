@@ -16,12 +16,12 @@
 
 package com.spotify.folsom.client.ascii;
 
+import java.io.IOException;
+import java.util.List;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-
-import java.io.IOException;
-import java.util.List;
 
 public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
 
@@ -40,6 +40,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf,
                         final List<Object> out) throws Exception {
     while (true) {
+//      String tmp = new String(buf.copy().array());
       int readableBytes = buf.readableBytes();
       if (readableBytes == 0) {
         return;
@@ -86,6 +87,12 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           } catch (NumberFormatException e) {
             throw new IOException("Unexpected line: " + line, e);
           }
+        } else if (firstEnd == 2) {
+          if (firstChar == 'O') {
+            expect(line, "OK");
+            out.add(AsciiResponse.OK);
+            return;
+          }
         } else if (firstEnd == 3) {
           expect(line, "END");
           out.add(valueResponse);
@@ -129,6 +136,12 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"
           throw new IOException("Unexpected line: " + line);
+        } else if (firstEnd == 2) {
+          if (firstChar == 'O') {
+            expect(line, "OK");
+            out.add(AsciiResponse.OK);
+            return;
+          }
         } else if (firstEnd == 6) {
           if (firstChar == 'S') {
             expect(line, "STORED");

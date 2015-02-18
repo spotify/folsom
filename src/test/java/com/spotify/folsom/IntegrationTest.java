@@ -361,6 +361,22 @@ public class IntegrationTest {
   }
 
   @Test
+  public void testFlushAll() throws Exception {
+    client.set(KEY1, VALUE1, TTL).get();
+    client.flushAll(0);
+    String emptyVal = (isBinary() && isEmbedded()) ? "" : null;
+    assertEquals(emptyVal, client.get(KEY1).get());
+
+    if (!isEmbedded()) {
+      client.set(KEY1, VALUE1, TTL).get();
+      client.flushAll(2);
+      assertEquals(VALUE1, client.get(KEY1).get());
+      Thread.sleep(2000);
+      assertEquals(null, client.get(KEY1).get());
+    }
+  }
+
+  @Test
   public void testIncr() throws Throwable {
     if (isEmbedded()) {
       // Incr gives NPE on embedded server

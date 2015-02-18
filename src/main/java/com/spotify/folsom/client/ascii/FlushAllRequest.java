@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2015 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,9 @@
  * the License.
  */
 
-package com.spotify.folsom.client.binary;
+package com.spotify.folsom.client.ascii;
 
-import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.FanoutRequest;
-import com.spotify.folsom.client.OpCode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,27 +24,30 @@ import java.nio.ByteBuffer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-public class NoopRequest extends BinaryRequest<Void> implements FanoutRequest {
+public class FlushAllRequest extends AsciiRequest<Void> implements FanoutRequest {
+  private static final byte[] CMD = "flush_all ".getBytes();
+  private final int delay;
 
-  public NoopRequest(final int opaque) {
-    super("", opaque);
+  public FlushAllRequest(int delay) {
+    super("");
+    this.delay = delay;
   }
 
   @Override
-  public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    writeBinaryHeader(dst, OpCode.NOOP, 0, 0, 0, 0, opaque);
+  public ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer dst) {
+    dst.put(CMD);
+    dst.put(String.valueOf(delay).getBytes());
+    dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }
 
   @Override
-  public void handle(final BinaryResponse replies) throws IOException {
-    ResponsePacket reply = handleSingleReply(replies);
-
-    if (reply.status == MemcacheStatus.OK) {
+  protected void handle(AsciiResponse response) throws IOException {
+    AsciiResponse.Type type = response.type;
+    if (type == AsciiResponse.Type.OK) {
       succeed(null);
     } else {
-      throw new IOException("Unexpected response: " + reply.status);
+      throw new IOException("Unexpected line: " + type);
     }
   }
-
 }

@@ -202,6 +202,11 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     return transformerUtil.decodeList(future);
   }
 
+  @Override
+  public ListenableFuture<Void> flushAll(final int delay) {
+    return rawMemcacheClient.send(new FlushAllRequest(delay));
+  }
+
   private String encodeKey(final String key) {
     checkNotNull(key, "key may not be null");
     return key;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2015 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,15 +26,18 @@ import java.nio.ByteBuffer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-public class NoopRequest extends BinaryRequest<Void> implements FanoutRequest {
+public class FlushAllRequest extends BinaryRequest<Void> implements FanoutRequest {
+  private final int delay;
 
-  public NoopRequest(final int opaque) {
+  public FlushAllRequest(final int delay, final int opaque) {
     super("", opaque);
+    this.delay = delay;
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    writeBinaryHeader(dst, OpCode.NOOP, 0, 0, 0, 0, opaque);
+    writeBinaryHeader(dst, OpCode.FLUSH, 0, 4, 4, 0, opaque);
+    dst.putInt(delay);
     return toBuffer(alloc, dst);
   }
 
@@ -48,5 +51,4 @@ public class NoopRequest extends BinaryRequest<Void> implements FanoutRequest {
       throw new IOException("Unexpected response: " + reply.status);
     }
   }
-
 }

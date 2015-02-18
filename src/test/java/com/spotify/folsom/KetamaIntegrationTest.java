@@ -215,6 +215,18 @@ public class KetamaIntegrationTest {
     }
   }
 
+  @Test
+  public void testFlushAll() throws Exception {
+    String emptyVal = protocol.equals("binary") ? "" : null;
+    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY2, VALUE1, TTL).get();
+    client.set(KEY3, VALUE1, TTL).get();
+    client.flushAll(0);
+    assertEquals(emptyVal, client.get(KEY1).get());
+    assertEquals(emptyVal, client.get(KEY2).get());
+    assertEquals(emptyVal, client.get(KEY3).get());
+  }
+
   public static class Servers {
     private final List<EmbeddedServer> daemons;
     private final List<HostAndPort> addresses;
