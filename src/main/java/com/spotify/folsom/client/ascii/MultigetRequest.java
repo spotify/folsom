@@ -19,6 +19,7 @@ package com.spotify.folsom.client.ascii;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
 import io.netty.buffer.ByteBuf;
@@ -49,7 +50,7 @@ public class MultigetRequest
   public static MultigetRequest create(final List<String> keys, Charset charset, boolean withCas) {
     byte[] cmd = withCas ? CAS_GET : GET;
     final int size = keys.size();
-    if (size >= 256) {
+    if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
     return new MultigetRequest(encodeKeys(keys, charset), cmd);
