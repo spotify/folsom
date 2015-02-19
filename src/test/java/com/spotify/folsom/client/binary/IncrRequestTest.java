@@ -48,7 +48,7 @@ public class IncrRequestTest extends RequestTestTemplate {
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.INCREMENT, KEY.length(), 20, KEY.length() + 20, req.getOpaque(), 0);
+    assertHeader(b, OpCode.INCREMENT, KEY.length(), 20, KEY.length() + 20, req.opaque, 0);
     assertEquals(2L, b.readLong());
     assertEquals(3L, b.readLong());
     assertExpiration(b.readInt());

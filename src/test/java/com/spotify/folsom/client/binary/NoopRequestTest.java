@@ -19,7 +19,6 @@ package com.spotify.folsom.client.binary;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.NoopRequest;
 
 import org.junit.Test;
 
@@ -38,7 +37,7 @@ public class NoopRequestTest extends RequestTestTemplate {
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.NOOP, 0, 0, 0, req.getOpaque(), 0);
+    assertHeader(b, OpCode.NOOP, 0, 0, 0, req.opaque, 0);
     assertEOM(b);
   }
 }
