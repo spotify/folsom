@@ -21,6 +21,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -60,7 +61,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class DefaultRawMemcacheClient implements RawMemcacheClient {
+public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private static final DefaultThreadFactory DAEMON_THREAD_FACTORY =
       new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
@@ -71,8 +72,6 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
 
   private final AtomicInteger pendingCounter = new AtomicInteger();
   private final int outstandingRequestLimit;
-
-  private final SettableFuture<Void> closeFuture = SettableFuture.create();
 
   private final Channel channel;
   private final BatchFlusher flusher;
@@ -155,9 +154,6 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     this.outstandingRequestLimit = outstandingRequestLimit;
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
-    if (!channel.isOpen()) {
-      close();
-    }
   }
 
   @Override
@@ -202,10 +198,8 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
   }
 
   @Override
-  public ListenableFuture<Void> shutdown() {
-    disconnectReason.compareAndSet(null, "Closed");
+  public void shutdown() {
     channel.close();
-    return onExecutor(Futures.<Void>immediateFuture(null));
   }
 
   @Override
@@ -245,7 +239,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
           }
           if (timeoutChecker.check(head)) {
             log.error("Request timeout: {} {}", channel, head);
-            disconnectReason.compareAndSet(null, "Timeout");
+            DefaultRawMemcacheClient.this.setDisconnected("Timeout");
             channel.close();
           }
         }
@@ -267,7 +261,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
 
     @Override
     public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
-      disconnectReason.compareAndSet(null, "Disconnected");
+      DefaultRawMemcacheClient.this.setDisconnected("Disconnected");
       while (true) {
         final Request<?> request = outstanding.poll();
         if (request == null) {
@@ -275,7 +269,6 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
         }
         request.fail(new MemcacheClosedException(disconnectReason.get()));
       }
-      DefaultRawMemcacheClient.this.close();
     }
 
     @Override
@@ -289,7 +282,7 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
         request.handle(msg);
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
-        setDisconnectReason(exception);
+        DefaultRawMemcacheClient.this.setDisconnected(exception);
         request.fail(new MemcacheClosedException(disconnectReason.get()));
         ctx.channel().close();
       }
@@ -299,12 +292,12 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause)
         throws Exception {
       if (cause instanceof DecoderException) {
-        setDisconnectReason(cause.getCause());
+        DefaultRawMemcacheClient.this.setDisconnected(cause.getCause());
       } else if (!isLostConnection(cause)) {
         // default to the safe option of closing the connection on unhandled exceptions
         // use a ReconnectingClient to keep the connection going
         log.error("Unexpected error, closing connection", cause);
-        setDisconnectReason(cause);
+        DefaultRawMemcacheClient.this.setDisconnected(cause);
       }
       ctx.close();
     }
@@ -325,14 +318,6 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     } else {
       return false;
     }
-  }
-
-  private void close() {
-    closeFuture.set(null);
-  }
-
-  public ListenableFuture<Void> getCloseFuture() {
-    return onExecutor(closeFuture);
   }
 
   @Override
@@ -366,16 +351,22 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
     }
 
     private void fail(Throwable cause) {
-      setDisconnectReason(cause);
+      setDisconnected(cause);
       request.fail(new MemcacheClosedException(disconnectReason.get()));
     }
   }
 
-  private void setDisconnectReason(Throwable cause) {
+  private void setDisconnected(Throwable cause) {
     String message = cause.getMessage();
     if (message == null) {
       message = cause.getClass().getSimpleName();
     }
-    disconnectReason.compareAndSet(null, message);
+    setDisconnected(message);
+  }
+
+  private void setDisconnected(String message) {
+    if (disconnectReason.compareAndSet(null, message)) {
+      notifyConnectionChange();
+    }
   }
 }

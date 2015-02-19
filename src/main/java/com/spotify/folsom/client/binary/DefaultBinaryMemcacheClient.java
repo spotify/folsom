@@ -303,8 +303,8 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#shutdown()
    */
   @Override
-  public ListenableFuture<Void> shutdown() {
-    return rawMemcacheClient.shutdown();
+  public void shutdown() {
+    rawMemcacheClient.shutdown();
   }
 
   /*
@@ -334,3 +334,4 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     return opaqueGenerator.incrementAndGet();
   }
 }
+

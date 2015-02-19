@@ -59,7 +59,7 @@ public class RoundRobinMemcacheClientTest {
     for (RawMemcacheClient client : clientList) {
       assertEquals(true, client.isConnected());
     }
-    roundRobinMemcacheClient.shutdown().get();
+    roundRobinMemcacheClient.shutdown();
     for (RawMemcacheClient client : clientList) {
       assertEquals(false, client.isConnected());
     }
@@ -91,7 +91,7 @@ public class RoundRobinMemcacheClientTest {
     assertEquals(1000, client3.getMap().size());
 
     assertTrue(memcacheClient.isConnected());
-    client2.shutdown().get();
+    client2.shutdown();
 
     for (int i = 0; i < 3000; i++) {
       memcacheClient.set("key2-" + i, "value2-" + i, 0).get();
@@ -101,16 +101,16 @@ public class RoundRobinMemcacheClientTest {
     assertEquals(1000, client2.getMap().size());
     assertEquals(2500, client3.getMap().size());
 
-    client1.shutdown().get();
-    client3.shutdown().get();
+    client1.shutdown();
+    client3.shutdown();
     assertFalse(memcacheClient.isConnected());
   }
 
   @Test(expected = MemcacheClosedException.class)
   public void testAllDisconnected() throws Throwable {
-    client1.shutdown().get();
-    client2.shutdown().get();
-    client3.shutdown().get();
+    client1.shutdown();
+    client2.shutdown();
+    client3.shutdown();
     try {
       memcacheClient.set("key", "value", 0).get();
     } catch (ExecutionException e) {

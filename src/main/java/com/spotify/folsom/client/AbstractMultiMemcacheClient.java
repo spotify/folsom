@@ -16,40 +16,33 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.RawMemcacheClient;
 
 import java.util.Collection;
-import java.util.List;
 
-public abstract class AbstractMultiMemcacheClient implements RawMemcacheClient {
+public abstract class AbstractMultiMemcacheClient
+        extends AbstractRawMemcacheClient
+        implements ConnectionChangeListener {
 
   protected final Collection<RawMemcacheClient> clients;
 
   public AbstractMultiMemcacheClient(final Collection<RawMemcacheClient> clients) {
     Preconditions.checkArgument(!clients.isEmpty(), "clients must not be empty");
     this.clients = clients;
+    for (RawMemcacheClient client : clients) {
+      client.registerForConnectionChanges(this);
+    }
   }
 
 
   @Override
-  public ListenableFuture<Void> shutdown() {
-    final List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(clients.size());
+  public void shutdown() {
     for (final RawMemcacheClient client : clients) {
-      futures.add(client.shutdown());
+      client.shutdown();
     }
-
-    // ignore our list of nothings :)
-    return Utils.transform(Futures.allAsList(futures), new Function<List<Void>, Void>() {
-      @Override
-      public Void apply(final List<Void> input) {
-        return null;
-      }
-    });
   }
 
   @Override
@@ -83,5 +76,10 @@ public abstract class AbstractMultiMemcacheClient implements RawMemcacheClient {
   @Override
   public String toString() {
     return getClass().getSimpleName() + "(" + clients + ")";
+  }
+
+  @Override
+  public void connectionChanged(RawMemcacheClient client) {
+    notifyConnectionChange();
   }
 }

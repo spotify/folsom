@@ -118,11 +118,9 @@ public interface MemcacheClient<V> {
   ListenableFuture<MemcacheStatus> touch(String key, int ttl);
 
   /**
-   * Shut down the client. After the completion of this, the client is no longer possible to use
-   *
-   * @return A future representing completion of the request
+   * Shut down the client.
    */
-  ListenableFuture<Void> shutdown();
+  void shutdown();
 
   /**
    * Is the client connected to a server?

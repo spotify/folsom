@@ -18,6 +18,7 @@ package com.spotify.folsom.retry;
 import com.google.common.util.concurrent.FutureFallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
@@ -56,8 +57,8 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
-  public ListenableFuture<Void> shutdown() {
-    return delegate.shutdown();
+  public void shutdown() {
+    delegate.shutdown();
   }
 
   @Override
@@ -76,7 +77,18 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
+  public void registerForConnectionChanges(ConnectionChangeListener listener) {
+    delegate.registerForConnectionChanges(listener);
+  }
+
+  @Override
+  public void unregisterForConnectionChanges(ConnectionChangeListener listener) {
+    delegate.unregisterForConnectionChanges(listener);
+  }
+
+  @Override
   public String toString() {
     return "Retrying(" + delegate + ")";
   }
+
 }
