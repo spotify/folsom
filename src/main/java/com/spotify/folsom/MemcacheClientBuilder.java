@@ -87,8 +87,7 @@ public class MemcacheClientBuilder<V> {
                             .build());
   }
 
-  private List<HostAndPort> addresses = ImmutableList.of(
-      HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
+  private List<HostAndPort> addresses = null;
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
@@ -347,14 +346,20 @@ public class MemcacheClientBuilder<V> {
    * @return A raw memcached client.
    */
   protected RawMemcacheClient connectRaw(boolean binary) {
+    List<HostAndPort> addresses = this.addresses;
     RawMemcacheClient client;
     if (srvRecord != null) {
-      if (!addresses.isEmpty()) {
+      if (addresses != null) {
         throw new IllegalStateException("You may not specify both srvRecord and addresses");
       }
       client = createSRVClient(binary);
     } else {
-      final List<RawMemcacheClient> clients = createClients(binary);
+      if (addresses == null) {
+        addresses = ImmutableList.of(
+                HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
+      }
+
+      final List<RawMemcacheClient> clients = createClients(addresses, binary);
       if (addresses.size() > 1) {
         checkState(clients.size() == addresses.size());
 
@@ -376,7 +381,7 @@ public class MemcacheClientBuilder<V> {
     return client;
   }
 
-  private List<RawMemcacheClient> createClients(boolean binary) {
+  private List<RawMemcacheClient> createClients(List<HostAndPort> addresses, boolean binary) {
 
     final List<RawMemcacheClient> clients =
         Lists.newArrayListWithCapacity(addresses.size());
