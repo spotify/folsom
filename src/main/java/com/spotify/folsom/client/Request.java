@@ -30,15 +30,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class Request<V> extends AbstractFuture<V> {
   protected final byte[] key;
-  protected final int opaque;
 
-  protected Request(String key, Charset charset, int opaque) {
-    this(encodeKey(key, charset), opaque);
+  protected Request(String key, Charset charset) {
+    this(encodeKey(key, charset));
   }
 
-  protected Request(byte[] key, int opaque) {
+  protected Request(byte[] key) {
     this.key = key;
-    this.opaque = (opaque << 8) & 0xFFFFFF00;
   }
 
   protected static ByteBuf toBuffer(final ByteBufAllocator alloc, ByteBuffer dst) {
@@ -69,12 +67,8 @@ public abstract class Request<V> extends AbstractFuture<V> {
 
   public abstract void handle(Object response) throws IOException;
 
-  public int getOpaque() {
-    return opaque;
-  }
-
   @VisibleForTesting
-  static byte[] encodeKey(String key, Charset charset) {
+  protected static byte[] encodeKey(String key, Charset charset) {
     checkNotNull(key, "key");
     checkNotNull(charset, "charset");
     byte[] keyBytes = key.getBytes(charset);

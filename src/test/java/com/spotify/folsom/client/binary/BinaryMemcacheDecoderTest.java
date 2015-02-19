@@ -57,7 +57,7 @@ public class BinaryMemcacheDecoderTest {
     cb.writeZero(1);
     cb.writeShort(0);
     cb.writeInt(6);
-    cb.writeInt(request.getOpaque());
+    cb.writeInt(request.opaque);
     cb.writeLong(258);
     cb.writeBytes(KEY.getBytes());
     cb.writeBytes(VALUE.getBytes());

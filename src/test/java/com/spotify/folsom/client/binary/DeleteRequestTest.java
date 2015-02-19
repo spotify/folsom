@@ -39,7 +39,7 @@ public class DeleteRequestTest extends RequestTestTemplate {
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.DELETE, KEY.length(), 0, KEY.length(), req.getOpaque(), 0);
+    assertHeader(b, OpCode.DELETE, KEY.length(), 0, KEY.length(), req.opaque, 0);
     assertString(KEY, b);
     assertEOM(b);
   }

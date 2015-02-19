@@ -27,12 +27,15 @@ public abstract class BinaryRequest<V> extends Request<V> {
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
 
+  protected final int opaque;
+
   protected BinaryRequest(final String key, Charset charset, int opaque) {
-    super(key, charset, opaque);
+    this(encodeKey(key, charset), opaque);
   }
 
   protected BinaryRequest(final byte[] key, int opaque) {
-    super(key, opaque);
+    super(key);
+    this.opaque = (opaque << 8) & 0xFFFFFF00;
   }
 
   public void writeHeader(final ByteBuffer dst, final byte opCode,
