@@ -40,8 +40,7 @@ public class IncrRequestTest extends RequestTestTemplate {
       OpCode.INCREMENT,
       2,
       3,
-      1000,
-      OPAQUE);
+      1000);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

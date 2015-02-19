@@ -33,7 +33,7 @@ public class DeleteRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    DeleteRequest req = new DeleteRequest(KEY, Charsets.UTF_8, OPAQUE);
+    DeleteRequest req = new DeleteRequest(KEY, Charsets.UTF_8);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, req, out);

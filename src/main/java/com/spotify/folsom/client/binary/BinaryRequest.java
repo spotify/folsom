@@ -21,21 +21,24 @@ import com.spotify.folsom.client.Request;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BinaryRequest<V> extends Request<V> {
+
+  private static final AtomicInteger opaqueGenerator = new AtomicInteger();
 
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
 
   protected final int opaque;
 
-  protected BinaryRequest(final String key, Charset charset, int opaque) {
-    this(encodeKey(key, charset), opaque);
+  protected BinaryRequest(final String key, Charset charset) {
+    this(encodeKey(key, charset));
   }
 
-  protected BinaryRequest(final byte[] key, int opaque) {
+  protected BinaryRequest(final byte[] key) {
     super(key);
-    this.opaque = (opaque << 8) & 0xFFFFFF00;
+    this.opaque = (opaqueGenerator.incrementAndGet() << 8) & 0xFFFFFF00;
   }
 
   public void writeHeader(final ByteBuffer dst, final byte opCode,

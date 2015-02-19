@@ -33,7 +33,7 @@ public class GetRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferNoCas() throws Exception {
-    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 0, OPAQUE);
+    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 0);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, get, out);
@@ -46,7 +46,7 @@ public class GetRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferTtl() throws Exception {
-    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123, OPAQUE);
+    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

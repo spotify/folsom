@@ -40,13 +40,11 @@ public class BinaryMemcacheDecoderTest {
   private static final String KEY = "foo";
   private static final String VALUE = "bar";
 
-  private static final int OPAQUE = 123;
-
   private static final Transcoder<String> TRANSCODER = StringTranscoder.UTF8_INSTANCE;
 
   @Test
   public void test() throws Exception {
-    GetRequest request = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123, OPAQUE);
+    GetRequest request = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123);
     BinaryMemcacheDecoder decoder = new BinaryMemcacheDecoder();
 
     ByteBuf cb = Unpooled.buffer(30);

@@ -31,7 +31,7 @@ public class NoopRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    NoopRequest req = new NoopRequest(OPAQUE);
+    NoopRequest req = new NoopRequest();
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, req, out);

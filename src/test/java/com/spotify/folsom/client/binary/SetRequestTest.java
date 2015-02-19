@@ -49,8 +49,7 @@ public class SetRequestTest extends RequestTestTemplate {
       Charsets.UTF_8,
       TRANSCODER.encode(VALUE),
       1000,
-      cas,
-      OPAQUE);
+      cas);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

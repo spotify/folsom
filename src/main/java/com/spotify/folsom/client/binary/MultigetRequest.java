@@ -40,19 +40,19 @@ public class MultigetRequest
   private final List<byte[]> keys;
 
   private MultigetRequest(final List<byte[]> keys,
-                          final int ttl, final int opaque) {
-    super(keys.get(0), opaque);
+                          final int ttl) {
+    super(keys.get(0));
     this.keys = keys;
     this.ttl = ttl;
   }
 
   public static MultigetRequest create(final List<String> keys, Charset charset,
-                                       final int ttl, final int opaque) {
+                                       final int ttl) {
     final int size = keys.size();
     if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(encodeKeys(keys, charset), ttl, opaque);
+    return new MultigetRequest(encodeKeys(keys, charset), ttl);
   }
 
   @Override
@@ -138,6 +138,6 @@ public class MultigetRequest
   @Override
   public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
     // TODO: remove this null
-    return new MultigetRequest(keys, ttl, opaque);
+    return new MultigetRequest(keys, ttl);
   }
 }
