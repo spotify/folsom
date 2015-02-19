@@ -115,6 +115,14 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Define the charset encoding for keys.
+   * Note that some charsets may not be compatible with the memcache protocol which requires
+   * that keys are a string of 8-bit characters with the exclusion of characters in the range
+   * [0x00, 0x20].
+   * This is a problem in charsets such as UTF-16 which uses two bytes and one of them
+   * could easily be invalid for memcache purposes.
+   *
+   * UTF-8 and most single-byte charsets should be fine though.
+   *
    * @param charset The charset encoding for keys. The default is UTF-8.
    * @return itself
   */

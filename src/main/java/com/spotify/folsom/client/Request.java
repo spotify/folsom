@@ -76,6 +76,7 @@ public abstract class Request<V> extends AbstractFuture<V> {
   @VisibleForTesting
   static byte[] encodeKey(String key, Charset charset) {
     checkNotNull(key, "key");
+    checkNotNull(charset, "charset");
     byte[] keyBytes = key.getBytes(charset);
     int length = keyBytes.length;
     if (length > 250) {

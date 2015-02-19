@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 public class NoopRequest extends BinaryRequest<Void> {
 
   public NoopRequest(final int opaque) {
+    // Keys have to be valid, so pick the key "X" even though we will never actually use it.
     super("X", Charsets.US_ASCII, opaque);
   }
 
