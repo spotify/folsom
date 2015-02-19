@@ -27,7 +27,7 @@ public class ValueAsciiResponse extends AsciiResponse {
     super(Type.VALUE);
   }
 
-  public void addGetResult(String key, byte[] value, long cas) {
+  public void addGetResult(byte[] key, byte[] value, long cas) {
     values.add(new ValueResponse(key, value, cas));
   }
 }

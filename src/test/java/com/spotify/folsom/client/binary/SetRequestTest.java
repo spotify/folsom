@@ -16,10 +16,10 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.SetRequest;
 
 import org.junit.Test;
 
@@ -46,6 +46,7 @@ public class SetRequestTest extends RequestTestTemplate {
     SetRequest req = new SetRequest(
       OpCode.ADD,
       KEY,
+      Charsets.UTF_8,
       TRANSCODER.encode(VALUE),
       1000,
       cas,

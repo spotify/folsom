@@ -76,7 +76,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testBadAsciiGet() throws Throwable {
-    testAsciiGet("VALUE\r\n", "String index out of range: -1");
+    testAsciiGet("VALUE\r\n", "Unexpected line: VALUE");
   }
 
   @Test

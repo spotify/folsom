@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.ketama;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
@@ -96,9 +97,11 @@ public class KetamaMemcacheClientTest {
 
   private MemcacheClient<String> buildClient(final RawMemcacheClient client, boolean binary) {
     if (binary) {
-      return new DefaultBinaryMemcacheClient<>(client, new NoopMetrics(), StringTranscoder.UTF8_INSTANCE);
+      return new DefaultBinaryMemcacheClient<>(client, new NoopMetrics(),
+              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
     } else {
-      return new DefaultAsciiMemcacheClient<>(client, new NoopMetrics(), StringTranscoder.UTF8_INSTANCE);
+      return new DefaultAsciiMemcacheClient<>(client, new NoopMetrics(),
+              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
     }
   }
 }

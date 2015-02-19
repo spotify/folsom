@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.roundrobin;
 
+import com.google.common.base.Charsets;
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -49,7 +50,8 @@ public class RoundRobinMemcacheClientTest {
     clientList = Arrays.<RawMemcacheClient>asList(client1, client2, client3);
     roundRobinMemcacheClient = new RoundRobinMemcacheClient(clientList);
     memcacheClient = new DefaultAsciiMemcacheClient<>(
-            roundRobinMemcacheClient, new NoopMetrics(), StringTranscoder.UTF8_INSTANCE);
+            roundRobinMemcacheClient, new NoopMetrics(),
+            StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
   }
 
   @Test

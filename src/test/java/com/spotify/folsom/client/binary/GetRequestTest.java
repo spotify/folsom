@@ -16,10 +16,10 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.GetRequest;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class GetRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferNoCas() throws Exception {
-    GetRequest get = new GetRequest(KEY, OpCode.GET, 0, OPAQUE);
+    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 0, OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, get, out);
@@ -46,7 +46,7 @@ public class GetRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferTtl() throws Exception {
-    GetRequest get = new GetRequest(KEY, OpCode.GET, 123, OPAQUE);
+    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123, OPAQUE);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

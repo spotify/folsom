@@ -24,6 +24,7 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class SetRequest
         extends BinaryRequest<MemcacheStatus>
@@ -36,11 +37,12 @@ public class SetRequest
 
   public SetRequest(final byte opcode,
                     final String key,
+                    final Charset charset,
                     final byte[] value,
                     final int ttl,
                     final long cas,
                     final int opaque) {
-    super(key, opaque);
+    super(key, charset, opaque);
     this.opcode = opcode;
     this.value = value;
     this.ttl = ttl;
@@ -51,22 +53,19 @@ public class SetRequest
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     final int expiration = Utils.ttlToExpiration(ttl);
 
-    final int keyLength = key.length();
-
     final int valueLength = value.length;
 
     final boolean hasExtra =
             (opcode == OpCode.SET || opcode == OpCode.ADD || opcode == OpCode.REPLACE);
 
     final int extraLength = hasExtra ? 8 : 0;
-    final int totalLength = keyLength + valueLength + extraLength;
 
-    writeBinaryHeader(dst, opcode, keyLength, extraLength, totalLength, cas, opaque);
+    writeHeader(dst, opcode, extraLength, valueLength, cas, opaque);
     if (hasExtra) {
       dst.putInt(0); // byte 24-27, flags
       dst.putInt(expiration); // byte 28-31, expiration
     }
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     if (dst.remaining() >= valueLength) {
       dst.put(value);
       return toBuffer(alloc, dst);

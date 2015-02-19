@@ -27,13 +27,14 @@ import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
 public class FakeRawMemcacheClient implements RawMemcacheClient {
 
   private boolean connected = true;
-  private final Map<String, byte[]> map = Maps.newHashMap();
+  private final Map<ByteBuffer, byte[]> map = Maps.newHashMap();
 
   @Override
   public <T> ListenableFuture<T> send(Request<T> request) {
@@ -42,12 +43,12 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
     }
 
     if (request instanceof SetRequest) {
-      map.put(request.getKey(), ((SetRequest) request).getValue());
+      map.put(ByteBuffer.wrap(request.getKey()), ((SetRequest) request).getValue());
       return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
     }
 
     if (request instanceof GetRequest) {
-      byte[] value = map.get(request.getKey());
+      byte[] value = map.get(ByteBuffer.wrap(request.getKey()));
       if (value == null) {
         return (ListenableFuture<T>) Futures.immediateFuture(null);
       }
@@ -57,8 +58,8 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
     if (request instanceof MultiRequest) {
       List<GetResult<byte[]>> result = Lists.newArrayList();
       MultiRequest<?> multiRequest = (MultiRequest<?>) request;
-      for (String key : multiRequest.getKeys()) {
-        byte[] value = map.get(key);
+      for (byte[] key : multiRequest.getKeys()) {
+        byte[] value = map.get(ByteBuffer.wrap(key));
         if (value != null) {
           result.add(GetResult.success(value, 0));
         } else {
@@ -75,19 +76,19 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
 
     if (request instanceof IncrRequest) {
       IncrRequest incrRequest = (IncrRequest) request;
-      String key = request.getKey();
-      byte[] value = map.get(key);
+      byte[] key = request.getKey();
+      byte[] value = map.get(ByteBuffer.wrap(key));
       if (value == null) {
         return (ListenableFuture<T>) Futures.<Long>immediateFuture(null);
       }
       long longValue = Long.parseLong(new String(value));
       long newValue = longValue + incrRequest.multiplier() * incrRequest.getBy();
-      map.put(key, Long.toString(newValue).getBytes());
+      map.put(ByteBuffer.wrap(key), Long.toString(newValue).getBytes());
       return (ListenableFuture<T>) Futures.<Long>immediateFuture(newValue);
     }
 
     if (request instanceof DeleteRequest) {
-      map.remove(request.getKey());
+      map.remove(ByteBuffer.wrap(request.getKey()));
       return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
     }
 
@@ -115,7 +116,7 @@ public class FakeRawMemcacheClient implements RawMemcacheClient {
     return connected ? 1 : 0;
   }
 
-  public Map<String, byte[]> getMap() {
+  public Map<ByteBuffer, byte[]> getMap() {
     return map;
   }
 }

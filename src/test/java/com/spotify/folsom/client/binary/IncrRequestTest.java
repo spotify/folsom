@@ -16,10 +16,10 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.IncrRequest;
 
 import org.junit.Test;
 
@@ -36,6 +36,7 @@ public class IncrRequestTest extends RequestTestTemplate {
   public void testBuffer() throws Exception {
     IncrRequest req = new IncrRequest(
       KEY,
+      Charsets.UTF_8,
       OpCode.INCREMENT,
       2,
       3,

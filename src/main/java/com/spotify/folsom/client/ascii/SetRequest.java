@@ -18,12 +18,12 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.EnumMap;
 
 public class SetRequest
@@ -49,26 +49,27 @@ public class SetRequest
   private final long cas;
 
   private SetRequest(Operation operation, final String key,
-                     final byte[] value, final int ttl, final long cas) {
-    super(key);
+                     Charset charset, final byte[] value, final int ttl, final long cas) {
+    super(key, charset);
     this.operation = operation;
     this.value = value;
     this.ttl = ttl;
     this.cas = cas;
   }
 
-  public static SetRequest casSet(final String key, final byte[] value,
+  public static SetRequest casSet(final String key, Charset charset, final byte[] value,
                                   final int ttl, final long cas) {
-    return new SetRequest(Operation.CAS, key, value, ttl, cas);
+    return new SetRequest(Operation.CAS, key, charset, value, ttl, cas);
   }
 
   public static SetRequest create(final Operation operation,
-                                  final String key, final byte[] value,
+                                  final String key, Charset charset,
+                                  final byte[] value,
                                   final int ttl) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }
-    return new SetRequest(operation, key, value, ttl, 0);
+    return new SetRequest(operation, key, charset, value, ttl, 0);
   }
 
   @Override
@@ -76,7 +77,7 @@ public class SetRequest
     // <command name> <key> <flags> <exptime> <bytes> [noreply]\r\n
     // "cas" <key> <flags> <exptime> <cas unique> <bytes> [noreply]\r\n
     dst.put(CMD.get(operation));
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     dst.put(FLAGS);
     dst.put(String.valueOf(ttl).getBytes());
     dst.put(SPACE_BYTES);

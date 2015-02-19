@@ -20,19 +20,26 @@ import com.spotify.folsom.client.Request;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public abstract class BinaryRequest<V> extends Request<V> {
 
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
 
-  protected BinaryRequest(final String key, int opaque) {
+  protected BinaryRequest(final String key, Charset charset, int opaque) {
+    super(key, charset, opaque);
+  }
+
+  protected BinaryRequest(final byte[] key, int opaque) {
     super(key, opaque);
   }
 
-  public static void writeBinaryHeader(final ByteBuffer dst, final byte opCode, final int keyLength,
-                                       final int extraLength, final int totalLength,
-                                       final long cas, int opaque) {
+  public void writeHeader(final ByteBuffer dst, final byte opCode,
+                          final int extraLength, final int valueLength,
+                          final long cas, int opaque) {
+    int keyLength = key.length;
+
     dst.put(MAGIC_NUMBER);
     dst.put(opCode);
     dst.putShort((short) keyLength); // byte 2-3
@@ -40,7 +47,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
     dst.put((byte) 0);
     dst.put((byte) 0);
     dst.put((byte) 0);
-    dst.putInt(totalLength); // byte 8-11
+    dst.putInt(extraLength + keyLength + valueLength); // byte 8-11
     dst.putInt(opaque); // byte 12-15, Opaque
     dst.putLong(cas); // byte 16-23, CAS
   }

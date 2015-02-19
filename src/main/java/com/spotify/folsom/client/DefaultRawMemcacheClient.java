@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.Queue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -82,17 +83,18 @@ public class DefaultRawMemcacheClient implements RawMemcacheClient {
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
 
   public static ListenableFuture<RawMemcacheClient> connect(
-      final HostAndPort address,
-      final int outstandingRequestLimit,
-      final boolean binary,
-      final Executor executor,
-      final long timeoutMillis) {
+          final HostAndPort address,
+          final int outstandingRequestLimit,
+          final boolean binary,
+          final Executor executor,
+          final long timeoutMillis,
+          final Charset charset) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
       decoder = new BinaryMemcacheDecoder();
     } else {
-      decoder = new AsciiMemcacheDecoder();
+      decoder = new AsciiMemcacheDecoder(charset);
     }
 
     final ChannelHandler initializer = new ChannelInitializer<Channel>() {

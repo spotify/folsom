@@ -28,6 +28,7 @@ import com.spotify.folsom.client.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,13 +59,14 @@ public class ReconnectingClient implements RawMemcacheClient {
                             final int outstandingRequestLimit,
                             final boolean binary,
                             final Executor executor,
-                            final long timeoutMillis) {
+                            final long timeoutMillis,
+                            final Charset charset) {
     this(backoffFunction, scheduledExecutorService, new Connector() {
       @Override
       public ListenableFuture<RawMemcacheClient> connect() {
         return DefaultRawMemcacheClient.connect(
-            address, outstandingRequestLimit,
-            binary, executor, timeoutMillis);
+                address, outstandingRequestLimit,
+                binary, executor, timeoutMillis, charset);
       }
     }, address);
   }

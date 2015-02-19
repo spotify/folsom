@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.Executor;
 
 public final class Utils {
@@ -65,24 +64,4 @@ public final class Utils {
     return (int) (System.currentTimeMillis() / 1000) + ttl;
   }
 
-  public static void writeKeyString(final ByteBuffer buffer, final String key) {
-    final int length = key.length();
-    for (int i = 0; i < length; i++) {
-      final char c = key.charAt(i);
-      buffer.put((byte) c);
-    }
-  }
-
-  public static void validateKey(final String key) {
-    final int length = key.length();
-    if (length > 250) {
-      throw new IllegalArgumentException("Invalid key: " + key);
-    }
-    for (int i = 0; i < length; i++) {
-      final char c = key.charAt(i);
-      if (c <= 32 || c > 127) {
-        throw new IllegalArgumentException("Invalid key: " + key);
-      }
-    }
-  }
 }

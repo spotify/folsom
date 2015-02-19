@@ -64,9 +64,12 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("localhost", embeddedServer.getPort()), 5000, false, null, 3000).get();
+        HostAndPort.fromParts("localhost", embeddedServer.getPort()), 5000, false, null, 3000, Charsets.UTF_8).get();
 
-    DefaultAsciiMemcacheClient<String> asciiClient = new DefaultAsciiMemcacheClient<>(rawClient, new NoopMetrics(), new StringTranscoder(Charsets.UTF_8));
+    DefaultAsciiMemcacheClient<String> asciiClient =
+            new DefaultAsciiMemcacheClient<>(
+                    rawClient, new NoopMetrics(),
+                    new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8);
 
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     for (int i = 0; i < 2; i++) {
@@ -109,7 +112,7 @@ public class DefaultRawMemcacheClientTest {
 
   private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient) throws InterruptedException {
     try {
-      rawClient.send(new AsciiRequest<String>("key") {
+      rawClient.send(new AsciiRequest<String>("key", Charsets.UTF_8) {
         @Override
         protected void handle(AsciiResponse response) throws IOException {
           throw new IOException(exceptionString);
@@ -135,9 +138,9 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000).get();
+        address, 5000, false, null, 1000, Charsets.UTF_8).get();
 
-    final Future<?> future = rawClient.send(new GetRequest("foo", false));
+    final Future<?> future = rawClient.send(new GetRequest("foo", Charsets.UTF_8, false));
     try {
       future.get();
       fail();

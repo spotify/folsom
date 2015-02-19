@@ -16,10 +16,10 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.DeleteRequest;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class DeleteRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    DeleteRequest req = new DeleteRequest(KEY, OPAQUE);
+    DeleteRequest req = new DeleteRequest(KEY, Charsets.UTF_8, OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, req, out);

@@ -71,6 +71,7 @@ public class MemcacheClientBuilder<V> {
   private int connections = 1;
   private boolean retry = true;
   private Executor executor;
+  private Charset charset = Charsets.UTF_8;
 
   private long timeoutMillis = 3000;
 
@@ -110,6 +111,24 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder(final Transcoder<V> valueTranscoder) {
     this.valueTranscoder = valueTranscoder;
+  }
+
+  /**
+   * Define the charset encoding for keys.
+   * Note that some charsets may not be compatible with the memcache protocol which requires
+   * that keys are a string of 8-bit characters with the exclusion of characters in the range
+   * [0x00, 0x20].
+   * This is a problem in charsets such as UTF-16 which uses two bytes and one of them
+   * could easily be invalid for memcache purposes.
+   *
+   * UTF-8 and most single-byte charsets should be fine though.
+   *
+   * @param charset The charset encoding for keys. The default is UTF-8.
+   * @return itself
+  */
+  public MemcacheClientBuilder<V> withKeyCharset(final Charset charset) {
+    this.charset = checkNotNull(charset);
+    return this;
   }
 
   /**
@@ -232,7 +251,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
-    return new DefaultBinaryMemcacheClient<>(connectRaw(true), metrics, valueTranscoder);
+    return new DefaultBinaryMemcacheClient<>(connectRaw(true), metrics, valueTranscoder, charset);
   }
 
   /**
@@ -240,7 +259,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
-    return new DefaultAsciiMemcacheClient<>(connectRaw(false), metrics, valueTranscoder);
+    return new DefaultAsciiMemcacheClient<>(connectRaw(false), metrics, valueTranscoder, charset);
   }
 
   /**
@@ -303,6 +322,6 @@ public class MemcacheClientBuilder<V> {
         maxOutstandingRequests,
         binary,
         executor,
-        timeoutMillis);
+        timeoutMillis, charset);
   }
 }

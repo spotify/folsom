@@ -16,19 +16,19 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public class TouchRequest extends AsciiRequest<MemcacheStatus> {
   private static final byte[] CMD = "touch ".getBytes();
   private final int ttl;
 
-  public TouchRequest(String key, int ttl) {
-    super(key);
+  public TouchRequest(String key, Charset charset, int ttl) {
+    super(key, charset);
     this.ttl = ttl;
   }
 
@@ -36,7 +36,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
   public ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer dst) {
     // <command name> <key> <value> [noreply]\r\n
     dst.put(CMD);
-    Utils.writeKeyString(dst, key);
+    dst.put(key);
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(ttl).getBytes());
     dst.put(NEWLINE_BYTES);

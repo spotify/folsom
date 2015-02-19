@@ -161,11 +161,12 @@ public class IntegrationTest {
   protected static final String KEY1 = "folsomtest:key1";
   protected static final String KEY2 = "folsomtest:key2";
   protected static final String KEY3 = "folsomtest:key3";
+  protected static final String KEY4 = "folsomtest:keywithÅÄÖ";
   protected static final String VALUE1 = "val1";
   protected static final String VALUE2 = "val2";
   protected static final String NUMERIC_VALUE = "123";
 
-  public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3);
+  public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3, KEY4);
 
   protected static final int TTL = Integer.MAX_VALUE;
 
@@ -174,6 +175,13 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL).get();
 
     assertEquals(VALUE1, client.get(KEY1).get());
+  }
+
+  @Test
+  public void testSetGetWithUTF8() throws Exception {
+    client.set(KEY4, VALUE1, TTL).get();
+
+    assertEquals(VALUE1, client.get(KEY4).get());
   }
 
   @Test

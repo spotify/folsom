@@ -15,29 +15,29 @@
  */
 package com.spotify.folsom.client;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import org.junit.Test;
 
-import com.google.common.base.Strings;
-
-public class UtilsTest {
+public class RequestTest {
 
   @Test
   public void testValidateKey() throws Exception {
-    Utils.validateKey("hello");
+    Request.encodeKey("hello", Charsets.UTF_8);
+  }
+
+  @Test
+  public void testValidateUTFCharacter() throws Exception {
+    Request.encodeKey("räksmörgås", Charsets.UTF_8);
   }
 
   @Test(expected=IllegalArgumentException.class)
   public void testValidateKeyTooLongKey() throws Exception {
-    Utils.validateKey(Strings.repeat("hello", 100));
-  }
-
-  @Test(expected=IllegalArgumentException.class)
-  public void testValidateKeyInvalidChars() throws Exception {
-    Utils.validateKey("hällo");
+    Request.encodeKey(Strings.repeat("hello", 100), Charsets.UTF_8);
   }
 
   @Test(expected=IllegalArgumentException.class)
   public void testValidateKeyWithSpace() throws Exception {
-    Utils.validateKey("hello world");
+    Request.encodeKey("hello world", Charsets.UTF_8);
   }
 }

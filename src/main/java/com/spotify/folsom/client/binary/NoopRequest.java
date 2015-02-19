@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
@@ -27,12 +28,22 @@ import java.nio.ByteBuffer;
 public class NoopRequest extends BinaryRequest<Void> {
 
   public NoopRequest(final int opaque) {
-    super("", opaque);
+    // Keys have to be valid, so pick the key "X" even though we will never actually use it.
+    super("X", Charsets.US_ASCII, opaque);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    writeBinaryHeader(dst, OpCode.NOOP, 0, 0, 0, 0, opaque);
+    dst.put(MAGIC_NUMBER);
+    dst.put(OpCode.NOOP);
+    dst.putShort((short) 0); // byte 2-3
+    dst.put((byte) 0); // byte 4
+    dst.put((byte) 0);
+    dst.put((byte) 0);
+    dst.put((byte) 0);
+    dst.putInt(0); // byte 8-11
+    dst.putInt(opaque); // byte 12-15, Opaque
+    dst.putLong((long) 0); // byte 16-23, CAS
     return toBuffer(alloc, dst);
   }
 
