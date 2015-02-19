@@ -34,7 +34,7 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom</artifactId>
-      <version>0.5.0</version>
+      <version>0.6.0</version>
     </dependency>
 
 We are using semantic versioning which means and we are currently still in
@@ -47,7 +47,7 @@ it just means that the API is not necessarily finalized.
 ### Example usage
 
 ```Java
-final MemcacheClient<String> client = new MemcacheClientBuilder<>(new StringTranscoder(Charsets.UTF_8));
+final MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
     .withAddresses(Collections.singletonList(host))
     .connectAscii();
 
@@ -97,6 +97,9 @@ interface MemcacheClient<T> {}
 interface AsciiMemcacheClient<T> extends MemcacheClient<T> {}
 interface BinaryMemcacheClient<T> extends MemcacheClient<T> {}
 ```
+
+### Changelog
+See [changelog](CHANGELOG.md).
 
 ### Features
 
