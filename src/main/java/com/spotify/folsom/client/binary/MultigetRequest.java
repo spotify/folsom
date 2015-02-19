@@ -31,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
-// TODO: return a list instead of map for performance reasons
 public class MultigetRequest
         extends BinaryRequest<List<GetResult<byte[]>>>
         implements MultiRequest<GetResult<byte[]>> {
