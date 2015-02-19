@@ -16,6 +16,7 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
+import com.google.common.net.HostAndPort;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +41,7 @@ public class MemcacheClientBuilderTest {
   public void testValidLatin1() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.ISO_8859_1)
+            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
     IntegrationTest.awaitConnected(client);
     assertEquals(null, client.get("Räksmörgås").get());
@@ -49,6 +51,7 @@ public class MemcacheClientBuilderTest {
   public void testValidUTF8() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_8)
+            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
     IntegrationTest.awaitConnected(client);
     assertEquals(null, client.get("Räksmörgås").get());
@@ -58,6 +61,7 @@ public class MemcacheClientBuilderTest {
   public void testInvalidUTF16() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_16)
+            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
     IntegrationTest.awaitConnected(client);
     client.get("Key").get();
