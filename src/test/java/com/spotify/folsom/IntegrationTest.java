@@ -126,7 +126,7 @@ public class IntegrationTest {
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts("127.0.0.1", port))
             .withConnections(1)
-            .withMaxOutstandingRequests(100)
+            .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
@@ -310,13 +310,22 @@ public class IntegrationTest {
     assertGetKeyNotFound(client.get(KEY1));
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testTooLargeMultiget() throws Exception {
+  @Test
+  public void testPartitionMultiget() throws Exception {
     List<String> keys = Lists.newArrayList();
-    for (int i = 0; i < 1000; i++) {
-      keys.add("key-" + i);
+    for (int i = 0; i < 500; i++) {
+      final String key = "key-" + i;
+      keys.add(key);
+      client.set(key, key, TTL);
     }
-    client.get(keys);
+
+    final ListenableFuture<List<String>> resultsFuture = client.get(keys);
+    final List<String> results = resultsFuture.get();
+    assertEquals(keys, results);
+
+    for (String key : keys) {
+      client.delete(key);
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)

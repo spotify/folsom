@@ -17,12 +17,15 @@
 package com.spotify.folsom.client;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public final class Utils {
@@ -62,6 +65,15 @@ public final class Utils {
 
   public static int ttlToExpiration(final int ttl) {
     return (int) (System.currentTimeMillis() / 1000) + ttl;
+  }
+
+  public static <T> Function<List<List<T>>, List<T>> flatten() {
+    return new Function<List<List<T>>, List<T>>() {
+      @Override
+      public List<T> apply(final List<List<T>> input) {
+        return Lists.newArrayList(Iterables.concat(input));
+      }
+    };
   }
 
 }

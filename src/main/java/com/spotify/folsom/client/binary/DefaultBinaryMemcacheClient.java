@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.BinaryMemcacheClient;
@@ -24,10 +25,13 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.Transcoder;
+import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.TransformerUtil;
+import com.spotify.folsom.client.Utils;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -184,8 +188,19 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
       return Futures.immediateFuture(Collections.<GetResult<V>>emptyList());
     }
 
-    MultigetRequest request = MultigetRequest.create(keys, charset, ttl, makeOpaque());
-    final ListenableFuture<List<GetResult<byte[]>>> future = rawMemcacheClient.send(request);
+    final List<List<String>> keyPartition =
+          Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
+    final List<ListenableFuture<List<GetResult<byte[]>>>> futureList =
+          new ArrayList<>(keyPartition.size());
+
+    for (final List<String> part : keyPartition) {
+      MultigetRequest request = MultigetRequest.create(part, charset, ttl, makeOpaque());
+      futureList.add(rawMemcacheClient.send(request));
+    }
+
+    final ListenableFuture<List<GetResult<byte[]>>> future =
+          Utils.transform(Futures.allAsList(futureList), Utils.<GetResult<byte[]>>flatten());
+
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);
   }
