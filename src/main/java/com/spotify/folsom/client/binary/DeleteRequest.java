@@ -28,14 +28,13 @@ import java.nio.charset.Charset;
 public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
   public DeleteRequest(final String key,
-                       final Charset charset,
-                       final int opaque) {
-    super(key, charset, opaque);
+                       final Charset charset) {
+    super(key, charset);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    writeHeader(dst, OpCode.DELETE, (byte) 0, 0, 0L, opaque);
+    writeHeader(dst, OpCode.DELETE, (byte) 0, 0, 0L);
     dst.put(key);
     return toBuffer(alloc, dst);
   }

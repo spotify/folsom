@@ -40,19 +40,19 @@ public class MultigetRequest
   private final List<byte[]> keys;
 
   private MultigetRequest(final List<byte[]> keys,
-                          final int ttl, final int opaque) {
-    super(keys.get(0), opaque);
+                          final int ttl) {
+    super(keys.get(0));
     this.keys = keys;
     this.ttl = ttl;
   }
 
   public static MultigetRequest create(final List<String> keys, Charset charset,
-                                       final int ttl, final int opaque) {
+                                       final int ttl) {
     final int size = keys.size();
     if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(encodeKeys(keys, charset), ttl, opaque);
+    return new MultigetRequest(encodeKeys(keys, charset), ttl);
   }
 
   @Override
@@ -70,12 +70,13 @@ public class MultigetRequest
       extrasLength = 0;
     }
 
+    int multigetOpaque = this.getOpaque();
     int sequenceNumber = numKeys;
     for (final byte[] key : keys) {
       final int keyLength = key.length;
       final int totalLength = keyLength + extrasLength;
 
-      final int opaque = this.opaque | --sequenceNumber;
+      final int opaque = multigetOpaque | --sequenceNumber;
 
       dst.put(MAGIC_NUMBER);
       dst.put(sequenceNumber == 0 ? OpCode.GET : OpCode.GETQ);
@@ -104,12 +105,15 @@ public class MultigetRequest
     for (int i = 0; i < size; i++) {
       result.add(null);
     }
+
+    int expectedOpaque = this.getOpaque();
+
     for (final ResponsePacket reply : replies) {
       if (OpCode.getKind(reply.opcode) != OpCode.GET) {
         throw new IOException("Unmatched response");
       }
       final int opaque = reply.opaque & 0xFFFFFF00;
-      if (opaque != this.opaque) {
+      if (opaque != expectedOpaque) {
         throw new IOException("messages out of order for " + getClass().getSimpleName());
       }
       final int sequenceCounter = reply.opaque & 0x000000FF;
@@ -138,6 +142,6 @@ public class MultigetRequest
   @Override
   public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
     // TODO: remove this null
-    return new MultigetRequest(keys, ttl, opaque);
+    return new MultigetRequest(keys, ttl);
   }
 }

@@ -27,20 +27,27 @@ public abstract class BinaryRequest<V> extends Request<V> {
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
 
-  protected final int opaque;
+  protected int opaque;
+  protected boolean opaqueSet;
 
-  protected BinaryRequest(final String key, Charset charset, int opaque) {
-    this(encodeKey(key, charset), opaque);
+  protected BinaryRequest(final String key, Charset charset) {
+    this(encodeKey(key, charset));
   }
 
-  protected BinaryRequest(final byte[] key, int opaque) {
+  protected BinaryRequest(final byte[] key) {
     super(key);
-    this.opaque = (opaque << 8) & 0xFFFFFF00;
+  }
+
+  protected int getOpaque() {
+    if (!opaqueSet) {
+      throw new IllegalStateException("opaque must be set before write");
+    }
+    return opaque;
   }
 
   public void writeHeader(final ByteBuffer dst, final byte opCode,
                           final int extraLength, final int valueLength,
-                          final long cas, int opaque) {
+                          final long cas) {
     int keyLength = key.length;
 
     dst.put(MAGIC_NUMBER);
@@ -51,7 +58,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
     dst.put((byte) 0);
     dst.put((byte) 0);
     dst.putInt(extraLength + keyLength + valueLength); // byte 8-11
-    dst.putInt(opaque); // byte 12-15, Opaque
+    dst.putInt(getOpaque()); // byte 12-15, Opaque
     dst.putLong(cas); // byte 16-23, CAS
   }
 
@@ -63,7 +70,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
     }
 
     final ResponsePacket reply = replies.get(0);
-    if (reply.opaque != opaque) {
+    if (reply.opaque != getOpaque()) {
       throw new IOException("messages out of order for " + getClass().getSimpleName());
     }
     return reply;
@@ -75,4 +82,12 @@ public abstract class BinaryRequest<V> extends Request<V> {
   }
 
   protected abstract void handle(BinaryResponse response) throws IOException;
+
+  public void setOpaque(int opaque) {
+    if (this.opaqueSet) {
+      throw new IllegalStateException("opaque may not be set more than one");
+    }
+    this.opaqueSet = true;
+    this.opaque = (opaque << 8) & 0xFFFFFF00;
+  }
 }

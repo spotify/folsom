@@ -33,13 +33,14 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferNoCas() throws Exception {
-    TouchRequest req = new TouchRequest(KEY, Charsets.UTF_8, 123, OPAQUE);
+    TouchRequest req = new TouchRequest(KEY, Charsets.UTF_8, 123);
+    req.setOpaque(OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.TOUCH, KEY.length(), 4, KEY.length() + 4, req.opaque, 0);
+    assertHeader(b, OpCode.TOUCH, KEY.length(), 4, KEY.length() + 4, req.getOpaque(), 0);
     assertExpiration(b.readInt());
     assertString(KEY, b);
     assertEOM(b);
@@ -47,13 +48,14 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferTtl() throws Exception {
-    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123, OPAQUE);
+    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123);
+    get.setOpaque(OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, get, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.opaque, 0);
+    assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.getOpaque(), 0);
     assertExpiration(b.readInt());
     assertString(KEY, b);
     assertEOM(b);

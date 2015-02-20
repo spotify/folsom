@@ -40,15 +40,16 @@ public class IncrRequestTest extends RequestTestTemplate {
       OpCode.INCREMENT,
       2,
       3,
-      1000,
-      OPAQUE);
+      1000
+    );
+    req.setOpaque(OPAQUE);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.INCREMENT, KEY.length(), 20, KEY.length() + 20, req.opaque, 0);
+    assertHeader(b, OpCode.INCREMENT, KEY.length(), 20, KEY.length() + 20, req.getOpaque(), 0);
     assertEquals(2L, b.readLong());
     assertEquals(3L, b.readLong());
     assertExpiration(b.readInt());

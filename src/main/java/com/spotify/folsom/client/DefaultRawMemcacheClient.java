@@ -27,6 +27,7 @@ import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
+import com.spotify.folsom.client.binary.BinaryRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -72,6 +73,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private final AtomicInteger pendingCounter = new AtomicInteger();
   private final int outstandingRequestLimit;
+
+  private final AtomicInteger requestSequenceId = new AtomicInteger();
 
   private final Channel channel;
   private final BatchFlusher flusher;
@@ -250,7 +253,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     public void write(final ChannelHandlerContext ctx, final Object msg,
                       final ChannelPromise promise)
         throws Exception {
-      outstanding.add((Request<?>) msg);
+      Request<?> request = (Request<?>) msg;
+      if (request instanceof BinaryRequest) {
+        ((BinaryRequest) request).setOpaque(requestSequenceId.incrementAndGet());
+      }
+      outstanding.add(request);
+
       super.write(ctx, msg, promise);
     }
 
