@@ -74,7 +74,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final AtomicInteger pendingCounter = new AtomicInteger();
   private final int outstandingRequestLimit;
 
-  private final AtomicInteger requestSequenceId = new AtomicInteger();
 
   private final Channel channel;
   private final BatchFlusher flusher;
@@ -83,6 +82,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final long timeoutMillis;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
+
+  /**
+   * Used to set the opaque field for binary requests, to be able to detect messages out of order.
+   * A regular int is used, because this is only accessed from the single writer thread
+   */
+  private int requestSequenceId = 0;
 
   public static ListenableFuture<RawMemcacheClient> connect(
           final HostAndPort address,
@@ -255,7 +260,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         throws Exception {
       Request<?> request = (Request<?>) msg;
       if (request instanceof BinaryRequest) {
-        ((BinaryRequest) request).setOpaque(requestSequenceId.incrementAndGet());
+        ((BinaryRequest) request).setOpaque(++requestSequenceId);
       }
       outstanding.add(request);
 
