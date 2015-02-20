@@ -29,6 +29,7 @@ import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
+import com.spotify.folsom.ketama.SrvKetamaClient;
 import com.spotify.folsom.reconnect.ReconnectingClient;
 import com.spotify.folsom.retry.RetryingClient;
 import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;

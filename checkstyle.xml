@@ -96,5 +96,14 @@
         <!--module name="FinalParameters"/-->
         <!--module name="TodoComment"/-->
         <module name="UpperEll"/>
+
     </module>
+
+    <module name="Header">
+        <property name="headerFile" value="copyright-header.txt"/>
+        <!-- The year itself may differ, so ignore that part -->
+        <property name="ignoreLines" value="2"/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
 </module>
