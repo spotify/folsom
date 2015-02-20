@@ -33,9 +33,8 @@ public class TouchRequest extends BinaryRequest<MemcacheStatus> {
 
   public TouchRequest(final String key,
                       final Charset charset,
-                      final int ttl,
-                      final int opaque) {
-    super(key, charset, opaque);
+                      final int ttl) {
+    super(key, charset);
     this.ttl = ttl;
   }
 

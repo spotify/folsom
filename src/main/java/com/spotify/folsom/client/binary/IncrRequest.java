@@ -37,9 +37,8 @@ public class IncrRequest extends BinaryRequest<Long> {
                      final byte opcode,
                      final long by,
                      final long initial,
-                     final int ttl,
-                     final int opaque) {
-    super(key, charset, opaque);
+                     final int ttl) {
+    super(key, charset);
     this.opcode = opcode;
     this.by = by;
     this.initial = initial;

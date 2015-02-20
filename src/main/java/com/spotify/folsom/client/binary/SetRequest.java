@@ -40,9 +40,8 @@ public class SetRequest
                     final Charset charset,
                     final byte[] value,
                     final int ttl,
-                    final long cas,
-                    final int opaque) {
-    super(key, charset, opaque);
+                    final long cas) {
+    super(key, charset);
     this.opcode = opcode;
     this.value = value;
     this.ttl = ttl;

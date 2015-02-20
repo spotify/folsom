@@ -32,7 +32,6 @@ import static org.mockito.Mockito.when;
 
 public abstract class RequestTestTemplate {
 
-  public static final int OPAQUE = 123;
   protected static final int ID = 17;
   protected static final StringTranscoder TRANSCODER = new StringTranscoder(Charsets.UTF_8);
 

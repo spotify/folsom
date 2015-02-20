@@ -28,9 +28,8 @@ import java.nio.charset.Charset;
 public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
   public DeleteRequest(final String key,
-                       final Charset charset,
-                       final int opaque) {
-    super(key, charset, opaque);
+                       final Charset charset) {
+    super(key, charset);
   }
 
   @Override

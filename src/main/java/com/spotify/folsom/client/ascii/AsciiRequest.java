@@ -27,11 +27,11 @@ public abstract class AsciiRequest<T> extends Request<T> {
   protected static final byte SPACE_BYTES = ' ';
 
   protected AsciiRequest(String key, Charset charset) {
-    super(key, charset, 0);
+    super(key, charset);
   }
 
   protected AsciiRequest(byte[] key) {
-    super(key, 0);
+    super(key);
   }
 
   @Override
