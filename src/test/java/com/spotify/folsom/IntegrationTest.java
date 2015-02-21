@@ -16,11 +16,13 @@
 
 package com.spotify.folsom;
 
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.folsom.client.NoopMetrics;
@@ -126,7 +128,7 @@ public class IntegrationTest {
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts("127.0.0.1", port))
             .withConnections(1)
-            .withMaxOutstandingRequests(100)
+            .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
@@ -310,13 +312,31 @@ public class IntegrationTest {
     assertGetKeyNotFound(client.get(KEY1));
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testTooLargeMultiget() throws Exception {
-    List<String> keys = Lists.newArrayList();
-    for (int i = 0; i < 1000; i++) {
+  @Test
+  public void testPartitionMultiget() throws Exception {
+    final List<String> keys = Lists.newArrayList();
+    for (int i = 0; i < 500; i++) {
       keys.add("key-" + i);
     }
-    client.get(keys);
+
+    final List<ListenableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    try {
+      for (final String key : keys) {
+        futures.add(client.set(key, key, TTL));
+      }
+
+      Futures.allAsList(futures).get();
+
+      final ListenableFuture<List<String>> resultsFuture = client.get(keys);
+      final List<String> results = resultsFuture.get();
+      assertEquals(keys, results);
+    } finally {
+      futures.clear();
+      for (final String key : keys) {
+        futures.add(client.delete(key));
+      }
+      Futures.allAsList(futures).get();
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
