@@ -16,11 +16,13 @@
 
 package com.spotify.folsom;
 
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.folsom.client.NoopMetrics;
@@ -312,19 +314,28 @@ public class IntegrationTest {
 
   @Test
   public void testPartitionMultiget() throws Exception {
-    List<String> keys = Lists.newArrayList();
+    final List<String> keys = Lists.newArrayList();
     for (int i = 0; i < 500; i++) {
-      final String key = "key-" + i;
-      keys.add(key);
-      client.set(key, key, TTL);
+      keys.add("key-" + i);
     }
 
-    final ListenableFuture<List<String>> resultsFuture = client.get(keys);
-    final List<String> results = resultsFuture.get();
-    assertEquals(keys, results);
+    final List<ListenableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    try {
+      for (final String key : keys) {
+        futures.add(client.set(key, key, TTL));
+      }
 
-    for (String key : keys) {
-      client.delete(key);
+      Futures.allAsList(futures).get();
+
+      final ListenableFuture<List<String>> resultsFuture = client.get(keys);
+      final List<String> results = resultsFuture.get();
+      assertEquals(keys, results);
+    } finally {
+      futures.clear();
+      for (final String key : keys) {
+        futures.add(client.delete(key));
+      }
+      Futures.allAsList(futures).get();
     }
   }
 
