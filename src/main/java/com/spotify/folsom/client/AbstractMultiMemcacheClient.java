@@ -19,6 +19,7 @@ package com.spotify.folsom.client;
 import com.google.common.base.Preconditions;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 
 import java.util.Collection;
@@ -79,7 +80,7 @@ public abstract class AbstractMultiMemcacheClient
   }
 
   @Override
-  public void connectionChanged(RawMemcacheClient client) {
+  public void connectionChanged(ObservableClient client) {
     notifyConnectionChange();
   }
 }

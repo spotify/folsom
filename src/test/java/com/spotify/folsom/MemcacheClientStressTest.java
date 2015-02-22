@@ -60,7 +60,7 @@ public class MemcacheClientStressTest {
     client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
         .connectAscii();
-    IntegrationTest.awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
   }
 
   public static void main(final String[] args) throws Exception {

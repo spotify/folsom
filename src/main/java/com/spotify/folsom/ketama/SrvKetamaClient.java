@@ -229,7 +229,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
   private class MyConnectionChangeListener implements ConnectionChangeListener {
     @Override
-    public void connectionChanged(RawMemcacheClient client) {
+    public void connectionChanged(ObservableClient client) {
       notifyConnectionChange();
     }
   }

@@ -43,7 +43,7 @@ public class MemcacheClientBuilderTest {
             .withKeyCharset(Charsets.ISO_8859_1)
             .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
-    IntegrationTest.awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
     assertEquals(null, client.get("Räksmörgås").get());
   }
 
@@ -53,7 +53,7 @@ public class MemcacheClientBuilderTest {
             .withKeyCharset(Charsets.UTF_8)
             .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
-    IntegrationTest.awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
     assertEquals(null, client.get("Räksmörgås").get());
   }
 
@@ -63,7 +63,7 @@ public class MemcacheClientBuilderTest {
             .withKeyCharset(Charsets.UTF_16)
             .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
             .connectAscii();
-    IntegrationTest.awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
     client.get("Key").get();
   }
 }

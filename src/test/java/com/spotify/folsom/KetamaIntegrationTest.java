@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -70,6 +72,24 @@ public class KetamaIntegrationTest {
     binaryServers.stop();
   }
 
+  public static void allClientsConnected(final MemcacheClient<?> client)
+      throws Exception{
+    final CountDownLatch done = new CountDownLatch(1);
+
+    client.registerForConnectionChanges(new ConnectionChangeListener() {
+      @Override
+      public void connectionChanged(ObservableClient ignored) {
+        if (client.numActiveConnections() == client.numTotalConnections()) {
+          done.countDown();
+        }
+      }
+    });
+
+    if (!done.await(10, TimeUnit.SECONDS)) {
+      throw new RuntimeException("Failed to connect to all cluster nodes before timeout");
+    }
+  }
+
   @Before
   public void setUp() throws Exception {
     boolean ascii;
@@ -96,7 +116,7 @@ public class KetamaIntegrationTest {
     } else {
       client = builder.connectBinary();
     }
-    IntegrationTest.awaitConnected(client);
+    allClientsConnected(client);
     System.out.println("Using client: " + client + ", protocol: " + protocol);
     servers.flush();
   }

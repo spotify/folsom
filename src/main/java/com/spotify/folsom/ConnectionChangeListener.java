@@ -20,5 +20,5 @@ import com.google.common.eventbus.Subscribe;
 public interface ConnectionChangeListener {
 
   @Subscribe
-  void connectionChanged(RawMemcacheClient client);
+  void connectionChanged(ObservableClient client);
 }

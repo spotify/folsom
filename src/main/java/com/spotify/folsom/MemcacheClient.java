@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.List;
 
-public interface MemcacheClient<V> {
+public interface MemcacheClient<V> extends ObservableClient {
 
   /**
    * Set a key in memcache to the provided value, with the specified TTL
@@ -121,13 +121,6 @@ public interface MemcacheClient<V> {
    * Shut down the client.
    */
   void shutdown();
-
-  /**
-   * Is the client connected to a server?
-   *
-   * @return true if the client is connected
-   */
-  boolean isConnected();
 
   /**
    * How many actual socket connections do we have, including currently disconnected clients.
