@@ -100,7 +100,7 @@ longer be used.
 
 ### Protocol
 
-Folsom implements both the [binary protocol] and [ascii protocol].
+Folsom implements both the [binary protocol] and [ascii protocol].
 They share a common interface but also extend it with their own specializations.
 
 Which protocol to use depends on your use case. With a regular memcached backend,
