@@ -24,7 +24,6 @@ import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import junit.framework.AssertionFailedError;
@@ -47,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -106,12 +104,6 @@ public class IntegrationTest {
     asciiEmbeddedServer.stop();
   }
 
-  public static void awaitConnected(final MemcacheClient<?> client) {
-    while (client != null && client.numActiveConnections() < client.numTotalConnections()) {
-      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
-    }
-  }
-
   @Before
   public void setUp() throws Exception {
     boolean ascii;
@@ -143,7 +135,7 @@ public class IntegrationTest {
       asciiClient = null;
       client = binaryClient;
     }
-    awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
     System.out.println("Using client: " + client + ", protocol: " + protocol + " and port: " + port);
     cleanup();
   }

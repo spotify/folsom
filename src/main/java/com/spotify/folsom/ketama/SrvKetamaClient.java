@@ -25,6 +25,7 @@ import com.spotify.dns.DnsSrvResolver;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
@@ -229,7 +230,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
   private class MyConnectionChangeListener implements ConnectionChangeListener {
     @Override
-    public void connectionChanged(RawMemcacheClient client) {
+    public void connectionChanged(ObservableClient client) {
       notifyConnectionChange();
     }
   }

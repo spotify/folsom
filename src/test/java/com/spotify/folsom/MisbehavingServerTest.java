@@ -145,7 +145,7 @@ public class MisbehavingServerTest {
     testAsciiSet("TOUCHED\r\n", "Unexpected line: TOUCHED");
   }
 
-  private void testAsciiGet(String response, String expectedError) throws InterruptedException, IOException {
+  private void testAsciiGet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
       client.get("key").get();
@@ -157,7 +157,7 @@ public class MisbehavingServerTest {
     }
   }
 
-  private void testAsciiTouch(String response, String expectedError) throws InterruptedException, IOException {
+  private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
       client.touch("key", 123).get();
@@ -169,7 +169,7 @@ public class MisbehavingServerTest {
     }
   }
 
-  private void testAsciiSet(String response, String expectedError) throws InterruptedException, IOException {
+  private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
       client.set("key", "value", 123).get();
@@ -181,14 +181,14 @@ public class MisbehavingServerTest {
     }
   }
 
-  private MemcacheClient<String> setupAscii(String response) throws IOException {
+  private MemcacheClient<String> setupAscii(String response) throws Exception {
     server = new Server(response);
     MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts("localhost", server.port))
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
-    IntegrationTest.awaitConnected(client);
+    ConnectFuture.connectFuture(client).get();
     return client;
   }
 

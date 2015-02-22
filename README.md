@@ -37,19 +37,38 @@ To import it with maven, use this:
       <version>0.6.1</version>
     </dependency>
 
-We are using semantic versioning which means and we are currently still in
+We are using |semantic versioning](http://semver.org) which means and we are currently still in
 the initial development phase. This does not mean that the code is not stable,
 it just means that the API is not necessarily finalized.
 
     Major version zero (0.y.z) is for initial development.
     Anything may change at any time. The public API should not be considered stable.
 
-### Example usage
+### Usage
+
+The main entry point to the folsom API is the MemcacheClientBuilder class. It has
+chainable setter methods to configure various aspects of the client. The methods connectBinary()
+and connectAscii() constructs MemcacheClient instances utilising the [binary protocol] and
+[ascii protocol] respectively. For details on their differences see **Protocol** below.
+
+All calls to the folsom API that interacts with a memcache server is asynchronous and the
+result is typically accessible from ListenableFuture instances. An exception to this rule
+are the methods that connects clients to their remote endpoints,
+MemcacheClientBuilder.connectBinary() and MemcacheClientBuilder.connectAscii() which will
+return a MemcacheClient immediately while asynchronously attempting to connect to the configured
+remote endpoint(s).
+
+As code using the folsom API should be written so that it handles failing intermittently with
+MemcacheClosedException anyway, waiting for the initial connect to complete is not something
+folsom concerns itself with. For single server connections, ConnectFuture provides functionality
+to wait for the initial connection to succeed, as can be seen in the example below.
 
 ```Java
 final MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
     .withAddresses(Collections.singletonList(host))
     .connectAscii();
+// make we wait until the client has connected to the server
+ConnectFuture.connectFuture(client).get();
 
 client.set("key", "value", 10000).get();
 client.get("key").get();
@@ -79,13 +98,9 @@ longer be used.
   race condition bugs and deadlocks. We try to isolate that as much as possible to minimize the risk,
   and most of the code base doesn't have to care.
 
-### Futures
-
-All request operations return a Guava ListenableFuture.
-
 ### Protocol
 
-Folsom implements both the binary and ascii protocol.
+Folsom implements both the [binary protocol] and [ascii protocol].
 They share a common interface but also extend it with their own specializations.
 
 Which protocol to use depends on your use case. With a regular memcached backend,
@@ -120,17 +135,12 @@ You can optionally choose to track performance using yammer metrics.
 mvn package
 ```
 
-### References
-
-https://code.google.com/p/memcached/wiki/BinaryProtocolRevamped
-https://github.com/memcached/memcached/blob/master/doc/protocol.txt
-
 ### Authors
-
-Authors
--------
 
 Folsom was initially built at [Spotify](<https://github.com/spotify) by
 [Kristofer Karlsson](https://github.com/krka), [Niklas Gustavsson](https://github.com/protocol7) and
 [Daniel Norberg](https://github.com/danielnorberg).
 Many thanks also go out to [Noa Resare](https://github.com/noaresare).
+
+[binary protocol]: https://code.google.com/p/memcached/wiki/BinaryProtocolRevamped
+[ascii protocol]: https://github.com/memcached/memcached/blob/master/doc/protocol.txt

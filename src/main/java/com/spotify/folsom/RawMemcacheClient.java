@@ -22,7 +22,7 @@ import com.spotify.folsom.client.Request;
 /**
  * A raw memcache client, mostly useful internally
  */
-public interface RawMemcacheClient {
+public interface RawMemcacheClient extends ObservableClient {
 
   <T> ListenableFuture<T> send(Request<T> request);
 
@@ -31,12 +31,6 @@ public interface RawMemcacheClient {
    * to get notified when it has (possibly) finished shutting down
    */
   void shutdown();
-
-  /**
-   * Is the client connected to a server?
-   * @return true if the client is connected
-   */
-  boolean isConnected();
 
   /**
    * How many actual socket connections do we have, including currently disconnected clients.
@@ -49,17 +43,4 @@ public interface RawMemcacheClient {
    * @return the number of active connections
    */
   int numActiveConnections();
-
-  /**
-   * Register for connection change events. This should trigger at least once for every
-   * connection change. You should immediately get an initial callback.
-   * @param listener
-   */
-  void registerForConnectionChanges(ConnectionChangeListener listener);
-
-  /**
-   * Unregister for connection change events.
-   * @param listener
-   */
-  void unregisterForConnectionChanges(ConnectionChangeListener listener);
 }

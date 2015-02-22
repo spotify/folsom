@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.AsciiMemcacheClient;
+import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -218,9 +219,19 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     rawMemcacheClient.shutdown();
   }
 
+  @Override
+  public void registerForConnectionChanges(ConnectionChangeListener listener) {
+    rawMemcacheClient.registerForConnectionChanges(listener);
+  }
+
+  @Override
+  public void unregisterForConnectionChanges(ConnectionChangeListener listener) {
+    rawMemcacheClient.unregisterForConnectionChanges(listener);
+  }
+
   /*
-   * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
-   */
+     * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
+     */
   @Override
   public boolean isConnected() {
     return rawMemcacheClient.isConnected();

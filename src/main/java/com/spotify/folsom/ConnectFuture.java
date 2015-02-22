@@ -29,26 +29,26 @@ public class ConnectFuture
    * @param client
    * @param awaitedState
    */
-  private ConnectFuture(RawMemcacheClient client, boolean awaitedState) {
+  private ConnectFuture(ObservableClient client, boolean awaitedState) {
     this.awaitedState = awaitedState;
     client.registerForConnectionChanges(this);
     check(client);
   }
 
-  public static ListenableFuture<Void> disconnectFuture(RawMemcacheClient client) {
+  public static ListenableFuture<Void> disconnectFuture(ObservableClient client) {
     return new ConnectFuture(client, false);
   }
 
-  public static ListenableFuture<Void> connectFuture(RawMemcacheClient client) {
+  public static ListenableFuture<Void> connectFuture(ObservableClient client) {
     return new ConnectFuture(client, true);
   }
 
   @Override
-  public void connectionChanged(RawMemcacheClient client) {
+  public void connectionChanged(ObservableClient client) {
     check(client);
   }
 
-  private void check(RawMemcacheClient client) {
+  private void check(ObservableClient client) {
     if (awaitedState == client.isConnected()) {
       if (set(null)) {
         client.unregisterForConnectionChanges(this);
