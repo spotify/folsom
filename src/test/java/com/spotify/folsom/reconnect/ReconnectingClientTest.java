@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom.reconnect;
 
-import com.google.common.base.Charsets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,7 +23,6 @@ import com.spotify.folsom.BackoffFunction;
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.Request;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -32,9 +30,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 

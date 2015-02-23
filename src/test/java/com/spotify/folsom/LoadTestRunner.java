@@ -26,8 +26,6 @@ import com.spotify.folsom.transcoder.StringTranscoder;
 
 import java.util.List;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 public class LoadTestRunner {
 
   public static void main(final String[] args) throws Throwable {

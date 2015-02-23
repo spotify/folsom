@@ -25,8 +25,6 @@ import com.spotify.folsom.transcoder.StringTranscoder;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 public class KetamaRunner {
 
   public static void main(final String[] args) throws Throwable {
