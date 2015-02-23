@@ -84,13 +84,25 @@ public class SrvKetamaIntegrationTest {
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     int NUM_KEYS = 1000;
     for (int i = 0; i < NUM_KEYS; i++) {
-      futures.add(client.set("key-" + i, "value-" + i, 0));
+      ListenableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
+      futures.add(future);
+
+      // Do this to avoid making the embedded memcached sad
+      if (i % 10 == 0) {
+        future.get();
+      }
     }
     Futures.allAsList(futures).get();
     futures.clear();
 
     for (int i = 0; i < NUM_KEYS; i++) {
-      futures.add(client.get("key-" + i));
+      ListenableFuture<String> future = client.get("key-" + i);
+      futures.add(future);
+
+      // Do this to avoid making the embedded memcached sad
+      if (i % 10 == 0) {
+        future.get();
+      }
     }
     for (int i = 0; i < NUM_KEYS; i++) {
       assertEquals("value-" + i, futures.get(i).get());
@@ -107,7 +119,14 @@ public class SrvKetamaIntegrationTest {
     assertTrue(client.numActiveConnections() == client.numTotalConnections() - 1);
 
     for (int i = 0; i < NUM_KEYS; i++) {
-      futures.add(client.get("key-" + i));
+      ListenableFuture<String> future = client.get("key-" + i);
+      futures.add(future);
+
+      // Do this to avoid making the embedded memcached sad
+      if (i % 10 == 0) {
+        future.get();
+      }
+
     }
     int misses = 0;
     for (int i = 0; i < NUM_KEYS; i++) {
