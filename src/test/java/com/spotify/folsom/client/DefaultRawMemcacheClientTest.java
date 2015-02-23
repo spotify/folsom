@@ -19,6 +19,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -147,5 +148,19 @@ public class DefaultRawMemcacheClientTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof MemcacheClosedException);
     }
+  }
+
+  @Test
+  public void testShutdown() throws IOException, ExecutionException, InterruptedException {
+    final ServerSocket server = new ServerSocket();
+    server.bind(null);
+
+    final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
+    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+        address, 5000, false, null, 1000, Charsets.UTF_8).get();
+
+    rawClient.shutdown();
+    ConnectFuture.disconnectFuture(rawClient).get();
+    assertFalse(rawClient.isConnected());
   }
 }
