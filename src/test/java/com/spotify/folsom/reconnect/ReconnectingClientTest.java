@@ -15,13 +15,16 @@
  */
 package com.spotify.folsom.reconnect;
 
+import com.google.common.base.Charsets;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
+import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.Request;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -29,9 +32,13 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
@@ -127,6 +134,39 @@ public class ReconnectingClientTest {
 
 
     assertTrue(client.isConnected());
+  }
+
+  @Test
+  public void testShutdown() throws Exception {
+    ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
+    when(scheduledExecutorService.schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
+            .thenAnswer(new Answer<Object>() {
+              @Override
+              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
+                runnable.run();
+                return null;
+              }
+            });
+
+    FakeClient delegate = new FakeClient(true, false);
+
+    BackoffFunction backoffFunction = mock(BackoffFunction.class);
+    when(backoffFunction.getBackoffTimeMillis(0)).thenReturn(0L);
+    when(backoffFunction.getBackoffTimeMillis(1)).thenReturn(123L);
+
+    ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
+    when(connector.connect())
+            .thenReturn(Futures.<RawMemcacheClient>immediateFuture(delegate));
+
+    ReconnectingClient client = new ReconnectingClient(
+            backoffFunction, scheduledExecutorService,
+            connector, HostAndPort.fromString("localhost:123"));
+
+    assertTrue(client.isConnected());
+    client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
+    assertFalse(client.isConnected());
   }
 
   private static class FakeClient extends AbstractRawMemcacheClient {

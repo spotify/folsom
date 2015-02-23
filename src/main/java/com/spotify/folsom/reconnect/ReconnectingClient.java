@@ -126,7 +126,10 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
             @Override
             public void onSuccess(final Void ignore) {
               log.info("Lost connection to {}", address);
-              retry();
+              notifyConnectionChange();
+              if (stayConnected) {
+                retry();
+              }
             }
 
             @Override
