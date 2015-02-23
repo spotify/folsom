@@ -264,5 +264,9 @@ public class KetamaIntegrationTest {
         daemon.flush();
       }
     }
+
+    public EmbeddedServer getInstance(int i) {
+      return daemons.get(i);
+    }
   }
 }
