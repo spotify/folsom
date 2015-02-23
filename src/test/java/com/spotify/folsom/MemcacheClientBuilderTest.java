@@ -16,12 +16,18 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
@@ -66,4 +72,31 @@ public class MemcacheClientBuilderTest {
     ConnectFuture.connectFuture(client).get();
     client.get("Key").get();
   }
+
+  @Test(expected = MemcacheOverloadedException.class)
+  public void testOverloaded() throws Throwable {
+    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withMaxOutstandingRequests(100)
+            .connectAscii();
+    ConnectFuture.connectFuture(client).get();
+
+    try {
+      List<ListenableFuture<String>> futures = Lists.newArrayList();
+      for (int i = 0; i < 200; i++) {
+        futures.add(client.get("key"));
+      }
+      for (ListenableFuture<String> future : futures) {
+        try {
+          future.get();
+        } catch (ExecutionException e) {
+          throw e.getCause();
+        }
+      }
+      fail("No MemcacheOverloadedException was triggered");
+    } finally {
+      client.shutdown();
+    }
+  }
+
 }

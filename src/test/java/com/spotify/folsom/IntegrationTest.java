@@ -149,6 +149,7 @@ public class IntegrationTest {
   public void tearDown() throws Exception {
     cleanup();
     client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
   }
 
   protected static final String KEY1 = "folsomtest:key1";
