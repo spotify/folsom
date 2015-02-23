@@ -34,8 +34,10 @@ import com.spotify.folsom.reconnect.ReconnectingClient;
 import com.spotify.folsom.retry.RetryingClient;
 import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
 import com.spotify.folsom.transcoder.ByteArrayTranscoder;
+import com.spotify.folsom.transcoder.SerializableObjectTranscoder;
 import com.spotify.folsom.transcoder.StringTranscoder;
 
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -135,6 +137,14 @@ public class MemcacheClientBuilder<V> {
    */
   public static MemcacheClientBuilder<String> newStringClient(Charset charset) {
     return new MemcacheClientBuilder<>(new StringTranscoder(charset));
+  }
+
+  /**
+   * Create a client builder for serializable object values.
+   * @return The builder
+   */
+  public static MemcacheClientBuilder<Serializable> newSerializableObjectClient() {
+    return new MemcacheClientBuilder<>(SerializableObjectTranscoder.INSTANCE);
   }
 
 
