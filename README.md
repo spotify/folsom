@@ -37,7 +37,7 @@ To import it with maven, use this:
       <version>0.6.1</version>
     </dependency>
 
-We are using |semantic versioning](http://semver.org) which means and we are currently still in
+We are using [semantic versioning](http://semver.org) which means and we are currently still in
 the initial development phase. This does not mean that the code is not stable,
 it just means that the API is not necessarily finalized.
 
