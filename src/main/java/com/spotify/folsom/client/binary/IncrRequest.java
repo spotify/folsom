@@ -37,9 +37,8 @@ public class IncrRequest extends BinaryRequest<Long> {
                      final byte opcode,
                      final long by,
                      final long initial,
-                     final int ttl,
-                     final int opaque) {
-    super(key, charset, opaque);
+                     final int ttl) {
+    super(key, charset);
     this.opcode = opcode;
     this.by = by;
     this.initial = initial;
@@ -52,7 +51,7 @@ public class IncrRequest extends BinaryRequest<Long> {
 
     final int extraLength = 8 + 8 + 4; // by + initial + expiration
 
-    writeHeader(dst, opcode, extraLength, 0, 0, opaque);
+    writeHeader(dst, opcode, extraLength, 0, 0);
     dst.putLong(by);
     dst.putLong(initial);
     dst.putInt(expiration);

@@ -27,6 +27,7 @@ import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
+import com.spotify.folsom.client.binary.BinaryRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -73,6 +74,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final AtomicInteger pendingCounter = new AtomicInteger();
   private final int outstandingRequestLimit;
 
+
   private final Channel channel;
   private final BatchFlusher flusher;
   private final HostAndPort address;
@@ -80,6 +82,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final long timeoutMillis;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
+
+  /**
+   * Used to set the opaque field for binary requests, to be able to detect messages out of order.
+   * A regular int is used, because this is only accessed from the single writer thread
+   */
+  private int requestSequenceId = 0;
 
   public static ListenableFuture<RawMemcacheClient> connect(
           final HostAndPort address,
@@ -250,7 +258,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     public void write(final ChannelHandlerContext ctx, final Object msg,
                       final ChannelPromise promise)
         throws Exception {
-      outstanding.add((Request<?>) msg);
+      Request<?> request = (Request<?>) msg;
+      if (request instanceof BinaryRequest) {
+        ((BinaryRequest) request).setOpaque(++requestSequenceId);
+      }
+      outstanding.add(request);
+
       super.write(ctx, msg, promise);
     }
 

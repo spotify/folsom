@@ -38,9 +38,8 @@ public class GetRequest
   public GetRequest(final String key,
                     final Charset charset,
                     final byte opcode,
-                    final int ttl,
-                    final int opaque) {
-    super(key, charset, opaque);
+                    final int ttl) {
+    super(key, charset);
     this.opcode = checkNotNull(opcode, "opcode");
     this.ttl = checkNotNull(ttl, "ttl");
   }
@@ -57,7 +56,7 @@ public class GetRequest
       extrasLength = 0;
     }
 
-    writeHeader(dst, opcode, extrasLength, 0, 0, opaque);
+    writeHeader(dst, opcode, extrasLength, 0, 0);
     if (ttl > 0) {
       dst.putInt(expiration);
     }

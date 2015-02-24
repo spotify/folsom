@@ -38,9 +38,9 @@ public class RetryingClientTest {
   private static final int OPAQUE = 123;
 
   public static final GetRequest GET_REQUEST = new GetRequest(
-          "key1", Charsets.UTF_8, OpCode.GET, -1, OPAQUE);
+          "key1", Charsets.UTF_8, OpCode.GET, -1);
   public static final GetRequest FAIL_REQUEST = new GetRequest(
-          "key2", Charsets.UTF_8, OpCode.GET, -1, OPAQUE);
+          "key2", Charsets.UTF_8, OpCode.GET, -1);
 
   @Test
   public void testSimple() throws Exception {

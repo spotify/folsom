@@ -40,9 +40,8 @@ public class SetRequest
                     final Charset charset,
                     final byte[] value,
                     final int ttl,
-                    final long cas,
-                    final int opaque) {
-    super(key, charset, opaque);
+                    final long cas) {
+    super(key, charset);
     this.opcode = opcode;
     this.value = value;
     this.ttl = ttl;
@@ -60,7 +59,7 @@ public class SetRequest
 
     final int extraLength = hasExtra ? 8 : 0;
 
-    writeHeader(dst, opcode, extraLength, valueLength, cas, opaque);
+    writeHeader(dst, opcode, extraLength, valueLength, cas);
     if (hasExtra) {
       dst.putInt(0); // byte 24-27, flags
       dst.putInt(expiration); // byte 28-31, expiration

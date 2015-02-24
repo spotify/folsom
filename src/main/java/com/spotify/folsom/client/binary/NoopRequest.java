@@ -27,9 +27,9 @@ import java.nio.ByteBuffer;
 
 public class NoopRequest extends BinaryRequest<Void> {
 
-  public NoopRequest(final int opaque) {
+  public NoopRequest() {
     // Keys have to be valid, so pick the key "X" even though we will never actually use it.
-    super("X", Charsets.US_ASCII, opaque);
+    super("X", Charsets.US_ASCII);
   }
 
   @Override
@@ -42,7 +42,7 @@ public class NoopRequest extends BinaryRequest<Void> {
     dst.put((byte) 0);
     dst.put((byte) 0);
     dst.putInt(0); // byte 8-11
-    dst.putInt(opaque); // byte 12-15, Opaque
+    dst.putInt(getOpaque()); // byte 12-15, Opaque
     dst.putLong((long) 0); // byte 16-23, CAS
     return toBuffer(alloc, dst);
   }

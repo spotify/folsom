@@ -35,7 +35,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -51,8 +50,6 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   private final Transcoder<V> valueTranscoder;
   private final TransformerUtil<V> transformerUtil;
   private final Charset charset;
-
-  private final AtomicInteger opaqueGenerator = new AtomicInteger();
 
   public DefaultBinaryMemcacheClient(final RawMemcacheClient rawMemcacheClient,
                                      final Metrics metrics,
@@ -132,7 +129,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = new SetRequest(
-            opcode, key, charset, valueBytes, ttl, cas, makeOpaque());
+            opcode, key, charset, valueBytes, ttl, cas);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -171,7 +168,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   private ListenableFuture<GetResult<V>> getInternal(final String key, final int ttl) {
-    GetRequest request = new GetRequest(key, charset, OpCode.GET, ttl, makeOpaque());
+    GetRequest request = new GetRequest(key, charset, OpCode.GET, ttl);
     final ListenableFuture<GetResult<byte[]>> future =
             rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);
@@ -195,7 +192,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
           new ArrayList<>(keyPartition.size());
 
     for (final List<String> part : keyPartition) {
-      MultigetRequest request = MultigetRequest.create(part, charset, ttl, makeOpaque());
+      MultigetRequest request = MultigetRequest.create(part, charset, ttl);
       futureList.add(rawMemcacheClient.send(request));
     }
 
@@ -227,7 +224,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<MemcacheStatus> touch(final String key, final int ttl) {
-    TouchRequest request = new TouchRequest(key, charset, ttl, makeOpaque());
+    TouchRequest request = new TouchRequest(key, charset, ttl);
     ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
     return future;
@@ -238,7 +235,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<MemcacheStatus> delete(final String key) {
-    DeleteRequest request = new DeleteRequest(key, charset, makeOpaque());
+    DeleteRequest request = new DeleteRequest(key, charset);
     final ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
     return future;
@@ -260,7 +257,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
                                               final int ttl) {
 
     final ListenableFuture<Long> future = rawMemcacheClient.send(
-            new IncrRequest(key, charset, opcode, by, initial, ttl, makeOpaque()));
+            new IncrRequest(key, charset, opcode, by, initial, ttl));
     metrics.measureIncrDecrFuture(future);
     return future;
   }
@@ -312,7 +309,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<Void> noop() {
-    return rawMemcacheClient.send(new NoopRequest(makeOpaque()));
+    return rawMemcacheClient.send(new NoopRequest());
   }
 
   /*
@@ -354,10 +351,6 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public String toString() {
     return "BinaryMemcacheClient(" + rawMemcacheClient + ")";
-  }
-
-  private int makeOpaque() {
-    return opaqueGenerator.incrementAndGet();
   }
 }
 
