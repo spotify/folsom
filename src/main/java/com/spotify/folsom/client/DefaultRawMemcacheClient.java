@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Queues;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
@@ -89,6 +90,16 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
    */
   private int requestSequenceId = 0;
 
+  /**
+   * Used to count number of writes that were skipped because the request was already cancelled
+   */
+  private volatile int skippedWrites;
+
+  /**
+   * Used to count number of reads that were skipped because the request was already cancelled
+   */
+  private volatile int skippedReads;
+
   public static ListenableFuture<RawMemcacheClient> connect(
           final HostAndPort address,
           final int outstandingRequestLimit,
@@ -133,7 +144,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       public void operationComplete(final ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
           // Create client
-          final RawMemcacheClient client = new DefaultRawMemcacheClient(
+          final DefaultRawMemcacheClient client = new DefaultRawMemcacheClient(
               address,
               future.channel(),
               outstandingRequestLimit,
@@ -259,6 +270,10 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                       final ChannelPromise promise)
         throws Exception {
       Request<?> request = (Request<?>) msg;
+      if (request.isCancelled()) {
+        skippedWrites++;
+        return;
+      }
       if (request instanceof BinaryRequest) {
         ((BinaryRequest) request).setOpaque(++requestSequenceId);
       }
@@ -291,6 +306,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         throw new Exception("Unexpected response: " + msg);
       }
       pendingCounter.decrementAndGet();
+      if (request.isCancelled()) {
+        skippedReads++;
+        return;
+      }
+
       try {
         request.handle(msg);
       } catch (final Exception exception) {
@@ -382,4 +402,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       notifyConnectionChange();
     }
   }
+
+  @VisibleForTesting
+  int numSkippedWrites() {
+    return skippedWrites;
+  }
+
+  @VisibleForTesting
+  int numSkippedReads() {
+    return skippedReads;
+  }
+
 }
