@@ -27,4 +27,15 @@ public interface Metrics {
   void measureSetFuture(ListenableFuture<MemcacheStatus> future);
   void measureIncrDecrFuture(ListenableFuture<Long> future);
   void measureTouchFuture(ListenableFuture<MemcacheStatus> future);
+
+  /**
+   * Called by the MemcacheClient initialization process to allow a gauge to be registered with the
+   * metrics implementation to monitor the number of outstanding requests at any moment in time.
+   */
+  void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge);
+
+  interface OutstandingRequestsGauge {
+    int getOutstandingRequests();
+  }
+
 }

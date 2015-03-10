@@ -443,6 +443,8 @@ public class MemcacheClientBuilder<V> {
         maxOutstandingRequests,
         binary,
         executor,
-        timeoutMillis, charset);
+        timeoutMillis,
+        charset,
+        metrics);
   }
 }

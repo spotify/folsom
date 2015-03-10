@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
 import com.spotify.folsom.ConnectFuture;
+import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
@@ -62,13 +63,14 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final boolean binary,
                             final Executor executor,
                             final long timeoutMillis,
-                            final Charset charset) {
+                            final Charset charset,
+                            final Metrics metrics) {
     this(backoffFunction, scheduledExecutorService, new Connector() {
       @Override
       public ListenableFuture<RawMemcacheClient> connect() {
         return DefaultRawMemcacheClient.connect(
                 address, outstandingRequestLimit,
-                binary, executor, timeoutMillis, charset);
+                binary, executor, timeoutMillis, charset, metrics);
       }
     }, address);
   }

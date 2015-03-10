@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
+import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
@@ -95,7 +96,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
           final boolean binary,
           final Executor executor,
           final long timeoutMillis,
-          final Charset charset) {
+          final Charset charset,
+          final Metrics metrics) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -138,7 +140,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               future.channel(),
               outstandingRequestLimit,
               executor,
-              timeoutMillis);
+              timeoutMillis,
+              metrics);
           clientFuture.set(client);
         } else {
           clientFuture.setException(future.cause());
@@ -153,13 +156,21 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private DefaultRawMemcacheClient(final HostAndPort address,
                                    final Channel channel,
                                    final int outstandingRequestLimit,
-                                   final Executor executor, final long timeoutMillis) {
+                                   final Executor executor, final long timeoutMillis,
+                                   final Metrics metrics) {
     this.address = address;
     this.executor = executor;
     this.timeoutMillis = timeoutMillis;
     this.channel = checkNotNull(channel, "channel");
     this.flusher = new BatchFlusher(channel);
     this.outstandingRequestLimit = outstandingRequestLimit;
+
+    metrics.registerOutstandingRequestsGauge(new Metrics.OutstandingRequestsGauge() {
+      @Override
+      public int getOutstandingRequests() {
+        return pendingCounter.get();
+      }
+    });
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
   }

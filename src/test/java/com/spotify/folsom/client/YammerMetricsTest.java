@@ -36,13 +36,17 @@ public class YammerMetricsTest {
 
   private YammerMetrics metrics;
   private AsciiMemcacheClient<String> client;
+  private FakeRawMemcacheClient fakeRawMemcacheClient;
 
   @Before
   public void setUp() throws Exception {
     metrics = new YammerMetrics(new MetricsRegistry());
+    fakeRawMemcacheClient = new FakeRawMemcacheClient(metrics);
     client = new DefaultAsciiMemcacheClient<>(
-            new FakeRawMemcacheClient(), metrics,
-            StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
+        fakeRawMemcacheClient,
+        metrics,
+        StringTranscoder.UTF8_INSTANCE,
+        Charsets.UTF_8);
     ConnectFuture.connectFuture(client).get();
   }
 
@@ -153,6 +157,19 @@ public class YammerMetricsTest {
     awaitCount(1, metrics.getDeletes());
     assertEquals(0, metrics.getDeleteFailures().count());
     assertEquals(1, metrics.getDeleteSuccesses().count());
+  }
+
+  /** Test wiring up of OutstandingRequestGauge to the Yammer-metrics gauge. */
+  @Test
+  public void testOutstandingRequests() throws Exception {
+    // baseline
+    assertEquals(0, metrics.getOutstandingRequestsGauge().value().intValue());
+
+    fakeRawMemcacheClient.setOutstandingRequests(5);
+    assertEquals(5, metrics.getOutstandingRequestsGauge().value().intValue());
+
+    fakeRawMemcacheClient.setOutstandingRequests(0);
+    assertEquals(0, metrics.getOutstandingRequestsGauge().value().intValue());
   }
 
   private void awaitCount(int expectedValue, Metered timer) throws InterruptedException {
