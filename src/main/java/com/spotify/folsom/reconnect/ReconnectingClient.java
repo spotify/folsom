@@ -26,6 +26,7 @@ import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
+import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import org.slf4j.Logger;
@@ -55,6 +56,18 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   private volatile RawMemcacheClient client = NotConnectedClient.INSTANCE;
   private volatile int reconnectCount = 0;
   private volatile boolean stayConnected = true;
+
+  public ReconnectingClient(final BackoffFunction backoffFunction,
+                            final ScheduledExecutorService scheduledExecutorService,
+                            final HostAndPort address,
+                            final int outstandingRequestLimit,
+                            final boolean binary,
+                            final Executor executor,
+                            final long timeoutMillis,
+                            final Charset charset) {
+    this(backoffFunction, scheduledExecutorService, address, outstandingRequestLimit,
+        binary, executor, timeoutMillis, charset, new NoopMetrics());
+  }
 
   public ReconnectingClient(final BackoffFunction backoffFunction,
                             final ScheduledExecutorService scheduledExecutorService,
