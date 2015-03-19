@@ -19,6 +19,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
@@ -32,6 +33,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -53,13 +55,17 @@ public class KetamaMemcacheClientTest {
     }
   }
 
-  private void test(final int numClients, final int keysFound, final int requestSize, boolean binary) throws InterruptedException, java.util.concurrent.ExecutionException {
+  private void test(final int numClients, final int keysFound, final int requestSize,
+                    boolean binary)
+      throws InterruptedException, ExecutionException {
+
     final Random random = new Random(123717678612L);
 
     final ArrayList<AddressAndClient> clients = Lists.newArrayList();
     for (int i = 0; i < numClients; i++) {
       final FakeRawMemcacheClient client = new FakeRawMemcacheClient();
-      final AddressAndClient aac = new AddressAndClient(HostAndPort.fromString("host" + i + ":11211"), client);
+      final AddressAndClient aac = new AddressAndClient(
+          HostAndPort.fromString("host" + i + ":11211"), client);
       clients.add(aac);
 
       final MemcacheClient<String> memcacheClient = buildClient(client, binary);

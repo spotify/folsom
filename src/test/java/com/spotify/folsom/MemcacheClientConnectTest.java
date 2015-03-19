@@ -23,7 +23,7 @@ import org.junit.Test;
 
 public class MemcacheClientConnectTest {
 
-  @Test(expected=MemcacheClosedException.class)
+  @Test(expected = MemcacheClosedException.class)
   public void testConnectFails() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("dummy.dummy", 56742))
@@ -31,7 +31,7 @@ public class MemcacheClientConnectTest {
     Futures.get(client.get("foo"), MemcacheClosedException.class);
   }
 
-  @Test(expected=MemcacheClosedException.class)
+  @Test(expected = MemcacheClosedException.class)
   public void testConnectPort() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("127.0.0.1", 56742))

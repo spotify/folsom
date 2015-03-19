@@ -36,8 +36,8 @@ public class EmbeddedServer {
     daemon = new MemCacheDaemon<>();
     final int maxItems = 1492;
     final int maxBytes = 1024 * 1000;
-    final CacheStorage<Key, LocalCacheElement> storage =
-            ConcurrentLinkedHashMap.create(ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
+    final CacheStorage<Key, LocalCacheElement> storage = ConcurrentLinkedHashMap.create(
+                ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
     daemon.setCache(new CacheImpl(storage));
     daemon.setBinary(binary);
     daemon.setVerbose(false);

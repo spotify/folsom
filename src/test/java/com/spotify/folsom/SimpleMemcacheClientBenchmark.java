@@ -64,7 +64,8 @@ public class SimpleMemcacheClientBenchmark {
 
   public static final int NUM_CLIENT_CONNECTIONS = 3;
 
-  public static void main(final String[] args) throws ExecutionException, InterruptedException, IOException {
+  public static void main(final String[] args)
+      throws ExecutionException, InterruptedException, IOException {
     // Set up client
 
     BinaryMemcacheClient<String> client;
@@ -80,7 +81,8 @@ public class SimpleMemcacheClientBenchmark {
           }
         }
       };
-      spyClient = new MemcachedClient(defaultConnectionFactory, Collections.nCopies(NUM_CLIENT_CONNECTIONS, new InetSocketAddress("localhost", 11211)));
+      spyClient = new MemcachedClient(defaultConnectionFactory,
+          Collections.nCopies(NUM_CLIENT_CONNECTIONS, new InetSocketAddress("localhost", 11211)));
     } else {
       client = MemcacheClientBuilder.newStringClient()
               .withMaxOutstandingRequests(100000)
@@ -106,16 +108,17 @@ public class SimpleMemcacheClientBenchmark {
         values2.add(value);
         if (TEST_SPYMEMCACHED) {
           final SettableFuture<MemcacheStatus> settable = SettableFuture.create();
-          spyClient.set(key, Integer.MAX_VALUE, value).addListener(new OperationCompletionListener() {
-            @Override
-            public void onComplete(final OperationFuture<?> future) throws Exception {
-              if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
-                settable.set(null);
-              } else {
-                settable.setException(new RuntimeException(future.getStatus().getMessage()));
-              }
-            }
-          });
+          spyClient.set(key, Integer.MAX_VALUE, value)
+              .addListener(new OperationCompletionListener() {
+                @Override
+                public void onComplete(final OperationFuture<?> future) throws Exception {
+                  if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
+                    settable.set(null);
+                  } else {
+                    settable.setException(new RuntimeException(future.getStatus().getMessage()));
+                  }
+                }
+              });
           futures.add(settable);
         } else {
           futures.add(client.set(key, value, Integer.MAX_VALUE));
@@ -134,7 +137,11 @@ public class SimpleMemcacheClientBenchmark {
 
     for (int i = 0; i < CONCURRENCY; i++) {
       if (TEST_SPYMEMCACHED) {
-        sendSpyMemcached(spyClient, keys.get(i), toMap(keys.get(i), values.get(i)), meter, backoffExecutor);
+        sendSpyMemcached(spyClient,
+            keys.get(i),
+            toMap(keys.get(i), values.get(i)),
+            meter,
+            backoffExecutor);
       } else {
         sendFolsom(client, keys.get(i), values.get(i), meter, backoffExecutor);
       }

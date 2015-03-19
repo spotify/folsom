@@ -184,7 +184,8 @@ public class ContinuumTest {
     final List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
     final Continuum c = new Continuum(clients);
 
-    List<RawMemcacheClient> actual = Arrays.asList(c.findClient(bytes("key321")), c.findClient(bytes("key477")));
+    List<RawMemcacheClient> actual =
+        Arrays.asList(c.findClient(bytes("key321")), c.findClient(bytes("key477")));
     List<RawMemcacheClient> expected = Arrays.asList(CLIENT2, CLIENT3);
     assertEquals(expected, actual);
   }

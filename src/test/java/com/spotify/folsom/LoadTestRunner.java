@@ -36,7 +36,7 @@ public class LoadTestRunner {
                     .connectBinary();
 
     final String[] keys = new String[10];
-    for (int i = 0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       keys[i] = "key" + i;
     }
 
@@ -48,27 +48,33 @@ public class LoadTestRunner {
         final String key = keyProto + ":" + r;
 
         final ListenableFuture<MemcacheStatus> setFuture = client.set(key, "value" + key, 100000);
-        final ListenableFuture<String> getFuture = Utils.transform(setFuture, new AsyncFunction<MemcacheStatus, String>() {
-          @Override
-          public ListenableFuture<String> apply(final MemcacheStatus input) throws Exception {
-            return client.get(key);
-          }
-        });
-        final ListenableFuture<String> deleteFuture = Utils.transform(getFuture, new AsyncFunction<String, String>() {
-          @Override
-          public ListenableFuture<String> apply(final String value) throws Exception {
-            return Utils.transform(client.delete(key), new Function<MemcacheStatus, String>() {
+        final ListenableFuture<String> getFuture = Utils.transform(setFuture,
+            new AsyncFunction<MemcacheStatus, String>() {
               @Override
-              public String apply(final MemcacheStatus input) {
-                return value;
-              }});
-          }});
+              public ListenableFuture<String> apply(final MemcacheStatus input) throws Exception {
+                return client.get(key);
+              }
+            });
+        final ListenableFuture<String> deleteFuture = Utils.transform(getFuture,
+            new AsyncFunction<String, String>() {
+              @Override
+              public ListenableFuture<String> apply(final String value) throws Exception {
+                return Utils.transform(client.delete(key), new Function<MemcacheStatus, String>() {
+                  @Override
+                  public String apply(final MemcacheStatus input) {
+                    return value;
+                  }
+                });
+              }
+            });
 
-        final ListenableFuture<Boolean> assertFuture = Utils.transform(deleteFuture, new Function<String, Boolean>() {
-          @Override
-          public Boolean apply(final String input) {
-            return ("value" + key).equals(input);
-          }});
+        final ListenableFuture<Boolean> assertFuture = Utils.transform(deleteFuture,
+            new Function<String, Boolean>() {
+              @Override
+              public Boolean apply(final String input) {
+                return ("value" + key).equals(input);
+              }
+            });
 
         futures.add(assertFuture);
       }

@@ -66,7 +66,7 @@ public class SrvKetamaIntegrationTest {
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
-            .withRequestTimeoutMillis(10*1000);
+            .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 
     KetamaIntegrationTest.allClientsConnected(client);
@@ -82,8 +82,8 @@ public class SrvKetamaIntegrationTest {
   @Test
   public void testSetGet() throws Exception {
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    int NUM_KEYS = 1000;
-    for (int i = 0; i < NUM_KEYS; i++) {
+    final int numKeys = 1000;
+    for (int i = 0; i < numKeys; i++) {
       ListenableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
       futures.add(future);
 
@@ -95,7 +95,7 @@ public class SrvKetamaIntegrationTest {
     Futures.allAsList(futures).get();
     futures.clear();
 
-    for (int i = 0; i < NUM_KEYS; i++) {
+    for (int i = 0; i < numKeys; i++) {
       ListenableFuture<String> future = client.get("key-" + i);
       futures.add(future);
 
@@ -104,7 +104,7 @@ public class SrvKetamaIntegrationTest {
         future.get();
       }
     }
-    for (int i = 0; i < NUM_KEYS; i++) {
+    for (int i = 0; i < numKeys; i++) {
       assertEquals("value-" + i, futures.get(i).get());
     }
     futures.clear();
@@ -118,7 +118,7 @@ public class SrvKetamaIntegrationTest {
 
     assertTrue(client.numActiveConnections() == client.numTotalConnections() - 1);
 
-    for (int i = 0; i < NUM_KEYS; i++) {
+    for (int i = 0; i < numKeys; i++) {
       ListenableFuture<String> future = client.get("key-" + i);
       futures.add(future);
 
@@ -129,16 +129,16 @@ public class SrvKetamaIntegrationTest {
 
     }
     int misses = 0;
-    for (int i = 0; i < NUM_KEYS; i++) {
+    for (int i = 0; i < numKeys; i++) {
       misses += futures.get(i).get() == null ? 1 : 0;
     }
 
     // About 1/3 should be misses.
     // Due to random ports in the embedded server, this is actually somewhat non-deterministic.
     // This is why we use a large number of keys.
-    double missWithPerfectDistribution = NUM_KEYS / servers.getAddresses().size();
+    double missWithPerfectDistribution = numKeys / servers.getAddresses().size();
     double diff = Math.abs(misses - missWithPerfectDistribution);
-    double relativeDiff = diff / NUM_KEYS;
+    double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);
   }
 

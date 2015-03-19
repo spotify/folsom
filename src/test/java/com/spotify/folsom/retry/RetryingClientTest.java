@@ -35,8 +35,6 @@ import static org.mockito.Mockito.when;
 
 public class RetryingClientTest {
 
-  private static final int OPAQUE = 123;
-
   public static final GetRequest GET_REQUEST = new GetRequest(
           "key1", Charsets.UTF_8, OpCode.GET, -1);
   public static final GetRequest FAIL_REQUEST = new GetRequest(
@@ -46,19 +44,24 @@ public class RetryingClientTest {
   public void testSimple() throws Exception {
     RawMemcacheClient delegate = mock(RawMemcacheClient.class);
 
+    MemcacheClosedException ex = new MemcacheClosedException("reason");
+    GetResult<byte[]> result = GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123);
     when(delegate.send(GET_REQUEST))
-            .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(new MemcacheClosedException("reason")))
-            .thenReturn(Futures.immediateFuture(GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123)));
+        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex))
+        .thenReturn(Futures.immediateFuture(result));
 
+    MemcacheClosedException ex1 = new MemcacheClosedException("reason1");
+    MemcacheClosedException ex2 = new MemcacheClosedException("reason2");
     when(delegate.send(FAIL_REQUEST))
-            .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(new MemcacheClosedException("reason1")))
-            .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(new MemcacheClosedException("reason2")));
+        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex1))
+        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex2));
 
     when(delegate.isConnected()).thenReturn(true);
 
     RetryingClient retryingClient = new RetryingClient(delegate);
 
-    assertEquals("bar", StringTranscoder.UTF8_INSTANCE.decode(retryingClient.send(GET_REQUEST).get().getValue()));
+    byte[] responseBytes = retryingClient.send(GET_REQUEST).get().getValue();
+    assertEquals("bar", StringTranscoder.UTF8_INSTANCE.decode(responseBytes));
 
     try {
       retryingClient.send(FAIL_REQUEST).get();

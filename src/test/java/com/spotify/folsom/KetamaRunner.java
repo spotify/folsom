@@ -36,7 +36,7 @@ public class KetamaRunner {
                     .withAddresses(addresses)
                     .connectBinary();
 
-    for (int i = 0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
       final String key = "key" + i;
       final String value = "value" + i;
       checkKeyOkOrNotFound(client.delete(key));
@@ -53,7 +53,8 @@ public class KetamaRunner {
     checkStatus(future, ImmutableSet.of(MemcacheStatus.KEY_NOT_FOUND, MemcacheStatus.OK));
   }
 
-  private static void checkStatus(final ListenableFuture<?> future, final Set<MemcacheStatus> expected)
+  private static void checkStatus(final ListenableFuture<?> future,
+                                  final Set<MemcacheStatus> expected)
       throws Throwable {
     try {
       final Object v = future.get();

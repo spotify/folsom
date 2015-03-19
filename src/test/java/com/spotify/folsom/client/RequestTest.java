@@ -31,12 +31,12 @@ public class RequestTest {
     Request.encodeKey("räksmörgås", Charsets.UTF_8);
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testValidateKeyTooLongKey() throws Exception {
     Request.encodeKey(Strings.repeat("hello", 100), Charsets.UTF_8);
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testValidateKeyWithSpace() throws Exception {
     Request.encodeKey("hello world", Charsets.UTF_8);
   }

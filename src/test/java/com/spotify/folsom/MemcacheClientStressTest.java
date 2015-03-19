@@ -16,15 +16,15 @@
 
 package com.spotify.folsom;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,6 +38,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 
 import static org.junit.Assert.assertEquals;
 
@@ -106,7 +109,10 @@ public class MemcacheClientStressTest {
     }
   }
 
-  private void addRequest(final MemcacheClient<byte[]> client, final List<ListenableFuture<byte[]>> futures, final AtomicInteger successes, final ConcurrentMap<String, AtomicInteger> failures) {
+  private void addRequest(final MemcacheClient<byte[]> client,
+                          final List<ListenableFuture<byte[]>> futures,
+                          final AtomicInteger successes,
+                          final ConcurrentMap<String, AtomicInteger> failures) {
     final ListenableFuture<byte[]> future = client.get(KEY);
     Futures.addCallback(future, new FutureCallback<byte[]>() {
       @Override
