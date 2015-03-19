@@ -203,6 +203,7 @@
           <consoleOutput>true</consoleOutput>
           <failOnViolation>true</failOnViolation>
           <failsOnError>true</failsOnError>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <maxAllowedViolations>0</maxAllowedViolations>
         </configuration>
         <executions>
