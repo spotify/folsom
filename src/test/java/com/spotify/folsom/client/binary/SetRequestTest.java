@@ -58,7 +58,8 @@ public class SetRequestTest extends RequestTestTemplate {
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.ADD, KEY.length(), 8, KEY.length() + 8 + VALUE.length(), req.getOpaque(), cas);
+    final int keyLen = KEY.length();
+    assertHeader(b, OpCode.ADD, keyLen, 8, keyLen + 8 + VALUE.length(), req.getOpaque(), cas);
     assertZeros(b, 4);
     assertExpiration(b.readInt());
     assertString(KEY, b);

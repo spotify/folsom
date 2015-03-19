@@ -15,14 +15,14 @@
  */
 package com.spotify.folsom;
 
+import org.junit.Test;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
-
 public class GetResultTest {
 
-  @Test(expected=NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testCstrNullValue() throws Exception {
     GetResult.success(null, 123);
   }

@@ -217,7 +217,8 @@ public class MisbehavingServerTest {
         }
 
         private void handleConnection(Socket socket) throws Exception {
-          BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
+          BufferedReader reader =
+              new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
           String s = reader.readLine();
           if (s.startsWith("get ") || s.startsWith("touch ")) {
             // Don't need to read any more lines

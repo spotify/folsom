@@ -43,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
 
-  @Parameterized.Parameters(name="{0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
     res.add(new Object[]{"ascii"});
@@ -73,7 +73,7 @@ public class KetamaIntegrationTest {
   }
 
   public static void allClientsConnected(final MemcacheClient<?> client)
-      throws Exception{
+      throws Exception {
     final CountDownLatch done = new CountDownLatch(1);
 
     client.registerForConnectionChanges(new ConnectionChangeListener() {
@@ -109,7 +109,7 @@ public class KetamaIntegrationTest {
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
-            .withRequestTimeoutMillis(10*1000);
+            .withRequestTimeoutMillis(10 * 1000);
 
     if (ascii) {
       client = builder.connectAscii();

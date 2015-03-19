@@ -43,12 +43,12 @@ public class ProgressMeter {
   private long lastLatency = 0;
   private final long interval = 1000;
 
-  final private String unit;
+  private final String unit;
 
-  final private AtomicLong latency = new AtomicLong();
-  final private AtomicLong operations = new AtomicLong();
+  private final AtomicLong latency = new AtomicLong();
+  private final AtomicLong operations = new AtomicLong();
 
-  final private ArrayDeque<Delta> deltas = new ArrayDeque<>();
+  private final ArrayDeque<Delta> deltas = new ArrayDeque<>();
 
   private volatile boolean run = true;
 
@@ -104,11 +104,21 @@ public class ProgressMeter {
     final long averagedOperations = timeSum == 0 ? 0 : 1000000000 * opSum / timeSum;
     final double averageLatency = opSum == 0 ? 0 : latencySum / (1000000.d * opSum);
 
-    com.sun.management.OperatingSystemMXBean operatingSystemMXBean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-    double totalCPU = 100.0*operatingSystemMXBean.getSystemCpuLoad();
-    double processCPU = 100.0*operatingSystemMXBean.getProcessCpuLoad();
-    System.out.printf("%,10d (%,10d) %s/s. %,10.9f ms average latency. %,10d %s total. process=%3.0f%%, total=%3.0f%%\n",
-                      operations, averagedOperations, unit, averageLatency, count, unit, processCPU, totalCPU);
+    com.sun.management.OperatingSystemMXBean operatingSystemMXBean =
+        (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    double totalCPU = 100.0 * operatingSystemMXBean.getSystemCpuLoad();
+    double processCPU = 100.0 * operatingSystemMXBean.getProcessCpuLoad();
+    System.out.printf(
+        "%,10d (%,10d) %s/s. %,10.9f ms average latency. "
+        + "%,10d %s total. process=%3.0f%%, total=%3.0f%%\n",
+        operations,
+        averagedOperations,
+        unit,
+        averageLatency,
+        count,
+        unit,
+        processCPU,
+        totalCPU);
     System.out.flush();
 
     lastRows = count;

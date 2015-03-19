@@ -70,7 +70,7 @@ public class IntegrationTest {
     }
   }
 
-  @Parameterized.Parameters(name="{0}-{1}")
+  @Parameterized.Parameters(name = "{0}-{1}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
     res.add(new Object[]{"embedded", "ascii"});
@@ -135,7 +135,7 @@ public class IntegrationTest {
       client = binaryClient;
     }
     ConnectFuture.connectFuture(client).get();
-    System.out.println("Using client: " + client + ", protocol: " + protocol + " and port: " + port);
+    System.out.printf("Using client: %s protocol: %s and port: %d\n", client, protocol, port);
     cleanup();
   }
 
@@ -429,7 +429,7 @@ public class IntegrationTest {
     }
     // Ascii client behaves differently for this use case
     if (binaryClient != null) {
-      assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0,0).get());
+      assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0, 0).get());
       // memcached will intermittently cause this test to fail due to the value not being set
       // correctly when incr with initial=0 is used, this works around that
       binaryClient.set(KEY1, "0", TTL).get();

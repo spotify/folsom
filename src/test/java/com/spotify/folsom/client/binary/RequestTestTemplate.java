@@ -60,11 +60,11 @@ public abstract class RequestTestTemplate {
   }
 
   protected void assertByte(final int expected, final byte actual) {
-    assertEquals((byte)expected, actual);
+    assertEquals((byte) expected, actual);
   }
 
   protected void assertShort(final int expected, final short actual) {
-    assertEquals((short)expected, actual);
+    assertEquals((short) expected, actual);
   }
 
   protected void assertZeros(final ByteBuf buf, final int len) {
@@ -89,7 +89,7 @@ public abstract class RequestTestTemplate {
   }
 
   protected void assertExpiration(final int expiration) {
-    final long now = System.currentTimeMillis()/1000;
+    final long now = System.currentTimeMillis() / 1000;
 
     // check if in a reasonable interval
     // TODO improve

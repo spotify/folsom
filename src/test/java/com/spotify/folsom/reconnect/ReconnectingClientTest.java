@@ -18,12 +18,15 @@ package com.spotify.folsom.reconnect;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -45,19 +48,25 @@ import static org.mockito.Mockito.when;
 
 public class ReconnectingClientTest {
 
+  private final ScheduledExecutorService scheduledExecutorService =
+      mock(ScheduledExecutorService.class);
+
+  @Before
+  public void setUp() throws Exception {
+    when(scheduledExecutorService
+        .schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
+        .thenAnswer(new Answer<Object>() {
+          @Override
+          public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
+            runnable.run();
+            return null;
+          }
+        });
+  }
+
   @Test
   public void testInitialConnect() throws Exception {
-    ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
-    when(scheduledExecutorService.schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
-            .thenAnswer(new Answer<Object>() {
-              @Override
-              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
-                runnable.run();
-                return null;
-              }
-            });
-
     FakeClient delegate = new FakeClient(true, false);
 
     BackoffFunction backoffFunction = mock(BackoffFunction.class);
@@ -76,8 +85,10 @@ public class ReconnectingClientTest {
             connector, HostAndPort.fromString("localhost:123"));
 
     verify(connector, times(3)).connect();
-    verify(scheduledExecutorService, times(1)).schedule(Mockito.<Runnable>any(), eq(0L), eq(TimeUnit.MILLISECONDS));
-    verify(scheduledExecutorService, times(1)).schedule(Mockito.<Runnable>any(), eq(123L), eq(TimeUnit.MILLISECONDS));
+    verify(scheduledExecutorService, times(1))
+        .schedule(Mockito.<Runnable>any(), eq(0L), eq(TimeUnit.MILLISECONDS));
+    verify(scheduledExecutorService, times(1))
+        .schedule(Mockito.<Runnable>any(), eq(123L), eq(TimeUnit.MILLISECONDS));
     verify(backoffFunction, times(1)).getBackoffTimeMillis(0);
     verify(backoffFunction, times(1)).getBackoffTimeMillis(1);
 
@@ -89,17 +100,6 @@ public class ReconnectingClientTest {
 
   @Test
   public void testLostConnectionRetry() throws Exception {
-    ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
-    when(scheduledExecutorService.schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
-            .thenAnswer(new Answer<Object>() {
-              @Override
-              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
-                runnable.run();
-                return null;
-              }
-            });
-
     FakeClient delegate1 = new FakeClient(true, true);
     FakeClient delegate2 = new FakeClient(true, false);
 
@@ -120,8 +120,10 @@ public class ReconnectingClientTest {
             connector, HostAndPort.fromString("localhost:123"));
 
     verify(connector, times(4)).connect();
-    verify(scheduledExecutorService, times(1)).schedule(Mockito.<Runnable>any(), eq(0L), eq(TimeUnit.MILLISECONDS));
-    verify(scheduledExecutorService, times(1)).schedule(Mockito.<Runnable>any(), eq(123L), eq(TimeUnit.MILLISECONDS));
+    verify(scheduledExecutorService, times(1))
+        .schedule(Mockito.<Runnable>any(), eq(0L), eq(TimeUnit.MILLISECONDS));
+    verify(scheduledExecutorService, times(1))
+        .schedule(Mockito.<Runnable>any(), eq(123L), eq(TimeUnit.MILLISECONDS));
     verify(backoffFunction, times(1)).getBackoffTimeMillis(0);
     verify(backoffFunction, times(1)).getBackoffTimeMillis(1);
 
@@ -133,17 +135,6 @@ public class ReconnectingClientTest {
 
   @Test
   public void testShutdown() throws Exception {
-    ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
-    when(scheduledExecutorService.schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
-            .thenAnswer(new Answer<Object>() {
-              @Override
-              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
-                runnable.run();
-                return null;
-              }
-            });
-
     FakeClient delegate = new FakeClient(true, false);
 
     BackoffFunction backoffFunction = mock(BackoffFunction.class);

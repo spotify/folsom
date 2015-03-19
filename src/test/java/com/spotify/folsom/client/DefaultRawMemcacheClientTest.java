@@ -19,6 +19,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ListenableFuture;
+
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.MemcacheClosedException;
@@ -28,8 +29,7 @@ import com.spotify.folsom.client.ascii.AsciiResponse;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +42,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -65,7 +68,9 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("localhost", embeddedServer.getPort()), 5000, false, null, 3000, Charsets.UTF_8).get();
+        HostAndPort.fromParts("localhost", embeddedServer.getPort()),
+        5000, false, null, 3000, Charsets.UTF_8
+    ).get();
 
     DefaultAsciiMemcacheClient<String> asciiClient =
             new DefaultAsciiMemcacheClient<>(
@@ -111,7 +116,8 @@ public class DefaultRawMemcacheClientTest {
     assertEquals(stuck + " out of " + total + " requests got stuck:\n" + sb.toString(), 0, stuck);
   }
 
-  private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient) throws InterruptedException {
+  private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient)
+      throws InterruptedException {
     try {
       rawClient.send(new AsciiRequest<String>("key", Charsets.UTF_8) {
         @Override
