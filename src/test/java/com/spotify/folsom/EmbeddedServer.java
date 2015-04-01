@@ -16,12 +16,13 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Throwables;
+
 import com.thimbleware.jmemcached.Cache;
+import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
 import com.thimbleware.jmemcached.MemCacheDaemon;
-import com.thimbleware.jmemcached.storage.CacheStorage;
 import com.thimbleware.jmemcached.storage.hash.ConcurrentLinkedHashMap;
 
 import java.io.IOException;
@@ -29,21 +30,31 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 public class EmbeddedServer {
-  private final MemCacheDaemon<LocalCacheElement> daemon;
+
+  private final MemCacheDaemon<? extends CacheElement> daemon;
   private final int port;
 
   public EmbeddedServer(boolean binary) {
-    daemon = new MemCacheDaemon<>();
-    final int maxItems = 1492;
-    final int maxBytes = 1024 * 1000;
-    final CacheStorage<Key, LocalCacheElement> storage = ConcurrentLinkedHashMap.create(
-                ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
-    daemon.setCache(new CacheImpl(storage));
+    this(binary, defaultCache());
+  }
+
+  public <E extends CacheElement> EmbeddedServer(final boolean binary, final Cache<E> cache) {
+    MemCacheDaemon<E> daemon = new MemCacheDaemon<>();
+    daemon.setCache(cache);
     daemon.setBinary(binary);
     daemon.setVerbose(false);
     port = findFreePort();
     daemon.setAddr(new InetSocketAddress(this.port));
     daemon.start();
+    this.daemon = daemon;
+  }
+
+  private static CacheImpl defaultCache() {
+    final int maxItems = 1492;
+    final int maxBytes = 1024 * 1000;
+    final ConcurrentLinkedHashMap<Key, LocalCacheElement> storage = ConcurrentLinkedHashMap.create(
+        ConcurrentLinkedHashMap.EvictionPolicy.FIFO, maxItems, maxBytes);
+    return new CacheImpl(storage);
   }
 
   public static int findFreePort() {
