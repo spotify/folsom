@@ -21,6 +21,7 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
@@ -28,6 +29,20 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.util.Queue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -45,18 +60,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DecoderException;
 import io.netty.util.concurrent.DefaultThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.Queue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -247,8 +250,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
           }
           if (timeoutChecker.check(head)) {
             log.error("Request timeout: {} {}", channel, head);
+            // XXX (dano): close the channel synchronously in order to avoid the potential race
+            // condition where connection change listeners (e.g. ConnectFuture) could call
+            // isConnected() before the channel is closed and lose disconnection event.
+            channel.close().awaitUninterruptibly();
             DefaultRawMemcacheClient.this.setDisconnected("Timeout");
-            channel.close();
           }
         }
       }, pollIntervalMillis, pollIntervalMillis, MILLISECONDS);
