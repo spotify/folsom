@@ -122,6 +122,9 @@ public class RecoveryTest {
     // Verify that the rest failed with TimeoutException
     assertThat(timeout, is(MAX_OUTSTANDING_REQUESTS));
 
+    // Wait for the client to reconnect
+    ConnectFuture.connectFuture(client).get();
+
     // Have memcached reply to all GET requests
     answer.set(elements("foo", "bar"));
 
