@@ -19,9 +19,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.spotify.folsom.client.MultiRequest;
-import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.GetRequest;
+import com.spotify.folsom.client.MultiRequest;
+import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
@@ -35,6 +36,20 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private boolean connected = true;
   private final Map<ByteBuffer, byte[]> map = Maps.newHashMap();
+  private int outstanding = 0;
+
+  public FakeRawMemcacheClient() {
+    this(new NoopMetrics());
+  }
+
+  public FakeRawMemcacheClient(Metrics metrics) {
+    metrics.registerOutstandingRequestsGauge(new Metrics.OutstandingRequestsGauge() {
+      @Override
+      public int getOutstandingRequests() {
+        return outstanding;
+      }
+    });
+  }
 
   @Override
   public <T> ListenableFuture<T> send(Request<T> request) {
@@ -118,5 +133,9 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
   public Map<ByteBuffer, byte[]> getMap() {
     return map;
+  }
+
+  public void setOutstandingRequests(int outstanding) {
+    this.outstanding = outstanding;
   }
 }

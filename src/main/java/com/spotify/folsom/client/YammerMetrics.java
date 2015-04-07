@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
+import com.yammer.metrics.core.Gauge;
 import com.yammer.metrics.core.Meter;
 import com.yammer.metrics.core.MetricName;
 import com.yammer.metrics.core.MetricsRegistry;
@@ -65,6 +66,9 @@ public class YammerMetrics implements Metrics {
   private final Meter touchSuccesses;
   private final Meter touchFailures;
 
+  private volatile OutstandingRequestsGauge internalOutstandingReqGauge;
+  private final Gauge<Integer> outstandingRequestsGauge;
+
   public YammerMetrics(final MetricsRegistry registry) {
     this.gets = registry.newTimer(name("get", "requests"), SECONDS, SECONDS);
     this.getSuccesses = registry.newMeter(name("get", "successes"), "Successes", SECONDS);
@@ -91,6 +95,15 @@ public class YammerMetrics implements Metrics {
     this.touches = registry.newTimer(name("touch", "requests"), SECONDS, SECONDS);
     this.touchSuccesses = registry.newMeter(name("touch", "successes"), "Successes", SECONDS);
     this.touchFailures = registry.newMeter(name("touch", "failures"), "Failures", SECONDS);
+
+    final MetricName gaugeName = name("outstandingRequests", "count");
+    this.outstandingRequestsGauge = registry.newGauge(gaugeName, new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        return internalOutstandingReqGauge != null ?
+               internalOutstandingReqGauge.getOutstandingRequests() : 0;
+      }
+    });
   }
 
   private MetricName name(final String type, final String name) {
@@ -233,6 +246,11 @@ public class YammerMetrics implements Metrics {
     Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
   }
 
+  @Override
+  public void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
+    this.internalOutstandingReqGauge = gauge;
+  }
+
   public Timer getGets() {
     return gets;
   }
@@ -311,5 +329,9 @@ public class YammerMetrics implements Metrics {
 
   public Meter getTouchFailures() {
     return touchFailures;
+  }
+
+  public Gauge<Integer> getOutstandingRequestsGauge() {
+    return outstandingRequestsGauge;
   }
 }

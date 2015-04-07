@@ -18,10 +18,12 @@ package com.spotify.folsom.client;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
+import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiRequest;
@@ -37,6 +39,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -48,6 +52,7 @@ import io.netty.buffer.ByteBufAllocator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -69,7 +74,12 @@ public class DefaultRawMemcacheClientTest {
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         HostAndPort.fromParts("localhost", embeddedServer.getPort()),
-        5000, false, null, 3000, Charsets.UTF_8
+        5000,
+        false,
+        null,
+        3000,
+        Charsets.UTF_8,
+        new NoopMetrics()
     ).get();
 
     DefaultAsciiMemcacheClient<String> asciiClient =
@@ -145,7 +155,7 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000, Charsets.UTF_8).get();
+        address, 5000, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
 
     final Future<?> future = rawClient.send(new GetRequest("foo", Charsets.UTF_8, false));
     try {
@@ -163,10 +173,60 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000, Charsets.UTF_8).get();
+        address, 5000, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
 
     rawClient.shutdown();
     ConnectFuture.disconnectFuture(rawClient).get();
     assertFalse(rawClient.isConnected());
+  }
+
+  @Test
+  public void testOutstandingRequestMetric() throws Exception {
+    final OutstandingRequestListenerMetrics metrics = new OutstandingRequestListenerMetrics();
+    final Charset charset = Charsets.UTF_8;
+    final byte[] response = "END\r\n".getBytes(charset);
+
+    try (SlowStaticServer server = new SlowStaticServer(response, 1000)) {
+
+      final int port = server.start(0);
+
+      RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+          HostAndPort.fromParts("localhost", port),
+          5000,
+          false,
+          null,
+          3000,
+          charset,
+          metrics
+      ).get();
+
+      assertNotNull(metrics.getGauge());
+      assertEquals(0, metrics.getGauge().getOutstandingRequests());
+
+      List<ListenableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
+      futures.add(rawClient.send(new GetRequest("key", charset, false)));
+      assertEquals(1, metrics.getGauge().getOutstandingRequests());
+
+      futures.add(rawClient.send(new GetRequest("key", charset, false)));
+      assertEquals(2, metrics.getGauge().getOutstandingRequests());
+
+      // ensure that counter goes back to zero after request is done
+      Futures.allAsList(futures).get(5, TimeUnit.SECONDS);
+      assertEquals(0, metrics.getGauge().getOutstandingRequests());
+    }
+  }
+
+  private static class OutstandingRequestListenerMetrics extends NoopMetrics {
+
+    private OutstandingRequestsGauge gauge;
+
+    @Override
+    public void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
+      this.gauge = gauge;
+    }
+
+    public OutstandingRequestsGauge getGauge() {
+      return this.gauge;
+    }
   }
 }
