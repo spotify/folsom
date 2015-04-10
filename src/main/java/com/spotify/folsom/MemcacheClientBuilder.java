@@ -217,8 +217,10 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * This is only used for the SRV based ketama client. This is how often
-   * DNS should be queried for updates.
+   * This is only used for the SRV based ketama client. This is the maximum
+   * time DNS should be queried for updates.
+   * It can be shorter, depending the ttl values in the DNS lookup result
+   *
    * @param periodMillis time in milliseonds. The default is 60 seconds.
    * @return itself
    */
