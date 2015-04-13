@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.dns.DnsSrvResolver;
+import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
@@ -42,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 
 public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private static final Logger log = LoggerFactory.getLogger(SrvKetamaClient.class);
+  public static final int MIN_DNS_WAIT_TIME = 10;
+  public static final int MAX_DNS_WAIT_TIME = 3600;
 
   private final ScheduledExecutorService executor;
   private final String srvRecord;
@@ -53,6 +56,12 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private final long shutdownDelay;
   private final TimeUnit shutdownUnit;
   private final MyConnectionChangeListener listener = new MyConnectionChangeListener();
+  private final Runnable refreshRunnable = new Runnable() {
+    @Override
+    public void run() {
+      updateDNS();
+    }
+  };
 
   private ScheduledFuture<?> refreshJob;
 
@@ -86,12 +95,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
     if (refreshJob != null) {
       throw new RuntimeException("You may only start this once");
     }
-    refreshJob = this.executor.scheduleAtFixedRate(new Runnable() {
-      @Override
-      public void run() {
-        updateDNS();
-      }
-    }, 0, period, periodUnit);
+    refreshJob = this.executor.schedule(refreshRunnable, 0, TimeUnit.MILLISECONDS);
   }
 
   public void updateDNS() {
@@ -99,15 +103,31 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       if (shutdown) {
         return;
       }
-      List<HostAndPort> newAddresses = Ordering.from(HostAndPortComparator.INSTANCE)
-              .sortedCopy(srvResolver.resolve(srvRecord));
-      if (!newAddresses.equals(addresses)) {
-        addresses = newAddresses;
-        log.info("Connecting to " + newAddresses);
-        List<AddressAndClient> addressAndClients = getAddressesAndClients(newAddresses);
-        setPendingClient(addressAndClients);
+      long ttl = TimeUnit.SECONDS.convert(period, periodUnit);
+      try {
+        List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
+        List<HostAndPort> hosts = Lists.newArrayListWithCapacity(lookupResults.size());
+        for (LookupResult lookupResult : lookupResults) {
+          hosts.add(HostAndPort.fromParts(lookupResult.host(), lookupResult.port()));
+          ttl = Math.min(ttl, lookupResult.ttl());
+        }
+        List<HostAndPort> newAddresses = Ordering.from(HostAndPortComparator.INSTANCE)
+                .sortedCopy(hosts);
+        if (!newAddresses.equals(addresses)) {
+          addresses = newAddresses;
+          log.info("Connecting to " + newAddresses);
+          List<AddressAndClient> addressAndClients = getAddressesAndClients(newAddresses);
+          setPendingClient(addressAndClients);
+        }
+      } finally {
+        long delay = clamp(MIN_DNS_WAIT_TIME, MAX_DNS_WAIT_TIME, ttl);
+        refreshJob = this.executor.schedule(refreshRunnable, delay, TimeUnit.SECONDS);
       }
     }
+  }
+
+  private long clamp(int min, int max, long value) {
+    return Math.max(min, Math.min(max, value));
   }
 
   private List<AddressAndClient> getAddressesAndClients(List<HostAndPort> newAddresses) {

@@ -19,42 +19,30 @@ import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.folsom.ketama.SrvKetamaClient;
+import org.jmock.lib.concurrent.DeterministicScheduler;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static com.spotify.folsom.SrvKetamaIntegrationTest.toResult;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class SrvKetamaClientTest {
   @Test
   public void testSimple() throws Exception {
-    HostAndPort hostNameA = HostAndPort.fromHost("a");
-    HostAndPort hostNameB = HostAndPort.fromHost("b");
-    HostAndPort hostNameC = HostAndPort.fromHost("c");
-    HostAndPort hostNameD = HostAndPort.fromHost("d");
+    HostAndPort hostNameA = HostAndPort.fromString("a:1");
+    HostAndPort hostNameB = HostAndPort.fromString("b:1");
+    HostAndPort hostNameC = HostAndPort.fromString("c:1");
+    HostAndPort hostNameD = HostAndPort.fromString("d:1");
 
     DnsSrvResolver resolver = Mockito.mock(DnsSrvResolver.class);
 
     // Run shutdown code immediately
-    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
-    Mockito.when(executor.schedule(Mockito.any(Runnable.class),
-            Mockito.anyLong(), Mockito.any(TimeUnit.class)))
-            .thenAnswer(new Answer<Object>() {
-              @Override
-              public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
-                runnable.run();
-                return null;
-              }
-            });
-
+    DeterministicScheduler executor = new DeterministicScheduler();
 
     final Map<HostAndPort, FakeRawMemcacheClient> knownClients = Maps.newHashMap();
 
@@ -70,20 +58,23 @@ public class SrvKetamaClientTest {
     SrvKetamaClient ketamaClient = new SrvKetamaClient(
             "the-srv-record", resolver, executor, 1000, TimeUnit.MILLISECONDS,
             connector, 1000, TimeUnit.MILLISECONDS);
+    executor.tick(1000, TimeUnit.SECONDS);
 
     assertFalse(ketamaClient.isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(Arrays.asList(hostNameA, hostNameB));
+            .thenReturn(toResult(Arrays.asList(hostNameA, hostNameB)));
     ketamaClient.updateDNS();
+    executor.tick(1000, TimeUnit.SECONDS);
 
     assertTrue(ketamaClient.isConnected());
     assertTrue(knownClients.get(hostNameA).isConnected());
     assertTrue(knownClients.get(hostNameB).isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(Arrays.asList(hostNameB, hostNameC));
+            .thenReturn(toResult(Arrays.asList(hostNameB, hostNameC)));
     ketamaClient.updateDNS();
+    executor.tick(1000, TimeUnit.SECONDS);
 
     assertTrue(ketamaClient.isConnected());
     assertFalse(knownClients.get(hostNameA).isConnected());
@@ -91,8 +82,9 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameC).isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(Arrays.asList(hostNameC, hostNameD));
+            .thenReturn(toResult(Arrays.asList(hostNameC, hostNameD)));
     ketamaClient.updateDNS();
+    executor.tick(1000, TimeUnit.SECONDS);
 
     assertTrue(ketamaClient.isConnected());
     assertFalse(knownClients.get(hostNameA).isConnected());

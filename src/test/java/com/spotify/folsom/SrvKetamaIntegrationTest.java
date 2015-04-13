@@ -16,11 +16,13 @@
 
 package com.spotify.folsom;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.dns.DnsSrvResolver;
+import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import org.junit.After;
@@ -56,11 +58,10 @@ public class SrvKetamaIntegrationTest {
             .withSRVRecord("memcached.srv")
             .withSrvResolver(new DnsSrvResolver() {
               @Override
-              public List<HostAndPort> resolve(String s) {
-                return servers.getAddresses();
+              public List<LookupResult> resolve(String s) {
+                return toResult(servers.getAddresses());
               }
             })
-            .withSRVRefreshPeriod(1000)
             .withSRVShutdownDelay(1000)
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -71,6 +72,15 @@ public class SrvKetamaIntegrationTest {
 
     KetamaIntegrationTest.allClientsConnected(client);
     servers.flush();
+  }
+
+  public static List<LookupResult> toResult(List<HostAndPort> addresses) {
+    return Lists.transform(addresses, new Function<HostAndPort, LookupResult>() {
+      @Override
+      public LookupResult apply(HostAndPort input) {
+        return LookupResult.create(input.getHostText(), input.getPort(), 100, 100, 100);
+      }
+    });
   }
 
   @After
