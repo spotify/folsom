@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
+import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
@@ -84,6 +85,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final HostAndPort address;
   private final Executor executor;
   private final long timeoutMillis;
+  private final int maxSetLength;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
 
@@ -100,7 +102,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
           final Executor executor,
           final long timeoutMillis,
           final Charset charset,
-          final Metrics metrics) {
+          final Metrics metrics,
+          final int maxSetLength) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -144,7 +147,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               outstandingRequestLimit,
               executor,
               timeoutMillis,
-              metrics);
+              metrics,
+              maxSetLength);
           clientFuture.set(client);
         } else {
           clientFuture.setException(future.cause());
@@ -160,10 +164,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                                    final Channel channel,
                                    final int outstandingRequestLimit,
                                    final Executor executor, final long timeoutMillis,
-                                   final Metrics metrics) {
+                                   final Metrics metrics, int maxSetLength) {
     this.address = address;
     this.executor = executor;
     this.timeoutMillis = timeoutMillis;
+    this.maxSetLength = maxSetLength;
     this.channel = checkNotNull(channel, "channel");
     this.flusher = new BatchFlusher(channel);
     this.outstandingRequestLimit = outstandingRequestLimit;
@@ -183,6 +188,13 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     if (!tryIncrementPending()) {
       return onExecutor(Futures.<T>immediateFailedFuture(new MemcacheOverloadedException(
               "too many outstanding requests")));
+    }
+    if (request instanceof SetRequest) {
+      SetRequest setRequest = (SetRequest) request;
+      byte[] value = setRequest.getValue();
+      if (value.length > maxSetLength) {
+        return (ListenableFuture<T>) Futures.immediateFuture(MemcacheStatus.VALUE_TOO_LARGE);
+      }
     }
     channel.write(request, new RequestWritePromise(channel, request));
     flusher.flush();

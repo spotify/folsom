@@ -41,7 +41,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -180,7 +179,7 @@ public class IntegrationTest {
 
   @Test
   public void testLargeSet() throws Exception {
-    String value = Collections.nCopies(10000, "Hello world ").toString();
+    String value = createValue(100000);
     client.set(KEY1, value, TTL).get();
     assertEquals(value, client.get(KEY1).get());
   }
@@ -531,6 +530,41 @@ public class IntegrationTest {
     if (binaryClient != null) {
       binaryClient.noop().get();
     }
+  }
+
+  @Test
+  public void testAlmostTooLargeValues() throws Exception {
+    String value = createValue(1024 * 1024 - 1000);
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, value, TTL).get());
+    assertEquals(value, client.get(KEY1).get());
+  }
+
+  @Test
+  public void testTooLargeValues() throws Exception {
+    String value = createValue(2 * 1024 * 1024);
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, "", TTL).get());
+    assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set(KEY1, value, TTL).get());
+    assertEquals("", client.get(KEY1).get());
+  }
+
+  @Test
+  public void testTooLargeValueDoesNotCorruptConnection() throws Exception {
+    String largeValue = createValue(2 * 1024 * 1024);
+    client.set(KEY1, largeValue, TTL).get();
+
+    String smallValue = createValue(1000);
+    for (int i = 0; i < 1000; i++) {
+      assertEquals(MemcacheStatus.OK, client.set(KEY1, smallValue, TTL).get());
+      assertEquals(smallValue, client.get(KEY1).get());
+    }
+  }
+
+  private String createValue(int size) {
+    StringBuilder sb = new StringBuilder(size);
+    for (int i = 0; i < size; i++) {
+      sb.append('.');
+    }
+    return sb.toString();
   }
 
   static void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
