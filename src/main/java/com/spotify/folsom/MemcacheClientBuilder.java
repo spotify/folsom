@@ -53,9 +53,12 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class MemcacheClientBuilder<V> {
 
+  private static final int DEFAULT_MAX_SET_LENGTH = 1024 * 1024;
+
   private static final int DEFAULT_MAX_OUTSTANDING = 1000;
   private static final String DEFAULT_HOSTNAME = "127.0.0.1";
   private static final int DEFAULT_PORT = 11211;
+
 
   /**
    * Lazily instantiated singleton default executor.
@@ -109,6 +112,7 @@ public class MemcacheClientBuilder<V> {
   private long shutdownDelay = 60 * 1000L;
 
   private long timeoutMillis = 3000;
+  private int maxSetLength = DEFAULT_MAX_SET_LENGTH;
 
   /**
    * Create a client builder for byte array values.
@@ -335,6 +339,24 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
+   * Set the maximum value size for set requests.
+   * If the limit is exceeded the set operation will fast-fail with a VALUE_TOO_LARGE status.
+   *
+   * If this limit is set higher than the actual limit in the memcache service,
+   * the memcache service may return a SERVER_ERROR
+   * which will close the connection to prevent any corrupted state.
+   *
+   * The default value is 1 MiB
+   *
+   * @param maxSetLength The maximum size in bytes
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withMaxSetLength(final int maxSetLength) {
+    this.maxSetLength = maxSetLength;
+    return this;
+  }
+
+  /**
    * Create a client that uses the binary memcache protocol.
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
@@ -445,6 +467,6 @@ public class MemcacheClientBuilder<V> {
         executor,
         timeoutMillis,
         charset,
-        metrics);
+        metrics, maxSetLength);
   }
 }
