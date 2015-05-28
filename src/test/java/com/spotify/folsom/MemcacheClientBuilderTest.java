@@ -99,4 +99,20 @@ public class MemcacheClientBuilderTest {
     }
   }
 
+  @Test
+  public void testMaxSetLength() throws Throwable {
+    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withMaxSetLength(1)
+            .connectAscii();
+    ConnectFuture.connectFuture(client).get();
+
+    try {
+      assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set("key", "value", 100).get());
+      assertEquals(null, client.get("key").get());
+    } finally {
+      client.shutdown();
+    }
+  }
+
 }
