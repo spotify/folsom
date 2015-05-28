@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.GetResult;
@@ -31,7 +30,8 @@ import com.spotify.folsom.client.ascii.AsciiResponse;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,9 +46,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -178,6 +175,55 @@ public class DefaultRawMemcacheClientTest {
     rawClient.shutdown();
     ConnectFuture.disconnectFuture(rawClient).get();
     assertFalse(rawClient.isConnected());
+  }
+
+  @Test(expected = MemcacheClosedException.class)
+  public void testShutdownRequestExceptionInsteadOfOverloaded() throws Throwable {
+    final ServerSocket server = new ServerSocket();
+    server.bind(null);
+
+    final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
+    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
+
+    rawClient.shutdown();
+    ConnectFuture.disconnectFuture(rawClient).get();
+    assertFalse(rawClient.isConnected());
+
+    // Try to fill up the outstanding request limit
+    for (int i = 0; i < 100; i++) {
+      try {
+        rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+      } catch (ExecutionException e) {
+        // Ignore any errors here
+      }
+    }
+
+    try {
+      rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
+  }
+
+  @Test(expected = MemcacheClosedException.class)
+  public void testShutdownRequestException() throws Throwable {
+    final ServerSocket server = new ServerSocket();
+    server.bind(null);
+
+    final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
+    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
+
+    rawClient.shutdown();
+    ConnectFuture.disconnectFuture(rawClient).get();
+    assertFalse(rawClient.isConnected());
+
+    try {
+      rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+    } catch (ExecutionException e) {
+      throw e.getCause();
+    }
   }
 
   @Test
