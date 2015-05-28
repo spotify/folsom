@@ -186,6 +186,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   @Override
   public <T> ListenableFuture<T> send(final Request<T> request) {
     if (!tryIncrementPending()) {
+
+      // Do the disconnect check in here instead of outside
+      // to get better performance in the happy case.
+      String disconnectReason = this.disconnectReason.get();
+      if (disconnectReason != null) {
+        MemcacheClosedException exception = new MemcacheClosedException(disconnectReason);
+        return onExecutor(Futures.<T>immediateFailedFuture(exception));
+      }
+
       return onExecutor(Futures.<T>immediateFailedFuture(new MemcacheOverloadedException(
               "too many outstanding requests")));
     }
@@ -408,6 +417,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private void setDisconnected(String message) {
     if (disconnectReason.compareAndSet(null, message)) {
+
+      // Use the pending counter as a way of marking disconnected for performance reasons
+      // Once we are disconnected we will not really decrease this value any more anyway.
+      pendingCounter.set(Math.max(Integer.MAX_VALUE / 2, outstandingRequestLimit));
+
       notifyConnectionChange();
     }
   }
