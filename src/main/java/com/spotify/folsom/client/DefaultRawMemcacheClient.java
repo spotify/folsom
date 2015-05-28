@@ -193,7 +193,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        return (ListenableFuture<T>) Futures.immediateFuture(MemcacheStatus.VALUE_TOO_LARGE);
+        return (ListenableFuture<T>) onExecutor(
+                Futures.immediateFuture(MemcacheStatus.VALUE_TOO_LARGE));
       }
     }
     channel.write(request, new RequestWritePromise(channel, request));
