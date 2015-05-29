@@ -184,7 +184,7 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024).get();
 
     rawClient.shutdown();
     ConnectFuture.disconnectFuture(rawClient).get();
@@ -213,7 +213,7 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics()).get();
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024).get();
 
     rawClient.shutdown();
     ConnectFuture.disconnectFuture(rawClient).get();
