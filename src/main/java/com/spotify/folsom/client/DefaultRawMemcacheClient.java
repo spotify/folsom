@@ -248,7 +248,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   @Override
   public boolean isConnected() {
-    return channel.isActive();
+    return disconnectReason.get() == null;
   }
 
   @Override
@@ -283,11 +283,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
           }
           if (timeoutChecker.check(head)) {
             log.error("Request timeout: {} {}", channel, head);
-            // XXX (dano): close the channel synchronously in order to avoid the potential race
-            // condition where connection change listeners (e.g. ConnectFuture) could call
-            // isConnected() before the channel is closed and lose disconnection event.
-            channel.close().awaitUninterruptibly();
             DefaultRawMemcacheClient.this.setDisconnected("Timeout");
+            channel.close();
           }
         }
       }, pollIntervalMillis, pollIntervalMillis, MILLISECONDS);
