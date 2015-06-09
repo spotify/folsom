@@ -1,4 +1,15 @@
-### 0.7.0
+### 0.7.1
+* Fixed bug that broke reconnects
+
+### 0.7.0 (changes from 0.6.2)
+* Fix minor bug where requests to a disconnected client appears to have
+  hit the outstanding request limit.
+* Disallow set-requests with too large values and also make
+  that limit configurable.
+* Update to dns-java 3.0.1 which is not backwards compatible
+
+### 0.6.3
+* Fixed bug that broke reconnects
 * Fix minor bug where requests to a disconnected client appears to have
   hit the outstanding request limit.
 * Disallow set-requests with too large values and also make
