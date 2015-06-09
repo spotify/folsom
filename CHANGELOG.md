@@ -1,3 +1,10 @@
+### 0.6.3
+* Fixed bug that broke reconnects
+* Fix minor bug where requests to a disconnected client appears to have
+  hit the outstanding request limit.
+* Disallow set-requests with too large values and also make
+  that limit configurable.
+
 ### 0.6.2
 * Monkey patch jmemcached to make tests more robust.
 * Add metrics-support for pending requests.
