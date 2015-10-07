@@ -64,7 +64,7 @@ public final class Utils {
   }
 
   public static int ttlToExpiration(final int ttl) {
-    return (int) (System.currentTimeMillis() / 1000) + ttl;
+    return (ttl == 0) ? 0 : (int) (System.currentTimeMillis() / 1000) + ttl;
   }
 
   public static <T> Function<List<List<T>>, List<T>> flatten() {
