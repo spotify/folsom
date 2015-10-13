@@ -63,8 +63,21 @@ public final class Utils {
   private Utils() {
   }
 
+  /**
+   * Convert a plain TTL value to a memcached expiration field
+   * @param ttl a non-negative integer representing the TTL in seconds
+   * @return a memcached expiration field value,
+   *         which can be either 0 (never expire, a ttl in seconds, or a unix timestamp)
+   */
   public static int ttlToExpiration(final int ttl) {
-    return (ttl == 0) ? 0 : (int) (System.currentTimeMillis() / 1000) + ttl;
+    if (ttl <= 0) {
+      return 0;
+    }
+    if (ttl < 60 * 60 * 24 * 30) {
+      return ttl;
+    }
+
+    return (int) (System.currentTimeMillis() / 1000) + ttl;
   }
 
   public static <T> Function<List<List<T>>, List<T>> flatten() {

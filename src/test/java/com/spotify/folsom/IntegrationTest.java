@@ -161,7 +161,7 @@ public class IntegrationTest {
 
   public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3, KEY4);
 
-  protected static final int TTL = Integer.MAX_VALUE;
+  protected static final int TTL = 10; // 10 seconds should be enough for any test life time
 
   @Test
   public void testSetGet() throws Exception {

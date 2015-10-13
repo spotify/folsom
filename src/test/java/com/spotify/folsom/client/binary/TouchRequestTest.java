@@ -27,6 +27,8 @@ import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 
+import static org.junit.Assert.assertEquals;
+
 
 public class TouchRequestTest extends RequestTestTemplate {
   private static final String KEY = "foo";
@@ -41,7 +43,7 @@ public class TouchRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     assertHeader(b, OpCode.TOUCH, KEY.length(), 4, KEY.length() + 4, req.getOpaque(), 0);
-    assertExpiration(b.readInt());
+    assertEquals(123, b.readInt());
     assertString(KEY, b);
     assertEOM(b);
   }
@@ -56,7 +58,7 @@ public class TouchRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.getOpaque(), 0);
-    assertExpiration(b.readInt());
+    assertEquals(123, b.readInt());
     assertString(KEY, b);
     assertEOM(b);
   }

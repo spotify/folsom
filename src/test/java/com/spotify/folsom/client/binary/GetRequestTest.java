@@ -27,6 +27,8 @@ import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 
+import static org.junit.Assert.assertEquals;
+
 
 public class GetRequestTest extends RequestTestTemplate {
   private static final String KEY = "foo";
@@ -56,7 +58,7 @@ public class GetRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.getOpaque(), 0);
-    assertExpiration(b.readInt());
+    assertEquals(123, b.readInt());
     assertString(KEY, b);
     assertEOM(b);
   }
