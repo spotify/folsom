@@ -108,7 +108,7 @@ public class SimpleMemcacheClientBenchmark {
         values2.add(value);
         if (TEST_SPYMEMCACHED) {
           final SettableFuture<MemcacheStatus> settable = SettableFuture.create();
-          spyClient.set(key, Integer.MAX_VALUE, value)
+          spyClient.set(key, 0, value)
               .addListener(new OperationCompletionListener() {
                 @Override
                 public void onComplete(final OperationFuture<?> future) throws Exception {
@@ -121,7 +121,7 @@ public class SimpleMemcacheClientBenchmark {
               });
           futures.add(settable);
         } else {
-          futures.add(client.set(key, value, Integer.MAX_VALUE));
+          futures.add(client.set(key, value, 0));
         }
       }
       keys.add(keys2);

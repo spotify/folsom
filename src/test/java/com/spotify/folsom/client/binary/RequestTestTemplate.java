@@ -25,7 +25,6 @@ import io.netty.channel.ChannelHandlerContext;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -88,12 +87,4 @@ public abstract class RequestTestTemplate {
     assertEquals(b.readerIndex(), b.writerIndex());
   }
 
-  protected void assertExpiration(final int expiration) {
-    final long now = System.currentTimeMillis() / 1000;
-
-    // check if in a reasonable interval
-    // TODO improve
-    assertTrue(expiration > now - 10000);
-    assertTrue(expiration < now + 10000);
-  }
 }

@@ -1,3 +1,6 @@
+* Fixed bug related to TTL handling.
+  NOTE: this changes behaviour if you're currently sending in timestamps as TTL
+
 ### 0.7.1
 * Fixed bug that broke reconnects
 
