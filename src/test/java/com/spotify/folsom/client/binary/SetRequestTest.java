@@ -20,12 +20,12 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-
+import io.netty.buffer.ByteBuf;
 import org.junit.Test;
 
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
+import static org.junit.Assert.assertEquals;
 
 
 public class SetRequestTest extends RequestTestTemplate {
@@ -42,13 +42,22 @@ public class SetRequestTest extends RequestTestTemplate {
     verifySetRequest(258);
   }
 
+  @Test
+  public void testZeroTTL() throws Exception {
+    verifySetRequest(0, 258);
+  }
+
   private void verifySetRequest(long cas) throws Exception {
+    verifySetRequest(1000, cas);
+  }
+
+  private void verifySetRequest(int ttl, long cas) throws Exception {
     SetRequest req = new SetRequest(
-      OpCode.ADD,
+      OpCode.SET,
       KEY,
       Charsets.UTF_8,
       TRANSCODER.encode(VALUE),
-      1000,
+      ttl,
       cas
     );
     req.setOpaque(OPAQUE);
@@ -59,9 +68,13 @@ public class SetRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     final int keyLen = KEY.length();
-    assertHeader(b, OpCode.ADD, keyLen, 8, keyLen + 8 + VALUE.length(), req.getOpaque(), cas);
+    assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.getOpaque(), cas);
     assertZeros(b, 4);
-    assertExpiration(b.readInt());
+    if (ttl == 0) {
+      assertEquals(0, b.readInt());
+    } else {
+      assertExpiration(b.readInt());
+    }
     assertString(KEY, b);
     assertString(VALUE, b);
     assertEOM(b);
