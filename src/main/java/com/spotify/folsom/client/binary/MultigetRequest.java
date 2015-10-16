@@ -36,37 +36,53 @@ public class MultigetRequest
         extends BinaryRequest<List<GetResult<byte[]>>>
         implements MultiRequest<GetResult<byte[]>> {
 
-  private final int ttl;
+  private final int expiration;
+  private final byte opcode;
+  private final byte opcodeQuiet;
   private final List<byte[]> keys;
 
   private MultigetRequest(final List<byte[]> keys,
-                          final int ttl) {
+                          final byte opcode,
+                          final int expiration) {
     super(keys.get(0));
     this.keys = keys;
-    this.ttl = ttl;
+    if (opcode == OpCode.GET) {
+      this.opcode = OpCode.GET;
+      this.opcodeQuiet = OpCode.GETQ;
+    } else if (opcode == OpCode.GAT) {
+      this.opcode = OpCode.GAT;
+      this.opcodeQuiet = OpCode.GATQ;
+    } else {
+      throw new IllegalArgumentException("Unsupported opcode: " + opcode);
+    }
+    this.expiration = expiration;
   }
 
   public static MultigetRequest create(final List<String> keys, Charset charset,
+                                       final byte opcode,
                                        final int ttl) {
     final int size = keys.size();
     if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(encodeKeys(keys, charset), ttl);
+    final int expiration;
+    if (opcode == OpCode.GAT) {
+      expiration = Utils.ttlToExpiration(ttl);
+    } else {
+      expiration = 0;
+    }
+    return new MultigetRequest(encodeKeys(keys, charset), opcode, expiration);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     final int numKeys = keys.size();
 
-    int expiration;
     int extrasLength;
-    final boolean hasTTL = ttl > 0;
+    final boolean hasTTL = expiration > 0;
     if (hasTTL) {
-      expiration = Utils.ttlToExpiration(ttl);
       extrasLength = 4;
     } else {
-      expiration = 0;
       extrasLength = 0;
     }
 
@@ -79,7 +95,7 @@ public class MultigetRequest
       final int opaque = multigetOpaque | --sequenceNumber;
 
       dst.put(MAGIC_NUMBER);
-      dst.put(sequenceNumber == 0 ? OpCode.GET : OpCode.GETQ);
+      dst.put(sequenceNumber == 0 ? opcode : opcodeQuiet);
       dst.putShort((short) keyLength); // byte 2-3
       dst.put((byte) extrasLength); // byte 4
       dst.put((byte) 0); // byte 5-7, Data type, Reserved
@@ -140,8 +156,7 @@ public class MultigetRequest
 
 
   @Override
-  public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
-    // TODO: remove this null
-    return new MultigetRequest(keys, ttl);
+  public Request<List<GetResult<byte[]>>> create(final List<byte[]> keys) {
+    return new MultigetRequest(keys, opcode, expiration);
   }
 }

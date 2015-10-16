@@ -53,8 +53,8 @@ public final class OpCode {
   public static final int PREPANDQ = 0x1a;
   public static final int VERBOSITY = 0x1b;
   public static final byte TOUCH = 0x1c;
-  public static final int GAT = 0x1d;
-  public static final int GATQ = 0x1e;
+  public static final byte GAT = 0x1d;
+  public static final byte GATQ = 0x1e;
   public static final int SASL_LIST_MECHS = 0x20;
   public static final int SASL_AUTH = 0x21;
   public static final int SASL_STEP = 0x22;
@@ -90,6 +90,8 @@ public final class OpCode {
     switch (opcode) {
       case GET:
       case GETQ:
+      case GAT:
+      case GATQ:
         return GET;
       case SET:
       case APPEND:

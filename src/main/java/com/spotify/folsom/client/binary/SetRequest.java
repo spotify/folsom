@@ -32,7 +32,7 @@ public class SetRequest
 
   private final byte opcode;
   private final byte[] value;
-  private final int ttl;
+  private final int expiration;
   private final long cas;
 
   public SetRequest(final byte opcode,
@@ -44,14 +44,12 @@ public class SetRequest
     super(key, charset);
     this.opcode = opcode;
     this.value = value;
-    this.ttl = ttl;
+    this.expiration = Utils.ttlToExpiration(ttl);
     this.cas = cas;
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int expiration = Utils.ttlToExpiration(ttl);
-
     final int valueLength = value.length;
 
     final boolean hasExtra =

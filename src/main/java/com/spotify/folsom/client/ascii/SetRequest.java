@@ -46,7 +46,7 @@ public class SetRequest
 
   private final Operation operation;
   private final byte[] value;
-  private final int ttl;
+  private final int expiration;
   private final long cas;
 
   private SetRequest(Operation operation, final String key,
@@ -54,7 +54,7 @@ public class SetRequest
     super(key, charset);
     this.operation = operation;
     this.value = value;
-    this.ttl = ttl;
+    this.expiration = Utils.ttlToExpiration(ttl);
     this.cas = cas;
   }
 
@@ -80,7 +80,7 @@ public class SetRequest
     dst.put(CMD.get(operation));
     dst.put(key);
     dst.put(FLAGS);
-    dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
+    dst.put(String.valueOf(expiration).getBytes());
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value.length).getBytes());
     if (operation == Operation.CAS) {

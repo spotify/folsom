@@ -29,18 +29,17 @@ import java.nio.charset.Charset;
 
 public class TouchRequest extends BinaryRequest<MemcacheStatus> {
 
-  private final int ttl;
+  private final int expiration;
 
   public TouchRequest(final String key,
                       final Charset charset,
                       final int ttl) {
     super(key, charset);
-    this.ttl = ttl;
+    this.expiration = Utils.ttlToExpiration(ttl);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int expiration = Utils.ttlToExpiration(ttl);
     final int extrasLength = 4;
 
     writeHeader(dst, OpCode.TOUCH, extrasLength, 0, 0);

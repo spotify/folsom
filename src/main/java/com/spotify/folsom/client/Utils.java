@@ -70,8 +70,8 @@ public final class Utils {
    *         which can be either 0 (never expire, a ttl in seconds, or a unix timestamp)
    */
   public static int ttlToExpiration(final int ttl) {
-    if (ttl <= 0) {
-      return 0;
+    if (ttl < 0) {
+      throw new IllegalArgumentException("ttl may not be negative, but was " + ttl);
     }
     if (ttl < 60 * 60 * 24 * 30) {
       return ttl;
@@ -95,5 +95,4 @@ public final class Utils {
       }
     };
   }
-
 }

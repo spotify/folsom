@@ -115,7 +115,7 @@ public class MultigetRequest
   }
 
   @Override
-  public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
+  public Request<List<GetResult<byte[]>>> create(final List<byte[]> keys) {
     return new MultigetRequest(keys, cmd);
   }
 }

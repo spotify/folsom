@@ -49,6 +49,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(Parameterized.class)
 public class IntegrationTest {
@@ -487,6 +488,19 @@ public class IntegrationTest {
 
     assertEquals(newCas, getResult2.getCas());
     assertEquals(VALUE2, getResult2.getValue());
+  }
+
+  @Test
+  public void testGetAndTouch() throws Throwable {
+    if (!isBinary() || isEmbedded()) {
+      return;
+    }
+    client.set(KEY1, VALUE1, 100).get();
+
+    assertEquals(VALUE1, client.get(KEY1).get());
+    binaryClient.getAndTouch(KEY1, 1).get();
+    Thread.sleep(1100);
+    assertNull(client.get(KEY1).get());
   }
 
   @Test

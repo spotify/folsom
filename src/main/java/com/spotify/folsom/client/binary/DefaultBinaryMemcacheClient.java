@@ -140,7 +140,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<V> get(final String key) {
-    return getAndTouch(key, -1);
+    return transformerUtil.unwrap(getInternal(key, OpCode.GET, -1));
   }
 
   /*
@@ -156,7 +156,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<List<V>> get(final List<String> keys) {
-    return getAndTouch(keys, -1);
+    return transformerUtil.unwrapList(multiget(keys, OpCode.GET, -1));
   }
 
   /*
@@ -164,11 +164,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<GetResult<V>> casGet(final String key) {
-    return getInternal(key, -1);
+    return getInternal(key, OpCode.GET, -1);
   }
 
-  private ListenableFuture<GetResult<V>> getInternal(final String key, final int ttl) {
-    GetRequest request = new GetRequest(key, charset, OpCode.GET, ttl);
+  private ListenableFuture<GetResult<V>> getInternal(final String key, byte opcode, int ttl) {
+    GetRequest request = new GetRequest(key, charset, opcode, ttl);
     final ListenableFuture<GetResult<byte[]>> future =
             rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);
@@ -177,10 +177,10 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
   @Override
   public ListenableFuture<List<GetResult<V>>> casGet(List<String> keys) {
-    return multiget(keys, -1);
+    return multiget(keys, OpCode.GET, -1);
   }
 
-  private ListenableFuture<List<GetResult<V>>> multiget(List<String> keys, int ttl) {
+  private ListenableFuture<List<GetResult<V>>> multiget(List<String> keys, byte opcode, int ttl) {
     final int size = keys.size();
     if (size == 0) {
       return Futures.immediateFuture(Collections.<GetResult<V>>emptyList());
@@ -192,7 +192,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
           new ArrayList<>(keyPartition.size());
 
     for (final List<String> part : keyPartition) {
-      MultigetRequest request = MultigetRequest.create(part, charset, ttl);
+      MultigetRequest request = MultigetRequest.create(part, charset, opcode, ttl);
       futureList.add(rawMemcacheClient.send(request));
     }
 
@@ -208,7 +208,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<List<V>> getAndTouch(final List<String> keys, final int ttl) {
-    return transformerUtil.unwrapList(multiget(keys, ttl));
+    return transformerUtil.unwrapList(multiget(keys, OpCode.GAT, ttl));
   }
 
   /*
@@ -216,7 +216,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public ListenableFuture<GetResult<V>> casGetAndTouch(final String key, final int ttl) {
-    return getInternal(key, ttl);
+    return getInternal(key, OpCode.GAT, ttl);
   }
 
   /*

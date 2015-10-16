@@ -33,7 +33,7 @@ public class GetRequest
         extends BinaryRequest<GetResult<byte[]>>
         implements com.spotify.folsom.client.GetRequest {
   private final byte opcode;
-  private final int ttl;
+  private final int expiration;
 
   public GetRequest(final String key,
                     final Charset charset,
@@ -41,23 +41,24 @@ public class GetRequest
                     final int ttl) {
     super(key, charset);
     this.opcode = checkNotNull(opcode, "opcode");
-    this.ttl = checkNotNull(ttl, "ttl");
+    if (opcode == OpCode.GAT) {
+      this.expiration = Utils.ttlToExpiration(ttl);
+    } else {
+      this.expiration = 0;
+    }
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    int expiration;
     int extrasLength;
-    if (ttl > 0) {
-      expiration = Utils.ttlToExpiration(ttl);
+    if (expiration > 0) {
       extrasLength = 4;
     } else {
-      expiration = 0;
       extrasLength = 0;
     }
 
     writeHeader(dst, opcode, extrasLength, 0, 0);
-    if (ttl > 0) {
+    if (expiration > 0) {
       dst.putInt(expiration);
     }
     dst.put(key);

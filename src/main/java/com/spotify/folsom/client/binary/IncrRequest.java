@@ -30,7 +30,7 @@ public class IncrRequest extends BinaryRequest<Long> {
   private final byte opcode;
   private final long by;
   private final long initial;
-  private final int ttl;
+  private final int expiration;
 
   public IncrRequest(final String key,
                      final Charset charset,
@@ -42,13 +42,11 @@ public class IncrRequest extends BinaryRequest<Long> {
     this.opcode = opcode;
     this.by = by;
     this.initial = initial;
-    this.ttl = ttl;
+    this.expiration = Utils.ttlToExpiration(ttl);
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    final int expiration = Utils.ttlToExpiration(ttl);
-
     final int extraLength = 8 + 8 + 4; // by + initial + expiration
 
     writeHeader(dst, opcode, extraLength, 0, 0);

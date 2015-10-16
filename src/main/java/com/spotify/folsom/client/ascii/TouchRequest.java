@@ -26,11 +26,11 @@ import java.nio.charset.Charset;
 
 public class TouchRequest extends AsciiRequest<MemcacheStatus> {
   private static final byte[] CMD = "touch ".getBytes();
-  private final int ttl;
+  private final int expiration;
 
   public TouchRequest(String key, Charset charset, int ttl) {
     super(key, charset);
-    this.ttl = ttl;
+    this.expiration = Utils.ttlToExpiration(ttl);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
     dst.put(CMD);
     dst.put(key);
     dst.put(SPACE_BYTES);
-    dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
+    dst.put(String.valueOf(expiration).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }
