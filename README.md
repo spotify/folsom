@@ -135,6 +135,9 @@ You can optionally choose to track performance using yammer metrics.
 mvn package
 ```
 
+## Code of conduct
+This project adheres to the [Open Code of Conduct][code-of-conduct]. By participating, you are expected to honor this code.
+
 ### Authors
 
 Folsom was initially built at [Spotify](<https://github.com/spotify) by
@@ -144,3 +147,4 @@ Many thanks also go out to [Noa Resare](https://github.com/noaresare).
 
 [binary protocol]: https://code.google.com/p/memcached/wiki/BinaryProtocolRevamped
 [ascii protocol]: https://github.com/memcached/memcached/blob/master/doc/protocol.txt
+[code-of-conduct]: https://github.com/spotify/code-of-conduct/blob/master/code-of-conduct.md
