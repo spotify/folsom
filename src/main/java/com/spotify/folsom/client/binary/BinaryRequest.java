@@ -84,9 +84,6 @@ public abstract class BinaryRequest<V> extends Request<V> {
   protected abstract void handle(BinaryResponse response) throws IOException;
 
   public void setOpaque(int opaque) {
-    if (this.opaqueSet) {
-      throw new IllegalStateException("opaque may not be set more than one");
-    }
     this.opaqueSet = true;
     this.opaque = (opaque << 8) & 0xFFFFFF00;
   }

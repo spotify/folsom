@@ -20,6 +20,8 @@ import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.GetResult;
@@ -30,8 +32,7 @@ import com.spotify.folsom.client.ascii.AsciiResponse;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,9 +44,15 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,15 +61,28 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DefaultRawMemcacheClientTest {
-  private static final EmbeddedServer embeddedServer = new EmbeddedServer(false);
+
+  private EmbeddedServer asciiServer;
+  private EmbeddedServer binaryServer;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUpBinaryServer() throws Exception {
+    binaryServer = new EmbeddedServer(true);
+  }
+
+  @Before
+  public void setUpAsciiServer() throws Exception {
+    asciiServer = new EmbeddedServer(false);
   }
 
   @After
-  public void tearDown() throws Exception {
-    embeddedServer.stop();
+  public void tearDownAsciiServer() throws Exception {
+    asciiServer.stop();
+  }
+
+  @After
+  public void tearDownBinaryServer() throws Exception {
+    binaryServer.stop();
   }
 
   @Test
@@ -70,7 +90,7 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("localhost", embeddedServer.getPort()),
+        HostAndPort.fromParts("localhost", asciiServer.getPort()),
         5000,
         false,
         null,
@@ -161,6 +181,59 @@ public class DefaultRawMemcacheClientTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof MemcacheClosedException);
     }
+  }
+
+  @Test
+  public void testBinaryRequestRetry() throws Exception {
+    final int outstandingRequestLimit = 5000;
+    final boolean binary = true;
+    final Executor executor = MoreExecutors.getExitingExecutorService(
+        (ThreadPoolExecutor) Executors.newCachedThreadPool());
+    final int timeoutMillis = 3000;
+    final int maxSetLength = 1024 * 1024;
+
+    final HostAndPort address = HostAndPort.fromParts("localhost", binaryServer.getPort());
+    final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+        address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
+        new NoopMetrics(), maxSetLength).get();
+
+    final com.spotify.folsom.client.binary.GetRequest request =
+        new com.spotify.folsom.client.binary.GetRequest("foo", Charsets.UTF_8, OpCode.GET, 123);
+
+    // Send request once
+    rawClient.send(request).get();
+
+    binaryServer.flush();
+
+    // Pretend that the above request failed and retry it by sending it again
+    rawClient.send(request).get();
+  }
+
+  @Test
+  public void testAsciiRequestRetry() throws Exception {
+    final boolean binary = false;
+
+    final int outstandingRequestLimit = 5000;
+    final Executor executor = MoreExecutors.getExitingExecutorService(
+        (ThreadPoolExecutor) Executors.newCachedThreadPool());
+    final int timeoutMillis = 3000;
+    final int maxSetLength = 1024 * 1024;
+
+    final HostAndPort address = HostAndPort.fromParts("localhost", asciiServer.getPort());
+    final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
+        address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
+        new NoopMetrics(), maxSetLength).get();
+
+    final com.spotify.folsom.client.ascii.GetRequest request =
+        new com.spotify.folsom.client.ascii.GetRequest("foo", Charsets.UTF_8, false);
+
+    // Send request once
+    rawClient.send(request).get();
+
+    asciiServer.flush();
+
+    // Pretend that the above request failed and retry it by sending it again
+    rawClient.send(request).get();
   }
 
   @Test
