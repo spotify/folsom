@@ -145,6 +145,6 @@ Folsom was initially built at [Spotify](<https://github.com/spotify) by
 [Daniel Norberg](https://github.com/danielnorberg).
 Many thanks also go out to [Noa Resare](https://github.com/noaresare).
 
-[binary protocol]: https://code.google.com/p/memcached/wiki/BinaryProtocolRevamped
+[binary protocol]: https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped
 [ascii protocol]: https://github.com/memcached/memcached/blob/master/doc/protocol.txt
 [code-of-conduct]: https://github.com/spotify/code-of-conduct/blob/master/code-of-conduct.md
