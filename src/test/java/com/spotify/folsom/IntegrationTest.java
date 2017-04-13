@@ -53,13 +53,24 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class IntegrationTest {
 
-  private static final HostAndPort SERVER_ADDRESS = HostAndPort.fromParts("127.0.0.1", 11211);
+  private static final HostAndPort DEFAULT_SERVER_ADDRESS
+          = HostAndPort.fromParts("127.0.0.1", 11211);
   private static EmbeddedServer asciiEmbeddedServer;
   private static EmbeddedServer binaryEmbeddedServer;
 
+  private static HostAndPort getServerAddress() {
+    String addressOverride = System.getProperty("memcached-address");
+    if (addressOverride != null) {
+      return HostAndPort.fromString(addressOverride).withDefaultPort(11211);
+    } else {
+      return DEFAULT_SERVER_ADDRESS;
+    }
+  }
+
   private static boolean memcachedRunning() {
     try (Socket socket = new Socket()) {
-      socket.connect(new InetSocketAddress(SERVER_ADDRESS.getHostText(), SERVER_ADDRESS.getPort()));
+      HostAndPort serverAddress = getServerAddress();
+      socket.connect(new InetSocketAddress(serverAddress.getHostText(), serverAddress.getPort()));
       return true;
     } catch (ConnectException e) {
       System.err.println("memcached not running, disabling test");
@@ -112,11 +123,14 @@ public class IntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
+    HostAndPort integrationServer = getServerAddress();
+
     int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
-    int port = isEmbedded() ? embeddedPort : 11211;
+    String address = isEmbedded() ? "127.0.0.1" : integrationServer.getHostText();
+    int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+            .withAddress(HostAndPort.fromParts(address, port))
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
