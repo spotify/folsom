@@ -49,6 +49,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(Parameterized.class)
 public class IntegrationTest {
@@ -533,6 +534,72 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL).get();
     MemcacheStatus result = client.touch(KEY1, TTL).get();
     assertEquals(MemcacheStatus.OK, result);
+  }
+
+  @Test
+  public void testTouchAndGetFound() throws Throwable {
+    if (binaryClient == null) {
+      // only supported for binary clients
+      return;
+    }
+
+    if (isEmbedded()) {
+      // touch is broken on embedded server
+      return;
+    }
+
+    client.set(KEY1, VALUE1, TTL).get();
+    assertEquals(VALUE1, binaryClient.getAndTouch(KEY1, TTL).get());
+  }
+
+  @Test
+  public void testTouchAndGetNotFound() throws Throwable {
+    if (binaryClient == null) {
+      // only supported for binary clients
+      return;
+    }
+
+    if (isEmbedded()) {
+      // touch is broken on embedded server
+      return;
+    }
+
+    assertNull(binaryClient.getAndTouch(KEY1, TTL).get());
+  }
+
+  @Test
+  public void testCasTouchAndGetFound() throws Throwable {
+    if (binaryClient == null) {
+      // only supported for binary clients
+      return;
+    }
+
+    if (isEmbedded()) {
+      // touch is broken on embedded server
+      return;
+    }
+
+    client.set(KEY1, VALUE1, TTL).get();
+    long cas = client.casGet(KEY1).get().getCas();
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).get();
+    assertEquals(cas, result.getCas());
+    assertEquals(VALUE1, result.getValue());
+  }
+
+  @Test
+  public void testCasTouchAndGetNotFound() throws Throwable {
+    if (binaryClient == null) {
+      // only supported for binary clients
+      return;
+    }
+
+    if (isEmbedded()) {
+      // touch is broken on embedded server
+      return;
+    }
+
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).get();
+    assertNull(result);
   }
 
   @Test
