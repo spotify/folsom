@@ -51,7 +51,7 @@ public final class Utils {
   public static <I, O> ListenableFuture<O> transform(
           final ListenableFuture<I> input,
           final AsyncFunction<? super I, ? extends O> function) {
-    return Futures.transform(input, function, SAME_THREAD_EXECUTOR);
+    return Futures.transformAsync(input, function, SAME_THREAD_EXECUTOR);
   }
 
   public static <I, O> ListenableFuture<O> transform(
