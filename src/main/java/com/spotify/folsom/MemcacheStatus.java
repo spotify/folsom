@@ -18,22 +18,46 @@ package com.spotify.folsom;
 
 import java.io.IOException;
 
+/**
+ * Response status codes from
+ * https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped#response-status
+ */
 public enum MemcacheStatus {
   OK,
   KEY_NOT_FOUND,
   KEY_EXISTS,
   VALUE_TOO_LARGE,
   INVALID_ARGUMENTS,
-  ITEM_NOT_STORED;
+  ITEM_NOT_STORED,
+  INCR_DECR_ON_NON_NUMERIC_VALUE,
+  THE_VBUCKET_BELONGS_TO_ANOTHER_SERVER,
+  AUTHENTICATION_ERROR,
+  AUTHENTICATION_CONTINUE,
+  UNKNOWN_COMMAND,
+  OUT_OF_MEMORY,
+  NOT_SUPPORTED,
+  INTERNAL_ERROR,
+  BUSY,
+  TEMPORARY_FAILURE;
 
   public static MemcacheStatus fromInt(final int status) throws IOException {
     switch (status) {
-      case 0: return OK;
-      case 1: return KEY_NOT_FOUND;
-      case 2: return KEY_EXISTS;
-      case 3: return VALUE_TOO_LARGE;
-      case 4: return INVALID_ARGUMENTS;
-      case 5: return ITEM_NOT_STORED;
+      case 0x00: return OK;
+      case 0x01: return KEY_NOT_FOUND;
+      case 0x02: return KEY_EXISTS;
+      case 0x03: return VALUE_TOO_LARGE;
+      case 0x04: return INVALID_ARGUMENTS;
+      case 0x05: return ITEM_NOT_STORED;
+      case 0x06: return INCR_DECR_ON_NON_NUMERIC_VALUE;
+      case 0x07: return THE_VBUCKET_BELONGS_TO_ANOTHER_SERVER;
+      case 0x08: return AUTHENTICATION_ERROR;
+      case 0x09: return AUTHENTICATION_CONTINUE;
+      case 0x81: return UNKNOWN_COMMAND;
+      case 0x82: return OUT_OF_MEMORY;
+      case 0x83: return NOT_SUPPORTED;
+      case 0x84: return INTERNAL_ERROR;
+      case 0x85: return BUSY;
+      case 0x86: return TEMPORARY_FAILURE;
       default: throw new IOException(String.format("Unknown status code: 0x%2x", status));
     }
   }

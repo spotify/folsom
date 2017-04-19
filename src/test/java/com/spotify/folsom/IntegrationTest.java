@@ -49,17 +49,31 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class IntegrationTest {
 
-  private static final HostAndPort SERVER_ADDRESS = HostAndPort.fromParts("127.0.0.1", 11211);
+  private static final HostAndPort DEFAULT_SERVER_ADDRESS
+          = HostAndPort.fromParts("127.0.0.1", 11211);
   private static EmbeddedServer asciiEmbeddedServer;
   private static EmbeddedServer binaryEmbeddedServer;
 
+  private static HostAndPort getServerAddress() {
+    String addressOverride = System.getProperty("memcached-address");
+    if (addressOverride != null) {
+      return HostAndPort.fromString(addressOverride).withDefaultPort(11211);
+    } else {
+      return DEFAULT_SERVER_ADDRESS;
+    }
+  }
+
   private static boolean memcachedRunning() {
     try (Socket socket = new Socket()) {
-      socket.connect(new InetSocketAddress(SERVER_ADDRESS.getHostText(), SERVER_ADDRESS.getPort()));
+      HostAndPort serverAddress = getServerAddress();
+      socket.connect(new InetSocketAddress(serverAddress.getHostText(), serverAddress.getPort()));
       return true;
     } catch (ConnectException e) {
       System.err.println("memcached not running, disabling test");
@@ -112,11 +126,14 @@ public class IntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
+    HostAndPort integrationServer = getServerAddress();
+
     int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
-    int port = isEmbedded() ? embeddedPort : 11211;
+    String address = isEmbedded() ? "127.0.0.1" : integrationServer.getHostText();
+    int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+            .withAddress(HostAndPort.fromParts(address, port))
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -204,51 +221,44 @@ public class IntegrationTest {
 
   @Test
   public void testAppendCas() throws Exception {
-    if (binaryClient != null) {
-      binaryClient.set(KEY1, VALUE1, TTL).get();
-      final long cas = binaryClient.casGet(KEY1).get().getCas();
-      binaryClient.append(KEY1, VALUE2, cas).get();
+    assumeBinary();
 
-      assertEquals(VALUE1 + VALUE2, binaryClient.get(KEY1).get());
-    }
+    binaryClient.set(KEY1, VALUE1, TTL).get();
+    final long cas = binaryClient.casGet(KEY1).get().getCas();
+    binaryClient.append(KEY1, VALUE2, cas).get();
+
+    assertEquals(VALUE1 + VALUE2, binaryClient.get(KEY1).get());
   }
 
   @Test
   public void testAppendCasIncorrect() throws Throwable {
-    if (isEmbedded()) {
-      // CAS is broken on embedded server
-      return;
-    }
-    if (binaryClient != null) {
-      binaryClient.set(KEY1, VALUE1, TTL).get();
-      final long cas = binaryClient.casGet(KEY1).get().getCas();
-      checkStatus(binaryClient.append(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
+    assumeBinary();
+    assumeNotEmbedded("CAS is broken on embedded server");
 
-    }
+    binaryClient.set(KEY1, VALUE1, TTL).get();
+    final long cas = binaryClient.casGet(KEY1).get().getCas();
+    checkStatus(binaryClient.append(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
   }
 
   @Test
   public void testPrependCasIncorrect() throws Throwable {
-    if (isEmbedded()) {
-      // CAS is broken on embedded server
-      return;
-    }
-    if (binaryClient != null) {
-      binaryClient.set(KEY1, VALUE1, TTL).get();
-      final long cas = binaryClient.casGet(KEY1).get().getCas();
-      checkStatus(binaryClient.prepend(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
-    }
+    assumeBinary();
+    assumeNotEmbedded("CAS is broken on embedded server");
+
+    binaryClient.set(KEY1, VALUE1, TTL).get();
+    final long cas = binaryClient.casGet(KEY1).get().getCas();
+    checkStatus(binaryClient.prepend(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
   }
 
   @Test
   public void testPrependCas() throws Exception {
-    if (binaryClient != null) {
-      binaryClient.set(KEY1, VALUE1, TTL).get();
-      final long cas = binaryClient.casGet(KEY1).get().getCas();
-      binaryClient.prepend(KEY1, VALUE2, cas).get();
+    assumeBinary();
 
-      assertEquals(VALUE2 + VALUE1, binaryClient.get(KEY1).get());
-    }
+    binaryClient.set(KEY1, VALUE1, TTL).get();
+    final long cas = binaryClient.casGet(KEY1).get().getCas();
+    binaryClient.prepend(KEY1, VALUE2, cas).get();
+
+    assertEquals(VALUE2 + VALUE1, binaryClient.get(KEY1).get());
   }
 
   @Test
@@ -261,10 +271,9 @@ public class IntegrationTest {
 
   @Test
   public void testSetDeleteGet() throws Throwable {
-    if (isEmbedded() && isBinary()) {
-      // returns "" instead of NOT_FOUND on embedded server
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
+
     client.set(KEY1, VALUE1, TTL).get();
 
     client.delete(KEY1).get();
@@ -296,10 +305,9 @@ public class IntegrationTest {
 
   @Test
   public void testGetKeyNotExist() throws Throwable {
-    if (isEmbedded() && isBinary()) {
-      // returns "" instead of NOT_FOUND on embedded server
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
+
     assertGetKeyNotFound(client.get(KEY1));
   }
 
@@ -364,10 +372,9 @@ public class IntegrationTest {
 
   @Test
   public void testMultiGetKeyMissing() throws Throwable {
-    if (isEmbedded() && isBinary()) {
-      // returns "" instead of NOT_FOUND on embedded server
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
+
     client.set(KEY1, VALUE1, TTL).get();
     client.set(KEY2, VALUE2, TTL).get();
 
@@ -381,18 +388,19 @@ public class IntegrationTest {
 
   @Test
   public void testIncr() throws Throwable {
-    if (isEmbedded()) {
-      // Incr gives NPE on embedded server
-      return;
-    }
-    if (binaryClient != null) {
-      assertEquals(new Long(3), binaryClient.incr(KEY1, 2, 3, TTL).get());
-      assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).get());
-    }
+    assumeBinary();
+    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
+
+    assertEquals(new Long(3), binaryClient.incr(KEY1, 2, 3, TTL).get());
+    assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).get());
   }
 
   private boolean isEmbedded() {
     return type.equals("embedded");
+  }
+
+  private boolean isAscii() {
+    return protocol.equals("ascii");
   }
 
   private boolean isBinary() {
@@ -401,76 +409,70 @@ public class IntegrationTest {
 
   @Test
   public void testDecr() throws Throwable {
-    if (isEmbedded()) {
-      // Decr gives NPE on embedded server
-      return;
-    }
-    if (binaryClient != null) {
-      assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).get());
-      assertEquals(new Long(1), binaryClient.decr(KEY1, 2, 5, TTL).get());
-    }
+    assumeBinary();
+    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
+
+    assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).get());
+    assertEquals(new Long(1), binaryClient.decr(KEY1, 2, 5, TTL).get());
   }
 
   @Test
   public void testDecrBelowZero() throws Throwable {
-    if (binaryClient != null && !isEmbedded()) { // Decr gives NPE on embedded server
-      assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).get());
-      // should not go below 0
-      assertEquals(new Long(0), binaryClient.decr(KEY1, 4, 5, TTL).get());
-    }
+    assumeBinary();
+    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
+
+    assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).get());
+    // should not go below 0
+    assertEquals(new Long(0), binaryClient.decr(KEY1, 4, 5, TTL).get());
   }
 
   @Test
   public void testIncrDefaults() throws Throwable {
-    if (isEmbedded()) {
-      // embedded crashes on this
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
+
     // Ascii client behaves differently for this use case
-    if (binaryClient != null) {
-      assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0, 0).get());
-      // memcached will intermittently cause this test to fail due to the value not being set
-      // correctly when incr with initial=0 is used, this works around that
-      binaryClient.set(KEY1, "0", TTL).get();
-      assertEquals(new Long(2), binaryClient.incr(KEY1, 2, 0, 0).get());
-    }
+    assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0, 0).get());
+    // memcached will intermittently cause this test to fail due to the value not being set
+    // correctly when incr with initial=0 is used, this works around that
+    binaryClient.set(KEY1, "0", TTL).get();
+    assertEquals(new Long(2), binaryClient.incr(KEY1, 2, 0, 0).get());
   }
 
   @Test
   public void testIncrDefaultsAscii() throws Throwable {
+    assumeAscii();
+
     // Ascii client behaves differently for this use case
-    if (asciiClient != null) {
-      assertEquals(null, asciiClient.incr(KEY1, 2).get());
-      // memcached will intermittently cause this test to fail due to the value not being set
-      // correctly when incr with initial=0 is used, this works around that
-      asciiClient.set(KEY1, "0", TTL).get();
-      assertEquals(new Long(2), asciiClient.incr(KEY1, 2).get());
-    }
+    assertEquals(null, asciiClient.incr(KEY1, 2).get());
+    // memcached will intermittently cause this test to fail due to the value not being set
+    // correctly when incr with initial=0 is used, this works around that
+    asciiClient.set(KEY1, "0", TTL).get();
+    assertEquals(new Long(2), asciiClient.incr(KEY1, 2).get());
   }
 
   @Test
   public void testIncrAscii() throws Throwable {
-    if (asciiClient != null) {
-      asciiClient.set(KEY1, NUMERIC_VALUE, TTL).get();
-      assertEquals(new Long(125), asciiClient.incr(KEY1, 2).get());
-    }
+    assumeAscii();
+
+    asciiClient.set(KEY1, NUMERIC_VALUE, TTL).get();
+    assertEquals(new Long(125), asciiClient.incr(KEY1, 2).get());
   }
 
   @Test
   public void testDecrAscii() throws Throwable {
-    if (asciiClient != null) {
-      asciiClient.set(KEY1, NUMERIC_VALUE, TTL).get();
-      assertEquals(new Long(121), asciiClient.decr(KEY1, 2).get());
-    }
+    assumeAscii();
+
+    asciiClient.set(KEY1, NUMERIC_VALUE, TTL).get();
+    assertEquals(new Long(121), asciiClient.decr(KEY1, 2).get());
   }
 
 
   @Test
   public void testCas() throws Throwable {
-    if (isEmbedded() && isBinary()) {
-      // CAS is broken on embedded server
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("CAS is broken on embedded server");
+
     client.set(KEY1, VALUE1, TTL).get();
 
     final GetResult<String> getResult1 = client.casGet(KEY1).get();
@@ -491,10 +493,9 @@ public class IntegrationTest {
 
   @Test
   public void testCasNotMatchingSet() throws Throwable {
-    if (isEmbedded() && isBinary()) {
-      // CAS is broken on embedded server
-      return;
-    }
+    assumeBinary();
+    assumeNotEmbedded("CAS is broken on embedded server");
+
     client.set(KEY1, VALUE1, TTL).get();
 
     checkStatus(client.set(KEY1, VALUE2, TTL, 666), MemcacheStatus.KEY_EXISTS);
@@ -502,34 +503,65 @@ public class IntegrationTest {
 
   @Test
   public void testTouchNotFound() throws Throwable {
-    if (isEmbedded()) {
-      // touch is broken on embedded server
-      return;
-    }
+    assumeNotEmbedded("touch is broken on embedded server");
+
     MemcacheStatus result = client.touch(KEY1, TTL).get();
     assertEquals(MemcacheStatus.KEY_NOT_FOUND, result);
   }
 
   @Test
   public void testTouchFound() throws Throwable {
-    if (isEmbedded()) {
-      // touch is broken on embedded server
-      return;
-    }
+    assumeNotEmbedded("touch is broken on embedded server");
+
     client.set(KEY1, VALUE1, TTL).get();
     MemcacheStatus result = client.touch(KEY1, TTL).get();
     assertEquals(MemcacheStatus.OK, result);
   }
 
   @Test
+  public void testTouchAndGetFound() throws Throwable {
+    assumeBinary();
+    assumeNotEmbedded("touch is broken on embedded server");
+
+    client.set(KEY1, VALUE1, TTL).get();
+    assertEquals(VALUE1, binaryClient.getAndTouch(KEY1, TTL).get());
+  }
+
+  @Test
+  public void testTouchAndGetNotFound() throws Throwable {
+    assumeBinary();
+    assumeNotEmbedded("touch is broken on embedded server");
+
+    assertNull(binaryClient.getAndTouch(KEY1, TTL).get());
+  }
+
+  @Test
+  public void testCasTouchAndGetFound() throws Throwable {
+    assumeBinary();
+    assumeNotEmbedded("touch is broken on embedded server");
+
+    client.set(KEY1, VALUE1, TTL).get();
+    long cas = client.casGet(KEY1).get().getCas();
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).get();
+    assertEquals(cas, result.getCas());
+    assertEquals(VALUE1, result.getValue());
+  }
+
+  @Test
+  public void testCasTouchAndGetNotFound() throws Throwable {
+    assumeBinary();
+    assumeNotEmbedded("touch is broken on embedded server");
+
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).get();
+    assertNull(result);
+  }
+
+  @Test
   public void testNoop() throws Throwable {
-    if (isEmbedded()) {
-      // CAS is broken on embedded server
-      return;
-    }
-    if (binaryClient != null) {
-      binaryClient.noop().get();
-    }
+    assumeBinary();
+    assumeNotEmbedded("touch is broken on embedded server");
+
+    binaryClient.noop().get();
   }
 
   @Test
@@ -565,6 +597,18 @@ public class IntegrationTest {
       sb.append('.');
     }
     return sb.toString();
+  }
+
+  private void assumeNotEmbedded(String msg) {
+    assumeFalse(msg, isEmbedded());
+  }
+
+  private void assumeAscii() {
+    assumeTrue(isAscii());
+  }
+
+  private void assumeBinary() {
+    assumeTrue(isBinary());
   }
 
   static void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {

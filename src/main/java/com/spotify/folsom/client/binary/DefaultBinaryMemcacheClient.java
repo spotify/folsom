@@ -168,7 +168,8 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   private ListenableFuture<GetResult<V>> getInternal(final String key, final int ttl) {
-    GetRequest request = new GetRequest(key, charset, OpCode.GET, ttl);
+    final byte opCode = ttl > -1 ? OpCode.GAT : OpCode.GET;
+    GetRequest request = new GetRequest(key, charset, opCode, ttl);
     final ListenableFuture<GetResult<byte[]>> future =
             rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);

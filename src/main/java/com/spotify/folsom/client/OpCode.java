@@ -90,6 +90,7 @@ public final class OpCode {
     switch (opcode) {
       case GET:
       case GETQ:
+      case GAT:
         return GET;
       case SET:
       case APPEND:
