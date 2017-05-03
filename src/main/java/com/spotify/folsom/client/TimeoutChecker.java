@@ -18,7 +18,7 @@ package com.spotify.folsom.client;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A utility for checking whether some state has changed within a specified timout. Could be used
+ * A utility for checking whether some state has changed within a specified timeout. Could be used
  * to verify that the head of a request queue changes quickly enough, indicating forward progress.
  */
 class TimeoutChecker<T> {
@@ -44,6 +44,10 @@ class TimeoutChecker<T> {
 
     // Timed out?
     return nowNanos - timestamp > timeoutNanos;
+  }
+
+  public long elapsed() {
+    return (timestamp > 0) ? System.nanoTime() - timestamp : 0;
   }
 
   public static <T> TimeoutChecker<T> create(final TimeUnit unit, final long timeout) {

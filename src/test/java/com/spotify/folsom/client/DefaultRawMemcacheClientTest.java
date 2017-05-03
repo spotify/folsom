@@ -26,6 +26,7 @@ import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
+import com.spotify.folsom.MemcacheTimeoutException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiRequest;
 import com.spotify.folsom.client.ascii.AsciiResponse;
@@ -179,7 +180,7 @@ public class DefaultRawMemcacheClientTest {
       future.get();
       fail();
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof MemcacheClosedException);
+      assertTrue(e.getCause() instanceof MemcacheTimeoutException);
     }
   }
 

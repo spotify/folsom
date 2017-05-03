@@ -30,6 +30,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MisbehavingServerTest {
@@ -96,7 +97,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testBadAsciiGet5() throws Throwable {
-    testAsciiGet("VALUE key 123 456\r\n", "Timeout");
+    testAsciiGetWithTimeout("VALUE key 123 456\r\n", "Request timeout");
   }
 
   @Test
@@ -156,6 +157,19 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     }
   }
+
+  private void testAsciiGetWithTimeout(String response, String expectedError) throws Exception {
+    MemcacheClient<String> client = setupAscii(response);
+    try {
+      client.get("key").get();
+      fail();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertEquals(MemcacheTimeoutException.class, cause.getClass());
+      assertTrue(cause.getMessage().contains(expectedError));
+    }
+  }
+
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
