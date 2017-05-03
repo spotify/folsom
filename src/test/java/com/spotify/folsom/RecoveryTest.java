@@ -109,8 +109,7 @@ public class RecoveryTest {
         final Throwable cause = e.getCause();
         if (cause instanceof MemcacheOverloadedException) {
           overloaded++;
-        } else if (cause instanceof MemcacheClosedException &&
-                   cause.getMessage().contains("Timeout")) {
+        } else if (cause instanceof MemcacheClosedException) {
           timeout++;
         }
       }

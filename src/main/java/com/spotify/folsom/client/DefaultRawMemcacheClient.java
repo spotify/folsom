@@ -21,11 +21,11 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.MemcacheTimeoutException;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
@@ -64,6 +64,7 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -73,6 +74,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
   private static final EventLoopGroup EVENT_LOOP_GROUP =
       new NioEventLoopGroup(0, DAEMON_THREAD_FACTORY);
+
+  private static final double NANOS_IN_MILLIS = 1000000.0;
 
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
 
@@ -282,7 +285,10 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
             return;
           }
           if (timeoutChecker.check(head)) {
-            log.error("Request timeout: {} {}", channel, head);
+            double elapsed = timeoutChecker.elapsed() / NANOS_IN_MILLIS;
+            String message = format("Request timeout after %s ms: %s %s", elapsed, channel, head);
+            log.debug(message);
+            head.fail(new MemcacheTimeoutException(message));
             DefaultRawMemcacheClient.this.setDisconnected("Timeout");
             channel.close();
           }
