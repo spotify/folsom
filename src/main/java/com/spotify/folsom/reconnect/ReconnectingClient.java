@@ -129,6 +129,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
             @Override
             public void onSuccess(final Void ignore) {
               log.info("Lost connection to {}", address);
+              client.shutdown();
               notifyConnectionChange();
               if (stayConnected) {
                 retry();
@@ -153,6 +154,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   }
 
   private void onFailure() {
+    client.shutdown();
     final long backOff = backoffFunction.getBackoffTimeMillis(reconnectCount);
 
     if (stayConnected) {
