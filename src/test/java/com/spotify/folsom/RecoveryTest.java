@@ -92,7 +92,7 @@ public class RecoveryTest {
 
     // Have memcached block indefinitely on all GET requests
     final GetAnswer answer = new GetAnswer();
-    when(cache.get(any(Key[].class))).then(answer);
+    when(cache.get((Key[]) any())).then(answer);
 
     // Overload the client
     final int overload = 10;
