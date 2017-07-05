@@ -1,3 +1,14 @@
+### 0.7.4
+* Minimize Netty dependency
+* Make sure build works on Java 9
+
+### 0.7.3
+* Fix broken GAT (get and touch)
+* Allow for overriding integration server address
+
+### 0.7.2
+* Bump OSS parent
+
 ### 0.7.1
 * Fixed bug that broke reconnects
 
