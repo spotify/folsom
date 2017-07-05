@@ -76,8 +76,13 @@
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
-      <version>4.0.25.Final</version>
+      <artifactId>netty-transport</artifactId>
+      <version>4.0.48.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+      <version>4.0.48.Final</version>
     </dependency>
     <dependency>
       <groupId>com.yammer.metrics</groupId>
