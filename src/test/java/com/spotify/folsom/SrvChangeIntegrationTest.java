@@ -93,7 +93,7 @@ public class SrvChangeIntegrationTest {
     client.shutdown();
     ConnectFuture.disconnectFuture(client).get();
 
-    waitUntilSuccess(10000, new Runnable() {
+    waitUntilSuccess(1000, new Runnable() {
       @Override
       public void run() {
         assertEquals(0, Utils.getGlobalConnectionCount());
@@ -103,7 +103,7 @@ public class SrvChangeIntegrationTest {
 
   @Test
   public void testFlappingSrv() throws Exception {
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
       srvKetamaClient.updateDNS();
       waitUntilSuccess(1000, new Runnable() {
