@@ -118,7 +118,7 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue(0 == Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
 
     boolean ascii;
     if (protocol.equals("ascii")) {

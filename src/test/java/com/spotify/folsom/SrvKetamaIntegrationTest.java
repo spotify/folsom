@@ -35,7 +35,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 public class SrvKetamaIntegrationTest {
 
@@ -55,7 +54,7 @@ public class SrvKetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue(0 == Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")

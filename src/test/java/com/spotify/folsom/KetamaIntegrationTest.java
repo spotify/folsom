@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
@@ -93,7 +92,7 @@ public class KetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue(0 == Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
 
     boolean ascii;
     if (protocol.equals("ascii")) {

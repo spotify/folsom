@@ -45,7 +45,6 @@ import static org.hamcrest.Matchers.is;
 import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -63,7 +62,7 @@ public class RecoveryTest {
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue(0 == Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
 
     server = new EmbeddedServer(true, cache);
     int port = server.getPort();

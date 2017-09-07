@@ -98,7 +98,7 @@ public class MemcacheClientBuilderTest {
 
     try {
       List<ListenableFuture<String>> futures = Lists.newArrayList();
-      for (int i = 0; i < 200; i++) {
+      for (int i = 0; i < 400; i++) {
         futures.add(client.get("key"));
       }
       for (ListenableFuture<String> future : futures) {

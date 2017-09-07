@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import static com.spotify.folsom.SrvKetamaIntegrationTest.toResult;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,7 +58,7 @@ public class SrvChangeIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assumeTrue(0 == Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
 
     fullResults = toResult(servers.getAddresses());
     oneMissing = ImmutableList.copyOf(
