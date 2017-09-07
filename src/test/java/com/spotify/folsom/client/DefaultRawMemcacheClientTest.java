@@ -90,7 +90,7 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("localhost", asciiServer.getPort()),
+        HostAndPort.fromParts("127.0.0.11", asciiServer.getPort()),
         5000,
         false,
         null,
@@ -199,7 +199,7 @@ public class DefaultRawMemcacheClientTest {
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
-    final HostAndPort address = HostAndPort.fromParts("localhost", binaryServer.getPort());
+    final HostAndPort address = HostAndPort.fromParts("127.0.0.10", binaryServer.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength).get();
@@ -231,7 +231,7 @@ public class DefaultRawMemcacheClientTest {
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
-    final HostAndPort address = HostAndPort.fromParts("localhost", asciiServer.getPort());
+    final HostAndPort address = HostAndPort.fromParts("127.0.0.9", asciiServer.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength).get();
@@ -327,7 +327,7 @@ public class DefaultRawMemcacheClientTest {
       final int port = server.start(0);
 
       RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-          HostAndPort.fromParts("localhost", port),
+          HostAndPort.fromParts("127.0.0.12", port),
           5000,
           false,
           null,

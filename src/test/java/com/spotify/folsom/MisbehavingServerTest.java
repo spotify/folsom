@@ -193,7 +193,7 @@ public class MisbehavingServerTest {
   private MemcacheClient<String> setupAscii(String response) throws Exception {
     server = new Server(response);
     MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("localhost", server.port))
+            .withAddress(HostAndPort.fromParts("127.0.0.8", server.port))
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
@@ -241,6 +241,7 @@ public class MisbehavingServerTest {
           socket.getOutputStream().flush();
         }
       });
+      thread.setName("misbehaving-server-thread-" + port);
       thread.start();
     }
 

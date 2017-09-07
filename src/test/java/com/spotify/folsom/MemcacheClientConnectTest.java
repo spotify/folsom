@@ -28,9 +28,12 @@ public class MemcacheClientConnectTest {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("dummy.dummy", 56742))
         .connectBinary();
-    Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
-    client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    try {
+      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
+    }
   }
 
   @Test(expected = MemcacheClosedException.class)
@@ -38,8 +41,11 @@ public class MemcacheClientConnectTest {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("127.0.0.1", 56742))
         .connectBinary();
-    Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
-    client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    try {
+      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
+    }
   }
 }

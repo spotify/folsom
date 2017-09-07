@@ -250,7 +250,7 @@ public class KetamaIntegrationTest {
       for (int i = 0; i < instances; i++) {
         EmbeddedServer daemon = new EmbeddedServer(binary);
         daemons.add(daemon);
-        addresses.add(HostAndPort.fromParts("localhost", daemon.getPort()));
+        addresses.add(HostAndPort.fromParts("127.0.0.2", daemon.getPort()));
       }
     }
 
