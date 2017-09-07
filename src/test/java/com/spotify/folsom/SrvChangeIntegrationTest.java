@@ -18,6 +18,7 @@ package com.spotify.folsom;
 
 import static com.spotify.folsom.SrvKetamaIntegrationTest.toResult;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -41,7 +42,6 @@ public class SrvChangeIntegrationTest {
   private static KetamaIntegrationTest.Servers servers;
 
   private MemcacheClient<String> client;
-  private int globalConnectionCount;
   private DnsSrvResolver dnsSrvResolver;
   private List<LookupResult> fullResults;
   private List<LookupResult> oneMissing;
@@ -59,7 +59,7 @@ public class SrvChangeIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    globalConnectionCount = Utils.getGlobalConnectionCount();
+    assumeTrue(0 == Utils.getGlobalConnectionCount());
 
     fullResults = toResult(servers.getAddresses());
     oneMissing = ImmutableList.copyOf(
@@ -96,8 +96,7 @@ public class SrvChangeIntegrationTest {
     waitUntilSuccess(10000, new Runnable() {
       @Override
       public void run() {
-        assertEquals("Global connection count",
-            globalConnectionCount, Utils.getGlobalConnectionCount());
+        assertEquals(0, Utils.getGlobalConnectionCount());
       }
     });
   }
@@ -107,7 +106,7 @@ public class SrvChangeIntegrationTest {
     for (int i = 0; i < 100; i++) {
       when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(10000, new Runnable() {
+      waitUntilSuccess(1000, new Runnable() {
             @Override
             public void run() {
               assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections());
@@ -117,7 +116,7 @@ public class SrvChangeIntegrationTest {
 
       when(dnsSrvResolver.resolve(anyString())).thenReturn(oneMissing);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(10000, new Runnable() {
+      waitUntilSuccess(1000, new Runnable() {
             @Override
             public void run() {
               assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections());

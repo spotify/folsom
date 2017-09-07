@@ -104,43 +104,48 @@ public class DefaultRawMemcacheClientTest {
                     rawClient, new NoopMetrics(),
                     new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8);
 
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
-    for (int i = 0; i < 2; i++) {
-      futures.add(asciiClient.set("key", "value" + i, 0));
-    }
-
-    sendFailRequest(exceptionString, rawClient);
-
-    for (int i = 0; i < 2; i++) {
-      futures.add(asciiClient.set("key", "value" + i, 0));
-    }
-
-    assertFalse(rawClient.isConnected());
-
-    int total = futures.size();
-    int stuck = 0;
-
-    StringBuilder sb = new StringBuilder();
-    long t1 = System.currentTimeMillis();
-    int i = 0;
-    for (ListenableFuture<?> future : futures) {
-      try {
-        long elapsed = System.currentTimeMillis() - t1;
-        future.get(Math.max(0, 1000 - elapsed), TimeUnit.MILLISECONDS);
-        sb.append('.');
-      } catch (ExecutionException e) {
-        assertEquals(MemcacheClosedException.class, e.getCause().getClass());
-        sb.append('.');
-      } catch (TimeoutException e) {
-        sb.append('X');
-        stuck++;
+    try {
+      List<ListenableFuture<?>> futures = Lists.newArrayList();
+      for (int i = 0; i < 2; i++) {
+        futures.add(asciiClient.set("key", "value" + i, 0));
       }
-      i++;
-      if (0 == (i % 50)) {
-        sb.append("\n");
+
+      sendFailRequest(exceptionString, rawClient);
+
+      for (int i = 0; i < 2; i++) {
+        futures.add(asciiClient.set("key", "value" + i, 0));
       }
+
+      assertFalse(rawClient.isConnected());
+
+      int total = futures.size();
+      int stuck = 0;
+
+      StringBuilder sb = new StringBuilder();
+      long t1 = System.currentTimeMillis();
+      int i = 0;
+      for (ListenableFuture<?> future : futures) {
+        try {
+          long elapsed = System.currentTimeMillis() - t1;
+          future.get(Math.max(0, 1000 - elapsed), TimeUnit.MILLISECONDS);
+          sb.append('.');
+        } catch (ExecutionException e) {
+          assertEquals(MemcacheClosedException.class, e.getCause().getClass());
+          sb.append('.');
+        } catch (TimeoutException e) {
+          sb.append('X');
+          stuck++;
+        }
+        i++;
+        if (0 == (i % 50)) {
+          sb.append("\n");
+        }
+      }
+      assertEquals(stuck + " out of " + total + " requests got stuck:\n" + sb.toString(), 0, stuck);
+    } finally {
+      asciiClient.shutdown();
+      ConnectFuture.disconnectFuture(asciiClient).get();
     }
-    assertEquals(stuck + " out of " + total + " requests got stuck:\n" + sb.toString(), 0, stuck);
   }
 
   private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient)
@@ -180,6 +185,8 @@ public class DefaultRawMemcacheClientTest {
       fail();
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof MemcacheClosedException);
+      rawClient.shutdown();
+      ConnectFuture.disconnectFuture(rawClient).get();
     }
   }
 
@@ -197,16 +204,21 @@ public class DefaultRawMemcacheClientTest {
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength).get();
 
-    final com.spotify.folsom.client.binary.GetRequest request =
-        new com.spotify.folsom.client.binary.GetRequest("foo", Charsets.UTF_8, OpCode.GET, 123);
+    try {
+      final com.spotify.folsom.client.binary.GetRequest request =
+          new com.spotify.folsom.client.binary.GetRequest("foo", Charsets.UTF_8, OpCode.GET, 123);
 
-    // Send request once
-    rawClient.send(request).get();
+      // Send request once
+      rawClient.send(request).get();
 
-    binaryServer.flush();
+      binaryServer.flush();
 
-    // Pretend that the above request failed and retry it by sending it again
-    rawClient.send(request).get();
+      // Pretend that the above request failed and retry it by sending it again
+      rawClient.send(request).get();
+    } finally {
+      rawClient.shutdown();
+      ConnectFuture.disconnectFuture(rawClient).get();
+    }
   }
 
   @Test
@@ -224,16 +236,21 @@ public class DefaultRawMemcacheClientTest {
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength).get();
 
-    final com.spotify.folsom.client.ascii.GetRequest request =
-        new com.spotify.folsom.client.ascii.GetRequest("foo", Charsets.UTF_8, false);
+    try {
+      final GetRequest request =
+          new GetRequest("foo", Charsets.UTF_8, false);
 
-    // Send request once
-    rawClient.send(request).get();
+      // Send request once
+      rawClient.send(request).get();
 
-    asciiServer.flush();
+      asciiServer.flush();
 
-    // Pretend that the above request failed and retry it by sending it again
-    rawClient.send(request).get();
+      // Pretend that the above request failed and retry it by sending it again
+      rawClient.send(request).get();
+    } finally {
+      rawClient.shutdown();
+      ConnectFuture.disconnectFuture(rawClient).get();
+    }
   }
 
   @Test
@@ -320,19 +337,24 @@ public class DefaultRawMemcacheClientTest {
           1024 * 1024
       ).get();
 
-      assertNotNull(metrics.getGauge());
-      assertEquals(0, metrics.getGauge().getOutstandingRequests());
+      try {
+        assertNotNull(metrics.getGauge());
+        assertEquals(0, metrics.getGauge().getOutstandingRequests());
 
-      List<ListenableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
-      futures.add(rawClient.send(new GetRequest("key", charset, false)));
-      assertEquals(1, metrics.getGauge().getOutstandingRequests());
+        List<ListenableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
+        futures.add(rawClient.send(new GetRequest("key", charset, false)));
+        assertEquals(1, metrics.getGauge().getOutstandingRequests());
 
-      futures.add(rawClient.send(new GetRequest("key", charset, false)));
-      assertEquals(2, metrics.getGauge().getOutstandingRequests());
+        futures.add(rawClient.send(new GetRequest("key", charset, false)));
+        assertEquals(2, metrics.getGauge().getOutstandingRequests());
 
-      // ensure that counter goes back to zero after request is done
-      Futures.allAsList(futures).get(5, TimeUnit.SECONDS);
-      assertEquals(0, metrics.getGauge().getOutstandingRequests());
+        // ensure that counter goes back to zero after request is done
+        Futures.allAsList(futures).get(5, TimeUnit.SECONDS);
+        assertEquals(0, metrics.getGauge().getOutstandingRequests());
+      } finally {
+        rawClient.shutdown();
+        ConnectFuture.disconnectFuture(rawClient).get();
+      }
     }
   }
 

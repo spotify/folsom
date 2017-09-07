@@ -39,11 +39,10 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
-
-  private int globalConnectionCount;
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
@@ -94,7 +93,7 @@ public class KetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    globalConnectionCount = Utils.getGlobalConnectionCount();
+    assumeTrue(0 == Utils.getGlobalConnectionCount());
 
     boolean ascii;
     if (protocol.equals("ascii")) {
@@ -128,7 +127,8 @@ public class KetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
+    ConnectFuture.disconnectFuture(client).get();
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";

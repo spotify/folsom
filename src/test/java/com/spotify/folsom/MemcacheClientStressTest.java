@@ -44,6 +44,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 public class MemcacheClientStressTest {
 
@@ -54,15 +55,15 @@ public class MemcacheClientStressTest {
   private final EmbeddedServer daemon = new EmbeddedServer(false);
   private ExecutorService workerExecutor;
   private MemcacheClient<byte[]> client;
-  private int globalConnectionCount;
 
   @Before
   public void setUp() throws Exception {
+    assumeTrue(0 == Utils.getGlobalConnectionCount());
+
     final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
     lc.getLogger(MemcachedCommandHandler.class).setLevel(Level.ERROR);
     workerExecutor = Executors.newFixedThreadPool(100);
 
-    globalConnectionCount = Utils.getGlobalConnectionCount();
 
     client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
@@ -147,7 +148,8 @@ public class MemcacheClientStressTest {
     client.shutdown();
     daemon.stop();
     workerExecutor.shutdown();
-    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
+    ConnectFuture.disconnectFuture(client).get();
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
 

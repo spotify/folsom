@@ -35,13 +35,13 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 public class SrvKetamaIntegrationTest {
 
   private static KetamaIntegrationTest.Servers servers;
 
   private MemcacheClient<String> client;
-  private int globalConnectionCount;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -55,7 +55,7 @@ public class SrvKetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    globalConnectionCount = Utils.getGlobalConnectionCount();
+    assumeTrue(0 == Utils.getGlobalConnectionCount());
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
@@ -91,7 +91,7 @@ public class SrvKetamaIntegrationTest {
     client.shutdown();
     ConnectFuture.disconnectFuture(client).get();
 
-    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   @Test

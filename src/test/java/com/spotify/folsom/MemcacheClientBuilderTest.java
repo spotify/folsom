@@ -51,6 +51,8 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     ConnectFuture.connectFuture(client).get();
     assertEquals(null, client.get("Räksmörgås").get());
+    client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
   }
 
   @Test
@@ -61,6 +63,8 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     ConnectFuture.connectFuture(client).get();
     assertEquals(null, client.get("Räksmörgås").get());
+    client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -71,6 +75,8 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     ConnectFuture.connectFuture(client).get();
     client.get("Key").get();
+    client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
   }
 
   @Test(expected = MemcacheOverloadedException.class)
@@ -96,6 +102,7 @@ public class MemcacheClientBuilderTest {
       fail("No MemcacheOverloadedException was triggered");
     } finally {
       client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 
@@ -112,6 +119,7 @@ public class MemcacheClientBuilderTest {
       assertEquals(null, client.get("key").get());
     } finally {
       client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 

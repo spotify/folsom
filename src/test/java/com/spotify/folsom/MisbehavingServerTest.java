@@ -154,6 +154,9 @@ public class MisbehavingServerTest {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
       assertEquals(expectedError, cause.getMessage());
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 
@@ -166,6 +169,9 @@ public class MisbehavingServerTest {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
       assertEquals(expectedError, cause.getMessage());
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 
@@ -178,6 +184,9 @@ public class MisbehavingServerTest {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
       assertEquals(expectedError, cause.getMessage());
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 

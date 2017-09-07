@@ -60,7 +60,6 @@ public class IntegrationTest {
           = HostAndPort.fromParts("127.0.0.1", 11211);
   private static EmbeddedServer asciiEmbeddedServer;
   private static EmbeddedServer binaryEmbeddedServer;
-  private int globalConnectionCount;
 
   private static HostAndPort getServerAddress() {
     String addressOverride = System.getProperty("memcached-address");
@@ -119,6 +118,8 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
+    assumeTrue(0 == Utils.getGlobalConnectionCount());
+
     boolean ascii;
     if (protocol.equals("ascii")) {
       ascii = true;
@@ -132,8 +133,6 @@ public class IntegrationTest {
     int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
     String address = isEmbedded() ? "127.0.0.1" : integrationServer.getHostText();
     int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
-
-    globalConnectionCount = Utils.getGlobalConnectionCount();
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withAddress(HostAndPort.fromParts(address, port))
@@ -170,7 +169,7 @@ public class IntegrationTest {
     client.shutdown();
     ConnectFuture.disconnectFuture(client).get();
 
-    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";
