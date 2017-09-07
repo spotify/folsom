@@ -74,6 +74,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private static final EventLoopGroup EVENT_LOOP_GROUP =
       new NioEventLoopGroup(0, DAEMON_THREAD_FACTORY);
 
+  private static final AtomicInteger GLOBAL_CONNECTION_COUNT = new AtomicInteger();
+
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
 
   private final AtomicInteger pendingCounter = new AtomicInteger();
@@ -173,6 +175,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.channel = checkNotNull(channel, "channel");
     this.flusher = new BatchFlusher(channel);
     this.outstandingRequestLimit = outstandingRequestLimit;
+
+    GLOBAL_CONNECTION_COUNT.incrementAndGet();
 
     metrics.registerOutstandingRequestsGauge(new Metrics.OutstandingRequestsGauge() {
       @Override
@@ -420,7 +424,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       // Once we are disconnected we will not really decrease this value any more anyway.
       pendingCounter.set(Math.max(Integer.MAX_VALUE / 2, outstandingRequestLimit));
       channel.close();
+      GLOBAL_CONNECTION_COUNT.decrementAndGet();
       notifyConnectionChange();
     }
+  }
+
+  static int getGlobalConnectionCount() {
+    return GLOBAL_CONNECTION_COUNT.get();
   }
 }

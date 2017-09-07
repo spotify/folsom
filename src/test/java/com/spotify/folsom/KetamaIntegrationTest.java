@@ -43,6 +43,8 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
 
+  private int globalConnectionCount;
+
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
@@ -92,6 +94,8 @@ public class KetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
+    globalConnectionCount = Utils.getGlobalConnectionCount();
+
     boolean ascii;
     if (protocol.equals("ascii")) {
       ascii = true;
@@ -124,6 +128,7 @@ public class KetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
+    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";

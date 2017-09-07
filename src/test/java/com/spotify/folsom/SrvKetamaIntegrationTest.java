@@ -41,6 +41,7 @@ public class SrvKetamaIntegrationTest {
   private static KetamaIntegrationTest.Servers servers;
 
   private MemcacheClient<String> client;
+  private int globalConnectionCount;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -54,6 +55,8 @@ public class SrvKetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
+    globalConnectionCount = Utils.getGlobalConnectionCount();
+
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
             .withSrvResolver(new DnsSrvResolver() {
@@ -87,6 +90,8 @@ public class SrvKetamaIntegrationTest {
   public void tearDown() throws Exception {
     client.shutdown();
     ConnectFuture.disconnectFuture(client).get();
+
+    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
   }
 
   @Test

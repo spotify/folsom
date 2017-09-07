@@ -43,6 +43,7 @@ import java.util.concurrent.ExecutionException;
 import static io.netty.util.CharsetUtil.UTF_8;
 import static org.hamcrest.Matchers.is;
 import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -58,9 +59,12 @@ public class RecoveryTest {
   private EmbeddedServer server;
 
   private MemcacheClient<String> client;
+  private int globalConnectionCount;
 
   @Before
   public void setUp() throws Exception {
+    globalConnectionCount = Utils.getGlobalConnectionCount();
+
     server = new EmbeddedServer(true, cache);
     int port = server.getPort();
 
@@ -85,6 +89,8 @@ public class RecoveryTest {
     if (server != null) {
       server.stop();
     }
+
+    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
   }
 
   @Test
