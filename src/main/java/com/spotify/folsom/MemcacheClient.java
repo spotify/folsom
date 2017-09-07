@@ -134,4 +134,10 @@ public interface MemcacheClient<V> extends ObservableClient {
    */
   int numActiveConnections();
 
+  /**
+   * Note: This is typically only useful for testing and debugging
+   * @return the underlying raw memcache client.
+   */
+  RawMemcacheClient getRawMemcacheClient();
+
 }

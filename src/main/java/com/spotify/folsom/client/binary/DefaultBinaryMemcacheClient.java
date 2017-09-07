@@ -350,6 +350,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   @Override
+  public RawMemcacheClient getRawMemcacheClient() {
+    return rawMemcacheClient;
+  }
+
+  @Override
   public String toString() {
     return "BinaryMemcacheClient(" + rawMemcacheClient + ")";
   }
