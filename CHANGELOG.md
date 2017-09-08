@@ -1,3 +1,9 @@
+### 0.8.0
+* Fixed race condition in ReconnectingClient, causing shutdowns to fail
+* Make more robust client shutdown logic
+* Add Utils.getGlobalConnectionCount() to track number of memcached connections.
+  Also add metrics for this to YammerMetrics
+
 ### 0.7.4
 * Minimize Netty dependency
 * Make sure build works on Java 9
