@@ -120,12 +120,22 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       final ListenableFuture<RawMemcacheClient> future = connector.connect();
       Futures.addCallback(future, new FutureCallback<RawMemcacheClient>() {
         @Override
-        public void onSuccess(final RawMemcacheClient result) {
+        public void onSuccess(final RawMemcacheClient newClient) {
           log.info("Successfully connected to {}", address);
           reconnectCount = 0;
-          client = result;
+          client.shutdown();
+          client = newClient;
+
+          // Protection against races with shutdown()
+          if (!stayConnected) {
+            newClient.shutdown();
+            notifyConnectionChange();
+            return;
+          }
+
           notifyConnectionChange();
-          Futures.addCallback(ConnectFuture.disconnectFuture(result), new FutureCallback<Void>() {
+          final ListenableFuture<Void> discFuture = ConnectFuture.disconnectFuture(newClient);
+          Futures.addCallback(discFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(final Void ignore) {
               log.info("Lost connection to {}", address);

@@ -251,4 +251,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public String toString() {
     return "AsciiMemcacheClient(" + rawMemcacheClient + ")";
   }
+
+  @Override
+  public RawMemcacheClient getRawMemcacheClient() {
+    return rawMemcacheClient;
+  }
 }

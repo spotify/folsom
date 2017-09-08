@@ -76,4 +76,11 @@ public final class Utils {
     };
   }
 
+  /**
+   * A counter of all currently connected clients. This can be useful to detect connection leaks
+   */
+  public static int getGlobalConnectionCount() {
+    return DefaultRawMemcacheClient.getGlobalConnectionCount();
+  }
+
 }

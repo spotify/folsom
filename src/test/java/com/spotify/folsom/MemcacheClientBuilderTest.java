@@ -47,43 +47,58 @@ public class MemcacheClientBuilderTest {
   public void testValidLatin1() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.ISO_8859_1)
-            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withAddress(HostAndPort.fromParts("127.0.0.6", server.getPort()))
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
-    assertEquals(null, client.get("Räksmörgås").get());
+    try {
+      ConnectFuture.connectFuture(client).get();
+      assertEquals(null, client.get("Räksmörgås").get());
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
+    }
   }
 
   @Test
   public void testValidUTF8() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_8)
-            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withAddress(HostAndPort.fromParts("127.0.0.7", server.getPort()))
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
-    assertEquals(null, client.get("Räksmörgås").get());
+    try {
+      ConnectFuture.connectFuture(client).get();
+      assertEquals(null, client.get("Räksmörgås").get());
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidUTF16() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_16)
-            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withAddress(HostAndPort.fromParts("127.0.0.3", server.getPort()))
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
-    client.get("Key").get();
+    try {
+      ConnectFuture.connectFuture(client).get();
+      client.get("Key").get();
+    } finally {
+      client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
+    }
   }
 
   @Test(expected = MemcacheOverloadedException.class)
   public void testOverloaded() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withAddress(HostAndPort.fromParts("127.0.0.5", server.getPort()))
             .withMaxOutstandingRequests(100)
             .connectAscii();
     ConnectFuture.connectFuture(client).get();
 
     try {
       List<ListenableFuture<String>> futures = Lists.newArrayList();
-      for (int i = 0; i < 200; i++) {
+      for (int i = 0; i < 400; i++) {
         futures.add(client.get("key"));
       }
       for (ListenableFuture<String> future : futures) {
@@ -96,13 +111,14 @@ public class MemcacheClientBuilderTest {
       fail("No MemcacheOverloadedException was triggered");
     } finally {
       client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 
   @Test
   public void testMaxSetLength() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("localhost", server.getPort()))
+            .withAddress(HostAndPort.fromParts("127.0.0.4", server.getPort()))
             .withMaxSetLength(1)
             .connectAscii();
     ConnectFuture.connectFuture(client).get();
@@ -112,6 +128,7 @@ public class MemcacheClientBuilderTest {
       assertEquals(null, client.get("key").get());
     } finally {
       client.shutdown();
+      ConnectFuture.disconnectFuture(client).get();
     }
   }
 

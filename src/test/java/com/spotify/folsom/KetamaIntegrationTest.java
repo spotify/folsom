@@ -92,6 +92,8 @@ public class KetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
+    assertEquals(0, Utils.getGlobalConnectionCount());
+
     boolean ascii;
     if (protocol.equals("ascii")) {
       ascii = true;
@@ -124,6 +126,8 @@ public class KetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
+    ConnectFuture.disconnectFuture(client).get();
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";
@@ -245,7 +249,7 @@ public class KetamaIntegrationTest {
       for (int i = 0; i < instances; i++) {
         EmbeddedServer daemon = new EmbeddedServer(binary);
         daemons.add(daemon);
-        addresses.add(HostAndPort.fromParts("localhost", daemon.getPort()));
+        addresses.add(HostAndPort.fromParts("127.0.0.2", daemon.getPort()));
       }
     }
 

@@ -28,7 +28,6 @@ import com.yammer.metrics.core.MetricName;
 import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
-
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -102,6 +101,14 @@ public class YammerMetrics implements Metrics {
       public Integer value() {
         return internalOutstandingReqGauge != null ?
                internalOutstandingReqGauge.getOutstandingRequests() : 0;
+      }
+    });
+
+    final MetricName globalConnections = name("global-connections", "count");
+    registry.newGauge(globalConnections, new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        return Utils.getGlobalConnectionCount();
       }
     });
   }

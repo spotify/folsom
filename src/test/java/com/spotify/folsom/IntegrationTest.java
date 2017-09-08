@@ -118,6 +118,8 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
+    assertEquals(0, Utils.getGlobalConnectionCount());
+
     boolean ascii;
     if (protocol.equals("ascii")) {
       ascii = true;
@@ -166,6 +168,8 @@ public class IntegrationTest {
     cleanup();
     client.shutdown();
     ConnectFuture.disconnectFuture(client).get();
+
+    assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";
