@@ -73,7 +73,9 @@ public class IntegrationTest {
   private static boolean memcachedRunning() {
     try (Socket socket = new Socket()) {
       HostAndPort serverAddress = getServerAddress();
-      socket.connect(new InetSocketAddress(serverAddress.getHostText(), serverAddress.getPort()));
+      socket.connect(new InetSocketAddress(
+          HostAndPortFix.getHostText(serverAddress),
+          serverAddress.getPort()));
       return true;
     } catch (ConnectException e) {
       System.err.println("memcached not running, disabling test");
@@ -131,7 +133,7 @@ public class IntegrationTest {
     HostAndPort integrationServer = getServerAddress();
 
     int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
-    String address = isEmbedded() ? "127.0.0.1" : integrationServer.getHostText();
+    String address = isEmbedded() ? "127.0.0.1" : HostAndPortFix.getHostText(integrationServer);
     int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()

@@ -26,6 +26,7 @@ import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.HostAndPortFix;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
@@ -226,7 +227,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
     @Override
     public int compare(HostAndPort o1, HostAndPort o2) {
-      int cmp = o1.getHostText().compareTo(o2.getHostText());
+      int cmp = HostAndPortFix.getHostText(o1).compareTo(HostAndPortFix.getHostText(o2));
       if (cmp != 0) {
         return cmp;
       }
