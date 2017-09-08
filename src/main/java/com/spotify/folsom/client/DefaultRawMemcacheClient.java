@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.HostAndPortFix;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
 import com.spotify.folsom.MemcacheStatus;
@@ -136,7 +137,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, SimpleSizeEstimator.INSTANCE);
 
     final ChannelFuture connectFuture = bootstrap.connect(
-        new InetSocketAddress(address.getHostText(), address.getPort()));
+        new InetSocketAddress(HostAndPortFix.getHostText(address), address.getPort()));
 
     connectFuture.addListener(new ChannelFutureListener() {
       @Override

@@ -80,7 +80,8 @@ public class SrvKetamaIntegrationTest {
     return Lists.transform(addresses, new Function<HostAndPort, LookupResult>() {
       @Override
       public LookupResult apply(HostAndPort input) {
-        return LookupResult.create(input.getHostText(), input.getPort(), 100, 100, 100);
+        return LookupResult.create(HostAndPortFix.getHostText(input), input.getPort(), 100, 100,
+            100);
       }
     });
   }
