@@ -86,7 +86,7 @@ public class MemcacheClientStressTest {
     client.set(KEY, VALUE, 100000).get();
 
     while (true) {
-      final List<ListenableFuture<byte[]>> futures = Lists.newArrayList();
+      final List<CompletableFuture<byte[]>> futures = Lists.newArrayList();
 
       final AtomicInteger successes = new AtomicInteger();
       final ConcurrentMap<String, AtomicInteger> failures = Maps.newConcurrentMap();
@@ -114,10 +114,10 @@ public class MemcacheClientStressTest {
   }
 
   private void addRequest(final MemcacheClient<byte[]> client,
-                          final List<ListenableFuture<byte[]>> futures,
+                          final List<CompletableFuture<byte[]>> futures,
                           final AtomicInteger successes,
                           final ConcurrentMap<String, AtomicInteger> failures) {
-    final ListenableFuture<byte[]> future = client.get(KEY);
+    final CompletableFuture<byte[]> future = client.get(KEY);
     Futures.addCallback(future, new FutureCallback<byte[]>() {
       @Override
       public void onSuccess(final byte[] result) {

@@ -97,11 +97,11 @@ public class MemcacheClientBuilderTest {
     ConnectFuture.connectFuture(client).get();
 
     try {
-      List<ListenableFuture<String>> futures = Lists.newArrayList();
+      List<CompletableFuture<String>> futures = Lists.newArrayList();
       for (int i = 0; i < 400; i++) {
         futures.add(client.get("key"));
       }
-      for (ListenableFuture<String> future : futures) {
+      for (CompletableFuture<String> future : futures) {
         try {
           future.get();
         } catch (ExecutionException e) {

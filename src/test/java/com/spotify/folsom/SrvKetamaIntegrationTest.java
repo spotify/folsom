@@ -95,10 +95,10 @@ public class SrvKetamaIntegrationTest {
 
   @Test
   public void testSetGet() throws Exception {
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    List<CompletableFuture<?>> futures = Lists.newArrayList();
     final int numKeys = 1000;
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
+      CompletableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
@@ -110,7 +110,7 @@ public class SrvKetamaIntegrationTest {
     futures.clear();
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletableFuture<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
@@ -133,7 +133,7 @@ public class SrvKetamaIntegrationTest {
     assertTrue(client.numActiveConnections() == client.numTotalConnections() - 1);
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletableFuture<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad

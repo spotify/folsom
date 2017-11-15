@@ -22,6 +22,7 @@ import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A simple wrapping client that retries once (but only for MemcacheClosedException's).
@@ -35,23 +36,39 @@ import com.spotify.folsom.client.Request;
  */
 public class RetryingClient implements RawMemcacheClient {
 
+  private final int maxRetries;
   private final RawMemcacheClient delegate;
 
   public RetryingClient(final RawMemcacheClient delegate) {
+    this(delegate, 1);
+  }
+
+  public RetryingClient(final RawMemcacheClient delegate, final int maxRetries) {
     this.delegate = delegate;
+    this.maxRetries = maxRetries;
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
-    final ListenableFuture<T> future = delegate.send(request);
-    return Futures.catchingAsync(future, MemcacheClosedException.class,
-        new AsyncFunction<MemcacheClosedException, T>() {
-          @Override
-          public ListenableFuture<T> apply(final MemcacheClosedException e) {
-            if (delegate.isConnected()) {
-              return delegate.send(request);
+  public <T> CompletableFuture<T> send(final Request<T> request) {
+    final CompletableFuture<T> promise = new CompletableFuture<>();
+    sendHelper(request, promise, 0);
+    return promise;
+  }
+
+  private <T> void sendHelper(final Request<T> request,
+                              final CompletableFuture<T> promise,
+                              final int retries) {
+    delegate.send(request)
+        .whenComplete((r, t) -> {
+          if (r != null) {
+            promise.complete(r);
+          } else {
+            if (retries <= maxRetries &&  // TODO - Stack overflow an issue
+                t instanceof MemcacheClosedException
+                && delegate.isConnected()) {
+              sendHelper(request, promise, retries + 1);
             } else {
-              return Futures.immediateFailedFuture(e);
+              promise.completeExceptionally(t);
             }
           }
         });

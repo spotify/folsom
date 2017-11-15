@@ -52,14 +52,14 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(Request<T> request) {
+  public <T> CompletableFuture<T> send(Request<T> request) {
     if (!connected) {
       return Futures.immediateFailedFuture(new MemcacheClosedException("Disconnected"));
     }
 
     if (request instanceof SetRequest) {
       map.put(ByteBuffer.wrap(request.getKey()), ((SetRequest) request).getValue());
-      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
+      return (CompletableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
     }
 
     if (request instanceof GetRequest) {

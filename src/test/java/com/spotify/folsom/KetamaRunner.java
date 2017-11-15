@@ -49,11 +49,11 @@ public class KetamaRunner {
     client.shutdown();
   }
 
-  private static void checkKeyOkOrNotFound(final ListenableFuture<?> future) throws Throwable {
+  private static void checkKeyOkOrNotFound(final CompletableFuture<?> future) throws Throwable {
     checkStatus(future, ImmutableSet.of(MemcacheStatus.KEY_NOT_FOUND, MemcacheStatus.OK));
   }
 
-  private static void checkStatus(final ListenableFuture<?> future,
+  private static void checkStatus(final CompletableFuture<?> future,
                                   final Set<MemcacheStatus> expected)
       throws Throwable {
     try {

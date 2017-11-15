@@ -24,9 +24,9 @@ import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.CompletableFuture;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
@@ -97,7 +97,7 @@ public class SimpleMemcacheClientBenchmark {
     final List<List<String>> keys = Lists.newArrayList();
     final List<List<String>> values = Lists.newArrayList();
 
-    final List<ListenableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    final List<CompletableFuture<MemcacheStatus>> futures = Lists.newArrayList();
     for (int i = 0; i < CONCURRENCY; i++) {
       final List<String> keys2 = Lists.newArrayList();
       final List<String> values2 = Lists.newArrayList();
@@ -107,15 +107,15 @@ public class SimpleMemcacheClientBenchmark {
         keys2.add(key);
         values2.add(value);
         if (TEST_SPYMEMCACHED) {
-          final SettableFuture<MemcacheStatus> settable = SettableFuture.create();
+          final CompletableFuture<MemcacheStatus> settable = new CompletableFuture<>();
           spyClient.set(key, Integer.MAX_VALUE, value)
               .addListener(new OperationCompletionListener() {
                 @Override
                 public void onComplete(final OperationFuture<?> future) throws Exception {
                   if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
-                    settable.set(null);
+                    settable.complete(null);
                   } else {
-                    settable.setException(new RuntimeException(future.getStatus().getMessage()));
+                    settable.completeExceptionally(new RuntimeException(future.getStatus().getMessage()));
                   }
                 }
               });
@@ -127,7 +127,7 @@ public class SimpleMemcacheClientBenchmark {
       keys.add(keys2);
       values.add(values2);
     }
-    for (final ListenableFuture<MemcacheStatus> future : futures) {
+    for (final CompletableFuture<MemcacheStatus> future : futures) {
       future.get();
     }
 
@@ -164,25 +164,17 @@ public class SimpleMemcacheClientBenchmark {
                                  final List<String> keys, final List<String> expected,
                                  final ProgressMeter meter,
                                  final ScheduledExecutorService backoffExecutor) {
-    final ListenableFuture<List<String>> future = client.get(keys);
+    final CompletableFuture<List<String>> future = client.get(keys);
     final long start = System.nanoTime();
-    Futures.addCallback(future, new FutureCallback<List<String>>() {
-      @Override
-      public void onSuccess(final List<String> response) {
-        final long end = System.nanoTime();
-        final long latency = end - start;
-        meter.inc(keys.size(), latency);
-        if (!expected.equals(response)) {
-          throw new AssertionError("expected: " + expected + ", got: " + response);
-        }
-        sendFolsom(client, keys, expected, meter, backoffExecutor);
+    future.whenComplete(response -> { // final List<String> response
+      final long end = System.nanoTime();
+      final long latency = end - start;
+      meter.inc(keys.size(), latency);
+      if (!expected.equals(response)) {
+        throw new AssertionError("expected: " + expected + ", got: " + response);
       }
-
-      @Override
-      public void onFailure(final Throwable throwable) {
-        System.err.println(throwable.getMessage());
-      }
-    }, SAME_THREAD_EXECUTOR);
+      sendFolsom(client, keys, expected, meter, backoffExecutor);
+    }).exceptionally(t -> System.err.println(t.getMessage()));
   }
 
   private static void sendSpyMemcached(final MemcachedClient client,

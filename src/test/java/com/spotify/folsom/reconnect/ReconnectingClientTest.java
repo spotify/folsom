@@ -17,7 +17,6 @@ package com.spotify.folsom.reconnect;
 
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
@@ -26,6 +25,7 @@ import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
 
+import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -166,7 +166,7 @@ public class ReconnectingClientTest {
     }
 
     @Override
-    public <T> ListenableFuture<T> send(Request<T> request) {
+    public <T> CompletableFuture<T> send(Request<T> request) {
       throw new RuntimeException("Not implemented");
     }
 

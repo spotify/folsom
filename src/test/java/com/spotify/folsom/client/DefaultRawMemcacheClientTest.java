@@ -105,7 +105,7 @@ public class DefaultRawMemcacheClientTest {
                     new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8);
 
     try {
-      List<ListenableFuture<?>> futures = Lists.newArrayList();
+      List<CompletableFuture<?>> futures = Lists.newArrayList();
       for (int i = 0; i < 2; i++) {
         futures.add(asciiClient.set("key", "value" + i, 0));
       }
@@ -124,7 +124,7 @@ public class DefaultRawMemcacheClientTest {
       StringBuilder sb = new StringBuilder();
       long t1 = System.currentTimeMillis();
       int i = 0;
-      for (ListenableFuture<?> future : futures) {
+      for (CompletableFuture<?> future : futures) {
         try {
           long elapsed = System.currentTimeMillis() - t1;
           future.get(Math.max(0, 1000 - elapsed), TimeUnit.MILLISECONDS);
@@ -341,7 +341,7 @@ public class DefaultRawMemcacheClientTest {
         assertNotNull(metrics.getGauge());
         assertEquals(0, metrics.getGauge().getOutstandingRequests());
 
-        List<ListenableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
+        List<CompletableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
         futures.add(rawClient.send(new GetRequest("key", charset, false)));
         assertEquals(1, metrics.getGauge().getOutstandingRequests());
 

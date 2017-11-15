@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.concurrent.CompletableFuture;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -322,15 +323,16 @@ public class IntegrationTest {
       keys.add("key-" + i);
     }
 
-    final List<ListenableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    // final List<CompletableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    final List<CompletableFuture<MemcacheStatus>> futures = Lists.newArrayList();
     try {
       for (final String key : keys) {
         futures.add(client.set(key, key, TTL));
       }
 
-      Futures.allAsList(futures).get();
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
 
-      final ListenableFuture<List<String>> resultsFuture = client.get(keys);
+      final CompletableFuture<List<String>> resultsFuture = client.get(keys);
       final List<String> results = resultsFuture.get();
       assertEquals(keys, results);
     } finally {
@@ -338,7 +340,7 @@ public class IntegrationTest {
       for (final String key : keys) {
         futures.add(client.delete(key));
       }
-      Futures.allAsList(futures).get();
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
     }
   }
 
@@ -615,15 +617,15 @@ public class IntegrationTest {
     assumeTrue(isBinary());
   }
 
-  static void assertGetKeyNotFound(ListenableFuture<String> future) throws Throwable {
+  static void assertGetKeyNotFound(CompletableFuture<String> future) throws Throwable {
     checkKeyNotFound(future);
   }
 
-  static void checkKeyNotFound(final ListenableFuture<?> future) throws Throwable {
+  static void checkKeyNotFound(final CompletableFuture<?> future) throws Throwable {
     checkStatus(future, MemcacheStatus.KEY_NOT_FOUND);
   }
 
-  static void checkStatus(final ListenableFuture<?> future, final MemcacheStatus... expected)
+  static void checkStatus(final CompletableFuture<?> future, final MemcacheStatus... expected)
       throws Throwable {
     final Set<MemcacheStatus> expectedSet = Sets.newHashSet(expected);
     try {

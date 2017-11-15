@@ -16,17 +16,16 @@
 
 package com.spotify.folsom;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface Metrics {
-  void measureGetFuture(ListenableFuture<GetResult<byte[]>> future);
-  void measureMultigetFuture(ListenableFuture<List<GetResult<byte[]>>> future);
-  void measureDeleteFuture(ListenableFuture<MemcacheStatus> future);
-  void measureSetFuture(ListenableFuture<MemcacheStatus> future);
-  void measureIncrDecrFuture(ListenableFuture<Long> future);
-  void measureTouchFuture(ListenableFuture<MemcacheStatus> future);
+  void measureGetFuture(CompletableFuture<GetResult<byte[]>> future);
+  void measureMultigetFuture(CompletableFuture<List<GetResult<byte[]>>> future);
+  void measureDeleteFuture(CompletableFuture<MemcacheStatus> future);
+  void measureSetFuture(CompletableFuture<MemcacheStatus> future);
+  void measureIncrDecrFuture(CompletableFuture<Long> future);
+  void measureTouchFuture(CompletableFuture<MemcacheStatus> future);
 
   /**
    * Called by the MemcacheClient initialization process to allow a gauge to be registered with the

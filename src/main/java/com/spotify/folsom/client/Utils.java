@@ -16,12 +16,10 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,19 +46,13 @@ public final class Utils {
     }
   };
 
-  public static <I, O> ListenableFuture<O> transform(
-          final ListenableFuture<I> input,
-          final AsyncFunction<? super I, ? extends O> function) {
-    return Futures.transformAsync(input, function, SAME_THREAD_EXECUTOR);
-  }
-
-  public static <I, O> ListenableFuture<O> transform(
-          final ListenableFuture<I> input,
-          final Function<? super I, ? extends O> function) {
-    return Futures.transform(input, function, SAME_THREAD_EXECUTOR);
-  }
-
   private Utils() {
+  }
+
+  public static <I, O> CompletableFuture<O> transform(
+          final CompletableFuture<I> input,
+          final Function<? super I, ? extends O> function) {
+    return input.thenApplyAsync(function, SAME_THREAD_EXECUTOR);
   }
 
   public static int ttlToExpiration(final int ttl) {

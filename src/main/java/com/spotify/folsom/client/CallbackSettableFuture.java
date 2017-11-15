@@ -15,26 +15,24 @@
  */
 package com.spotify.folsom.client;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-class CallbackSettableFuture<T> extends AbstractFuture<T> implements Runnable {
-  private final ListenableFuture<T> future;
+class CallbackSettableFuture<T> extends CompletableFuture<T> implements Runnable {
+  private final CompletableFuture<T> future;
 
-  public CallbackSettableFuture(ListenableFuture<T> future) {
+  public CallbackSettableFuture(CompletableFuture<T> future) {
     this.future = future;
   }
 
   @Override
   public void run() {
     try {
-      set(future.get());
+      complete(future.get());
     } catch (ExecutionException e) {
-      setException(e.getCause());
+      completeExceptionally(e.getCause());
     } catch (InterruptedException | RuntimeException | Error e) {
-      setException(e);
+      completeExceptionally(e);
     }
   }
 }

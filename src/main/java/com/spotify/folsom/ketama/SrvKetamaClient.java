@@ -18,9 +18,6 @@ package com.spotify.folsom.ketama;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
@@ -30,6 +27,7 @@ import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +137,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(Request<T> request) {
+  public <T> CompletableFuture<T> send(Request<T> request) {
     return currentClient.send(request);
   }
 
@@ -182,6 +180,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   }
 
   private void setPendingClient(List<AddressAndClient> addressAndClients) {
+
     final RawMemcacheClient newPending = new KetamaMemcacheClient(addressAndClients);
     newPending.registerForConnectionChanges(listener);
     final RawMemcacheClient oldPending;
@@ -191,30 +190,26 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       pendingClient = newPending;
     }
 
-    ListenableFuture<Void> future = ConnectFuture.connectFuture(newPending);
-    Futures.addCallback(future, new FutureCallback<Void>() {
-      @Override
-      public void onSuccess(@Nullable Void result) {
-        final RawMemcacheClient oldClient;
-        synchronized (sync) {
-          if (newPending != pendingClient) {
-            // We don't care about this event if it's not the expected client
-            return;
+    ConnectFuture.connectFuture(newPending)
+        .thenAccept(__ -> {
+          final RawMemcacheClient oldClient;
+          synchronized (sync) {
+            if (newPending != pendingClient) {
+              // We don't care about this event if it's not the expected client
+              return;
+            }
+
+            oldClient = currentClient;
+            currentClient = pendingClient;
+            pendingClient = null;
           }
+          notifyConnectionChange();
+          executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
+        })
+        .exceptionally(t -> {
+          throw new RuntimeException("Programmer bug - this is unreachable code", t);
+        });
 
-          oldClient = currentClient;
-          currentClient = pendingClient;
-          pendingClient = null;
-        }
-        notifyConnectionChange();
-        executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        throw new RuntimeException("Programmer bug - this is unreachable code");
-      }
-    });
     if (oldPending != null) {
       oldPending.unregisterForConnectionChanges(listener);
       oldPending.shutdown();

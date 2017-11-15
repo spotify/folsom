@@ -102,13 +102,13 @@ public class RecoveryTest {
 
     // Overload the client
     final int overload = 10;
-    final List<ListenableFuture<String>> overloadFutures = Lists.newArrayList();
+    final List<CompletableFuture<String>> overloadFutures = Lists.newArrayList();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS + overload; i++) {
       overloadFutures.add(client.get("foo"));
     }
     int timeout = 0;
     int overloaded = 0;
-    for (final ListenableFuture<String> f : overloadFutures) {
+    for (final CompletableFuture<String> f : overloadFutures) {
       try {
         f.get();
       } catch (ExecutionException e) {
@@ -135,11 +135,11 @@ public class RecoveryTest {
     answer.set(elements("foo", "bar"));
 
     // Verify that the client recovers and successfully processes requests
-    final List<ListenableFuture<String>> recoveryFutures = Lists.newArrayList();
+    final List<CompletableFuture<String>> recoveryFutures = Lists.newArrayList();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS; i++) {
       recoveryFutures.add(client.get("foo"));
     }
-    for (final ListenableFuture<String> f : recoveryFutures) {
+    for (final CompletableFuture<String> f : recoveryFutures) {
       f.get();
     }
   }

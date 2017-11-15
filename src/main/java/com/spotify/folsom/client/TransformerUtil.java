@@ -15,13 +15,13 @@
  */
 package com.spotify.folsom.client;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TransformerUtil<T> {
   private final Function<GetResult<T>, T> getResultToValue;
@@ -37,20 +37,20 @@ public class TransformerUtil<T> {
   }
 
 
-  public ListenableFuture<T> unwrap(ListenableFuture<GetResult<T>> future) {
+  public CompletableFuture<T> unwrap(CompletableFuture<GetResult<T>> future) {
     return Utils.transform(future, getResultToValue);
   }
 
-  public ListenableFuture<GetResult<T>> decode(ListenableFuture<GetResult<byte[]>> future) {
+  public CompletableFuture<GetResult<T>> decode(CompletableFuture<GetResult<byte[]>> future) {
     return Utils.transform(future, resultDecoder);
   }
 
-  public ListenableFuture<List<T>> unwrapList(ListenableFuture<List<GetResult<T>>> future) {
+  public CompletableFuture<List<T>> unwrapList(CompletableFuture<List<GetResult<T>>> future) {
     return Utils.transform(future, listResultUnwrapper);
   }
 
-  public ListenableFuture<List<GetResult<T>>> decodeList(
-          ListenableFuture<List<GetResult<byte[]>>> future) {
+  public CompletableFuture<List<GetResult<T>>> decodeList(
+          CompletableFuture<List<GetResult<byte[]>>> future) {
     return Utils.transform(future, listResultDecoder);
   }
 
@@ -73,7 +73,7 @@ public class TransformerUtil<T> {
 
     @Override
     public List<T> apply(List<GetResult<T>> input) {
-      return Lists.transform(input, resultUnwrapper);
+      return input.stream().map(resultUnwrapper).collect(Collectors.toList());
     }
   }
 
@@ -103,7 +103,7 @@ public class TransformerUtil<T> {
 
     @Override
     public List<GetResult<T>> apply(List<GetResult<byte[]>> input) {
-      return Lists.transform(input, resultDecoder);
+      return input.stream().map(resultDecoder).collect(Collectors.toList());
     }
   }
 }

@@ -17,7 +17,6 @@ package com.spotify.folsom.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractFuture;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
@@ -25,10 +24,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class Request<V> extends AbstractFuture<V> {
+public abstract class Request<V> extends CompletableFuture<V> {
+
   protected final byte[] key;
 
   protected Request(String key, Charset charset) {
@@ -50,11 +51,11 @@ public abstract class Request<V> extends AbstractFuture<V> {
   public abstract ByteBuf writeRequest(final ByteBufAllocator alloc, ByteBuffer dst);
 
   public void fail(final Throwable e) {
-    setException(e);
+    completeExceptionally(e);
   }
 
   public void succeed(final V result) {
-    set(result);
+    complete(result);
   }
 
   protected static ByteBuf toBuffer(final ByteBufAllocator alloc, ByteBuffer dst, int extra) {
@@ -95,5 +96,4 @@ public abstract class Request<V> extends AbstractFuture<V> {
     }
     return res;
   }
-
 }

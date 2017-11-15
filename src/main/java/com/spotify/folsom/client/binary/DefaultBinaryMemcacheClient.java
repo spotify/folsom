@@ -17,8 +17,6 @@
 package com.spotify.folsom.client.binary;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.BinaryMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
@@ -33,8 +31,12 @@ import com.spotify.folsom.client.Utils;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -66,7 +68,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#set(java.lang.String, V, int)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> set(final String key, final V value, final int ttl) {
+  public CompletableFuture<MemcacheStatus> set(final String key, final V value, final int ttl) {
     return setInternal(OpCode.SET, key, value, ttl);
   }
 
@@ -74,7 +76,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#set(java.lang.String, V, int, long)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> set(
+  public CompletableFuture<MemcacheStatus> set(
           final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.SET, key, value, ttl, cas);
   }
@@ -83,7 +85,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#add(java.lang.String, V, int)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> add(final String key, final V value, final int ttl) {
+  public CompletableFuture<MemcacheStatus> add(final String key, final V value, final int ttl) {
     return setInternal(OpCode.ADD, key, value, ttl);
   }
 
@@ -91,11 +93,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#replace(java.lang.String, V, int)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> replace(final String key, final V value, final int ttl) {
+  public CompletableFuture<MemcacheStatus> replace(final String key, final V value, final int ttl) {
     return setInternal(OpCode.REPLACE, key, value, ttl);
   }
 
-  private ListenableFuture<MemcacheStatus> setInternal(final byte opcode,
+  private CompletableFuture<MemcacheStatus> setInternal(final byte opcode,
                                              final String key,
                                              final V value,
                                              final int ttl) {
@@ -106,7 +108,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#add(java.lang.String, V, int, long)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> add(
+  public CompletableFuture<MemcacheStatus> add(
           final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.ADD, key, value, ttl, cas);
   }
@@ -115,12 +117,12 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#replace(java.lang.String, V, int, long)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> replace(
+  public CompletableFuture<MemcacheStatus> replace(
           final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.REPLACE, key, value, ttl, cas);
   }
 
-  private ListenableFuture<MemcacheStatus> casSetInternal(final byte opcode,
+  private CompletableFuture<MemcacheStatus> casSetInternal(final byte opcode,
                                                 final String key,
                                                 final V value,
                                                 final int ttl,
@@ -130,7 +132,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = new SetRequest(
             opcode, key, charset, valueBytes, ttl, cas);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
@@ -139,7 +141,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#get(java.lang.String)
    */
   @Override
-  public ListenableFuture<V> get(final String key) {
+  public CompletableFuture<V> get(final String key) {
     return getAndTouch(key, -1);
   }
 
@@ -147,7 +149,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#getAndTouch(java.lang.String, int)
    */
   @Override
-  public ListenableFuture<V> getAndTouch(final String key, final int ttl) {
+  public CompletableFuture<V> getAndTouch(final String key, final int ttl) {
     return transformerUtil.unwrap(casGetAndTouch(key, ttl));
   }
 
@@ -155,7 +157,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#get(java.util.List)
    */
   @Override
-  public ListenableFuture<List<V>> get(final List<String> keys) {
+  public CompletableFuture<List<V>> get(final List<String> keys) {
     return getAndTouch(keys, -1);
   }
 
@@ -163,42 +165,47 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#casGet(java.lang.String)
    */
   @Override
-  public ListenableFuture<GetResult<V>> casGet(final String key) {
+  public CompletableFuture<GetResult<V>> casGet(final String key) {
     return getInternal(key, -1);
   }
 
-  private ListenableFuture<GetResult<V>> getInternal(final String key, final int ttl) {
+  private CompletableFuture<GetResult<V>> getInternal(final String key, final int ttl) {
     final byte opCode = ttl > -1 ? OpCode.GAT : OpCode.GET;
     GetRequest request = new GetRequest(key, charset, opCode, ttl);
-    final ListenableFuture<GetResult<byte[]>> future =
+    final CompletableFuture<GetResult<byte[]>> future =
             rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);
     return transformerUtil.decode(future);
   }
 
   @Override
-  public ListenableFuture<List<GetResult<V>>> casGet(List<String> keys) {
+  public CompletableFuture<List<GetResult<V>>> casGet(List<String> keys) {
     return multiget(keys, -1);
   }
 
-  private ListenableFuture<List<GetResult<V>>> multiget(List<String> keys, int ttl) {
+  private CompletableFuture<List<GetResult<V>>> multiget(List<String> keys, int ttl) {
     final int size = keys.size();
     if (size == 0) {
-      return Futures.immediateFuture(Collections.<GetResult<V>>emptyList());
+      return CompletableFuture.completedFuture(Collections.<GetResult<V>>emptyList());
     }
 
     final List<List<String>> keyPartition =
-          Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
-    final List<ListenableFuture<List<GetResult<byte[]>>>> futureList =
-          new ArrayList<>(keyPartition.size());
+        Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
 
-    for (final List<String> part : keyPartition) {
-      MultigetRequest request = MultigetRequest.create(part, charset, ttl);
-      futureList.add(rawMemcacheClient.send(request));
-    }
+    final List<CompletableFuture<List<GetResult<byte[]>>>> futuresList =
+        keyPartition.stream()
+        .map(part -> rawMemcacheClient.send(MultigetRequest.create(part, charset, ttl)))
+        .collect(Collectors.toList());
 
-    final ListenableFuture<List<GetResult<byte[]>>> future =
-          Utils.transform(Futures.allAsList(futureList), Utils.<GetResult<byte[]>>flatten());
+    final CompletableFuture<List<GetResult<byte[]>>> [] futures =
+        futuresList.toArray(new CompletableFuture[keyPartition.size()]);
+
+    final CompletableFuture<List<GetResult<byte[]>>> future = CompletableFuture
+        .allOf(futures)
+        .thenApply(__ -> Arrays.stream(futures)
+            .map(CompletableFuture::join)
+            .flatMap(List::stream)
+            .collect(Collectors.toList()));
 
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);
@@ -208,7 +215,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#getAndTouch(java.util.List, int)
    */
   @Override
-  public ListenableFuture<List<V>> getAndTouch(final List<String> keys, final int ttl) {
+  public CompletableFuture<List<V>> getAndTouch(final List<String> keys, final int ttl) {
     return transformerUtil.unwrapList(multiget(keys, ttl));
   }
 
@@ -216,7 +223,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#casGetAndTouch(java.lang.String, int)
    */
   @Override
-  public ListenableFuture<GetResult<V>> casGetAndTouch(final String key, final int ttl) {
+  public CompletableFuture<GetResult<V>> casGetAndTouch(final String key, final int ttl) {
     return getInternal(key, ttl);
   }
 
@@ -224,9 +231,9 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#touch(java.lang.String, int)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> touch(final String key, final int ttl) {
+  public CompletableFuture<MemcacheStatus> touch(final String key, final int ttl) {
     TouchRequest request = new TouchRequest(key, charset, ttl);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
     return future;
   }
@@ -235,9 +242,9 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#delete(java.lang.String)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> delete(final String key) {
+  public CompletableFuture<MemcacheStatus> delete(final String key) {
     DeleteRequest request = new DeleteRequest(key, charset);
-    final ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    final CompletableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
     return future;
   }
@@ -246,18 +253,18 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#incr(java.lang.String, long, long, int)
    */
   @Override
-  public ListenableFuture<Long> incr(
+  public CompletableFuture<Long> incr(
           final String key, final long by, final long initial, final int ttl) {
     return incrInternal(OpCode.INCREMENT, key, by, initial, ttl);
   }
 
-  private ListenableFuture<Long> incrInternal(final byte opcode,
+  private CompletableFuture<Long> incrInternal(final byte opcode,
                                               final String key,
                                               final long by,
                                               final long initial,
                                               final int ttl) {
 
-    final ListenableFuture<Long> future = rawMemcacheClient.send(
+    final CompletableFuture<Long> future = rawMemcacheClient.send(
             new IncrRequest(key, charset, opcode, by, initial, ttl));
     metrics.measureIncrDecrFuture(future);
     return future;
@@ -267,7 +274,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#decr(java.lang.String, long, long, int)
    */
   @Override
-  public ListenableFuture<Long> decr(
+  public CompletableFuture<Long> decr(
           final String key, final long by, final long initial, final int ttl) {
     return incrInternal(OpCode.DECREMENT, key, by, initial, ttl);
   }
@@ -276,7 +283,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#append(java.lang.String, V)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> append(final String key, final V value) {
+  public CompletableFuture<MemcacheStatus> append(final String key, final V value) {
     return casSetInternal(OpCode.APPEND, key, value, 0, 0);
   }
 
@@ -284,7 +291,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#append(java.lang.String, V, long)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> append(final String key, final V value, final long cas) {
+  public CompletableFuture<MemcacheStatus> append(final String key, final V value, final long cas) {
     return casSetInternal(OpCode.APPEND, key, value, 0, cas);
   }
 
@@ -292,7 +299,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#prepend(java.lang.String, V)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> prepend(final String key, final V value) {
+  public CompletableFuture<MemcacheStatus> prepend(final String key, final V value) {
     return casSetInternal(OpCode.PREPEND, key, value, 0, 0);
   }
 
@@ -301,7 +308,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#prepend(java.lang.String, V, long)
    */
   @Override
-  public ListenableFuture<MemcacheStatus> prepend(final String key, final V value, final long cas) {
+  public CompletableFuture<MemcacheStatus> prepend(final String key, final V value, final long cas) {
     return casSetInternal(OpCode.PREPEND, key, value, 0, cas);
   }
 
@@ -309,7 +316,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#noop()
    */
   @Override
-  public ListenableFuture<Void> noop() {
+  public CompletableFuture<Void> noop() {
     return rawMemcacheClient.send(new NoopRequest());
   }
 
