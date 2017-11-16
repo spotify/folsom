@@ -19,7 +19,7 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,20 +37,20 @@ public class TransformerUtil<T> {
   }
 
 
-  public CompletableFuture<T> unwrap(CompletableFuture<GetResult<T>> future) {
+  public CompletionStage<T> unwrap(CompletionStage<GetResult<T>> future) {
     return Utils.transform(future, getResultToValue);
   }
 
-  public CompletableFuture<GetResult<T>> decode(CompletableFuture<GetResult<byte[]>> future) {
+  public CompletionStage<GetResult<T>> decode(CompletionStage<GetResult<byte[]>> future) {
     return Utils.transform(future, resultDecoder);
   }
 
-  public CompletableFuture<List<T>> unwrapList(CompletableFuture<List<GetResult<T>>> future) {
+  public CompletionStage<List<T>> unwrapList(CompletionStage<List<GetResult<T>>> future) {
     return Utils.transform(future, listResultUnwrapper);
   }
 
-  public CompletableFuture<List<GetResult<T>>> decodeList(
-          CompletableFuture<List<GetResult<byte[]>>> future) {
+  public CompletionStage<List<GetResult<T>>> decodeList(
+          CompletionStage<List<GetResult<byte[]>>> future) {
     return Utils.transform(future, listResultDecoder);
   }
 

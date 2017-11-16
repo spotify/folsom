@@ -21,38 +21,38 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class NoopMetrics implements Metrics {
   public static final NoopMetrics INSTANCE = new NoopMetrics();
 
   @Override
-  public void measureGetFuture(CompletableFuture<GetResult<byte[]>> future) {
+  public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
 
   }
 
   @Override
-  public void measureMultigetFuture(CompletableFuture<List<GetResult<byte[]>>> future) {
+  public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
 
   }
 
   @Override
-  public void measureDeleteFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 
   @Override
-  public void measureSetFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 
   @Override
-  public void measureIncrDecrFuture(CompletableFuture<Long> future) {
+  public void measureIncrDecrFuture(CompletionStage<Long> future) {
 
   }
 
   @Override
-  public void measureTouchFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 

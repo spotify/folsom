@@ -16,19 +16,21 @@
 package com.spotify.folsom.client;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 class CallbackSettableFuture<T> extends CompletableFuture<T> implements Runnable {
-  private final CompletableFuture<T> future;
 
-  public CallbackSettableFuture(CompletableFuture<T> future) {
+  private final CompletionStage<T> future;
+
+  public CallbackSettableFuture(CompletionStage<T> future) {
     this.future = future;
   }
 
   @Override
   public void run() {
     try {
-      complete(future.get());
+      complete(future.toCompletableFuture().get());
     } catch (ExecutionException e) {
       completeExceptionally(e.getCause());
     } catch (InterruptedException | RuntimeException | Error e) {

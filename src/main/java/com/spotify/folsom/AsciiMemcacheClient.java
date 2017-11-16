@@ -15,7 +15,7 @@
  */
 package com.spotify.folsom;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A memcache client using the ascii protocol
@@ -31,7 +31,7 @@ public interface AsciiMemcacheClient<V> extends MemcacheClient<V> {
    * @param by  The value to increment the counter by
    * @return A future representing completion of the request, with the new value of the counter
    */
-  CompletableFuture<Long> incr(String key, long by);
+  CompletionStage<Long> incr(String key, long by);
 
   /**
    * Decrement a counter for the provided key
@@ -40,5 +40,5 @@ public interface AsciiMemcacheClient<V> extends MemcacheClient<V> {
    * @param by  The value to decrement the counter by
    * @return A future representing completion of the request, with the new value of the counter
    */
-  CompletableFuture<Long> decr(String key, long by);
+  CompletionStage<Long> decr(String key, long by);
 }

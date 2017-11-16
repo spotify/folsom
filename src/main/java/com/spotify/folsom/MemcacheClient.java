@@ -16,7 +16,7 @@
 package com.spotify.folsom;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public interface MemcacheClient<V> extends ObservableClient {
 
@@ -27,7 +27,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param ttl The TTL in seconds
    * @return A future representing completion of the request
    */
-  CompletableFuture<MemcacheStatus> set(String key, V value, int ttl);
+  CompletionStage<MemcacheStatus> set(String key, V value, int ttl);
 
   /**
    * Compare and set a key in memcache to the provided value, with the specified TTL
@@ -37,7 +37,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param cas The CAS value, must match the value on the server for the set to go through
    * @return A future representing completion of the request.
    */
-  CompletableFuture<MemcacheStatus> set(String key, V value, int ttl, long cas);
+  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas);
 
   /**
    * Delete the provided key
@@ -45,7 +45,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param key Key, must not be null
    * @return A future representing completion of the request
    */
-  CompletableFuture<MemcacheStatus> delete(String key);
+  CompletionStage<MemcacheStatus> delete(String key);
 
   /**
    * Add a key in memcache with the provided value, with the specified TTL. Key must not exist
@@ -55,7 +55,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param ttl The TTL in seconds
    * @return A future representing completion of the request
    */
-  CompletableFuture<MemcacheStatus> add(String key, V value, int ttl);
+  CompletionStage<MemcacheStatus> add(String key, V value, int ttl);
 
   /**
    * Replace a key in memcache with the provided value, with the specified TTL. Key must exist
@@ -65,11 +65,11 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param ttl The TTL in seconds
    * @return A future representing completion of the request
    */
-  CompletableFuture<MemcacheStatus> replace(String key, V value, int ttl);
+  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl);
 
-  CompletableFuture<MemcacheStatus> append(String key, V value);
+  CompletionStage<MemcacheStatus> append(String key, V value);
 
-  CompletableFuture<MemcacheStatus> prepend(String key, V value);
+  CompletionStage<MemcacheStatus> prepend(String key, V value);
 
   /**
    * Get the value for the provided key
@@ -77,7 +77,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return A future representing completion of the request, with the value, or null if the key
    *         does not exist
    */
-  CompletableFuture<V> get(String key);
+  CompletionStage<V> get(String key);
 
   /**
    * Get the value for the provided key, including the CAS value
@@ -86,7 +86,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return A future representing completion of the request, with the value, including the CAS
    * value, or null if the value does not exists.
    */
-  CompletableFuture<GetResult<V>> casGet(String key);
+  CompletionStage<GetResult<V>> casGet(String key);
 
   /**
    * Get the value for the provided keys
@@ -95,7 +95,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return A future representing completion of the request, with the values. Any non existing
    * values will be null. Order will be maintained from the input keys
    */
-  CompletableFuture<List<V>> get(List<String> keys);
+  CompletionStage<List<V>> get(List<String> keys);
 
   /**
    * Get the value for the provided keys
@@ -105,7 +105,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * including the CAS value. Any non existing
    * values will be null. Order will be maintained from the input keys
    */
-  CompletableFuture<List<GetResult<V>>> casGet(List<String> keys);
+  CompletionStage<List<GetResult<V>>> casGet(List<String> keys);
 
   /**
    * Sets the expiration for the provided key
@@ -114,7 +114,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param ttl The TTL in seconds
    * @return A future representing completion of the request
    */
-  CompletableFuture<MemcacheStatus> touch(String key, int ttl);
+  CompletionStage<MemcacheStatus> touch(String key, int ttl);
 
   /**
    * Shut down the client.

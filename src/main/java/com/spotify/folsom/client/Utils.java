@@ -18,7 +18,7 @@ package com.spotify.folsom.client;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +49,8 @@ public final class Utils {
   private Utils() {
   }
 
-  public static <I, O> CompletableFuture<O> transform(
-          final CompletableFuture<I> input,
+  public static <I, O> CompletionStage<O> transform(
+          final CompletionStage<I> input,
           final Function<? super I, ? extends O> function) {
     return input.thenApplyAsync(function, SAME_THREAD_EXECUTOR);
   }

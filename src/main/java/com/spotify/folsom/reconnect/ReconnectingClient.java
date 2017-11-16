@@ -26,7 +26,7 @@ import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import java.nio.charset.Charset;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,7 +66,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final int maxSetLength) {
     this(backoffFunction, scheduledExecutorService, new Connector() {
       @Override
-      public CompletableFuture<RawMemcacheClient> connect() {
+      public CompletionStage<RawMemcacheClient> connect() {
         return DefaultRawMemcacheClient.connect(
                 address, outstandingRequestLimit,
                 binary, executor, timeoutMillis, charset, metrics, maxSetLength);
@@ -88,7 +88,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     return client.send(request);
   }
 
@@ -186,7 +186,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   }
 
   interface Connector {
-    CompletableFuture<RawMemcacheClient> connect();
+    CompletionStage<RawMemcacheClient> connect();
   }
 
   @Override

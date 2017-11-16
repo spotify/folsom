@@ -27,11 +27,10 @@ import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -137,7 +136,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(Request<T> request) {
+  public <T> CompletionStage<T> send(Request<T> request) {
     return currentClient.send(request);
   }
 

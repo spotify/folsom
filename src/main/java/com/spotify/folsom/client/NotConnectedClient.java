@@ -18,6 +18,7 @@ package com.spotify.folsom.client;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class NotConnectedClient extends AbstractRawMemcacheClient {
 
@@ -27,7 +28,7 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     return fail();
   }
 
@@ -51,7 +52,7 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
     return 0;
   }
 
-  private <T> CompletableFuture<T> fail() {
+  private <T> CompletionStage<T> fail() {
     CompletableFuture<T> result = new CompletableFuture();
     result.completeExceptionally(new MemcacheClosedException("Not connected"));
     return result;

@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
@@ -59,21 +60,21 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     if (request instanceof MultiRequest) {
       // T for Request should always be List<GetResult<byte[]>> here
       // which means that MultiRequest should have T = GetResult<byte[]>
       final MultiRequest<GetResult<byte[]>> multiRequest =
               (MultiRequest<GetResult<byte[]>>) request;
       if (multiRequest.getKeys().size() > 1) {
-        return (CompletableFuture<T>) sendSplitRequest(multiRequest);
+        return (CompletionStage<T>) sendSplitRequest(multiRequest);
       }
     }
 
     return getClient(request.getKey()).send(request);
   }
 
-  private <T> CompletableFuture<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
+  private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
     final List<byte[]> keys = multiRequest.getKeys();
 
     final Map<RawMemcacheClient, List<byte[]>> routing = Maps.newIdentityHashMap();
@@ -89,23 +90,28 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       routing2.add(client);
     }
 
-    final Map<RawMemcacheClient, CompletableFuture<List<T>>> futures = Maps.newIdentityHashMap();
+    final Map<RawMemcacheClient, CompletionStage<List<T>>> futures = Maps.newIdentityHashMap();
 
     for (final Map.Entry<RawMemcacheClient, List<byte[]>> entry : routing.entrySet()) {
       final List<byte[]> subKeys = entry.getValue();
       final Request<List<T>> subRequest = multiRequest.create(subKeys);
       final RawMemcacheClient client = entry.getKey();
-      CompletableFuture<List<T>> send = client.send(subRequest);
+      CompletionStage<List<T>> send = client.send(subRequest);
       futures.put(client, send);
     }
 
-    CompletableFuture<List<T>> [] cfs = futures.values().toArray(new CompletableFuture[futures.size()]);
+    List<CompletableFuture<List<T>>> cfs = futures.values().stream()
+        .map(CompletionStage::toCompletableFuture)
+        .collect(Collectors.toList());
+
+
     CompletableFuture<List<T>> result = CompletableFuture
-        .allOf(cfs)
-        .thenApply(__ -> Arrays.stream(cfs)
+        .allOf(cfs.toArray(new CompletableFuture[futures.size()]))
+        .thenApply(__ -> cfs.stream()
             .map(CompletableFuture::join)
             .flatMap(List::stream)
             .collect(Collectors.toList()));
+
     return result;
   }
 }

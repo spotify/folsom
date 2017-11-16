@@ -26,7 +26,7 @@ import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -114,7 +114,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureGetFuture(CompletableFuture<GetResult<byte[]>> future) {
+  public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
 
     final TimerContext ctx = gets.time();
 
@@ -135,7 +135,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureMultigetFuture(CompletableFuture<List<GetResult<byte[]>>> future) {
+  public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
 
     final TimerContext ctx = multigets.time();
 
@@ -161,7 +161,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureDeleteFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
 
     final TimerContext ctx = deletes.time();
 
@@ -178,7 +178,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureSetFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
 
     final TimerContext ctx = sets.time();
 
@@ -196,7 +196,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureIncrDecrFuture(CompletableFuture<Long> future) {
+  public void measureIncrDecrFuture(CompletionStage<Long> future) {
 
     final TimerContext ctx = incrDecrs.time();
 
@@ -213,7 +213,7 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureTouchFuture(CompletableFuture<MemcacheStatus> future) {
+  public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
 
     final TimerContext ctx = touches.time();
 

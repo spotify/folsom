@@ -22,7 +22,7 @@ import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,7 +42,7 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     return getClient().send(request);
   }
 

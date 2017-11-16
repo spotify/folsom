@@ -23,6 +23,7 @@ import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A simple wrapping client that retries once (but only for MemcacheClosedException's).
@@ -49,7 +50,7 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     final CompletableFuture<T> promise = new CompletableFuture<>();
     sendHelper(request, promise, 0);
     return promise;

@@ -30,6 +30,7 @@ import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
    */
   private int requestSequenceId = 0;
 
-  public static CompletableFuture<RawMemcacheClient> connect(
+  public static CompletionStage<RawMemcacheClient> connect(
           final HostAndPort address,
           final int outstandingRequestLimit,
           final boolean binary,
@@ -187,7 +188,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> CompletableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
 
     if (!tryIncrementPending()) {
       // Do the disconnect check in here instead of outside
@@ -205,8 +206,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        // Is this cast correct. Shouldn't return type be CompletableFuture<MemcacheStatus>?
-        return (CompletableFuture<T>) newCompletedFuture(MemcacheStatus.VALUE_TOO_LARGE);
+        // Is this cast correct. Shouldn't return type be CompletionStage<MemcacheStatus>?
+        return (CompletionStage<T>) newCompletedFuture(MemcacheStatus.VALUE_TOO_LARGE);
       }
     }
 
@@ -215,21 +216,21 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return onExecutor(request);
   }
 
-  private static <T> CompletableFuture<T> newCompletedFuture(T result) {
+  private static <T> CompletionStage<T> newCompletedFuture(T result) {
     return CompletableFuture.completedFuture(result);
   }
 
-  private static <T> CompletableFuture<T> newExceptionallyCompletedFuture(Exception exception) {
+  private static <T> CompletionStage<T> newExceptionallyCompletedFuture(Exception exception) {
     CompletableFuture<T> future = new CompletableFuture<>();
     future.completeExceptionally(exception);
     return future;
   }
 
-  private <T> CompletableFuture<T> onExecutor(CompletableFuture<T> future) {
+  private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
     return onExecutor(future, executor);
   }
 
-  private static <T> CompletableFuture<T> onExecutor(CompletableFuture<T> future, Executor executor) {
+  private static <T> CompletionStage<T> onExecutor(CompletionStage<T> future, Executor executor) {
     if (executor == null) {
       return future;
     }
