@@ -16,7 +16,6 @@
 package com.spotify.folsom;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 public class ConnectFuture
     extends CompletableFuture<Void>
@@ -35,11 +34,11 @@ public class ConnectFuture
     check(client);
   }
 
-  public static CompletionStage<Void> disconnectFuture(ObservableClient client) {
+  public static CompletableFuture<Void> disconnectFuture(ObservableClient client) {
     return new ConnectFuture(client, false);
   }
 
-  public static CompletionStage<Void> connectFuture(ObservableClient client) {
+  public static CompletableFuture<Void> connectFuture(ObservableClient client) {
     return new ConnectFuture(client, true);
   }
 
