@@ -16,9 +16,6 @@
 package com.spotify.folsom.reconnect;
 
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
@@ -28,17 +25,18 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.charset.Charset;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReconnectingClient extends AbstractRawMemcacheClient {
 
+  // Todo - switch ThreadFactory to not use guava at all?
   private static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE =
           Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder()
                   .setDaemon(true)
@@ -68,7 +66,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final int maxSetLength) {
     this(backoffFunction, scheduledExecutorService, new Connector() {
       @Override
-      public ListenableFuture<RawMemcacheClient> connect() {
+      public CompletionStage<RawMemcacheClient> connect() {
         return DefaultRawMemcacheClient.connect(
                 address, outstandingRequestLimit,
                 binary, executor, timeoutMillis, charset, metrics, maxSetLength);
@@ -86,11 +84,11 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
     this.connector = connector;
 
     this.address = address;
-    retry();
+    connectWithRetries();
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     return client.send(request);
   }
 
@@ -115,54 +113,56 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
     return client.numActiveConnections();
   }
 
-  private void retry() {
+  private void connectWithRetries() {
     try {
-      final ListenableFuture<RawMemcacheClient> future = connector.connect();
-      Futures.addCallback(future, new FutureCallback<RawMemcacheClient>() {
-        @Override
-        public void onSuccess(final RawMemcacheClient newClient) {
-          log.info("Successfully connected to {}", address);
-          reconnectCount = 0;
-          client.shutdown();
-          client = newClient;
-
-          // Protection against races with shutdown()
-          if (!stayConnected) {
-            newClient.shutdown();
-            notifyConnectionChange();
-            return;
-          }
-
-          notifyConnectionChange();
-          final ListenableFuture<Void> discFuture = ConnectFuture.disconnectFuture(newClient);
-          Futures.addCallback(discFuture, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(final Void ignore) {
-              log.info("Lost connection to {}", address);
-              notifyConnectionChange();
-              if (stayConnected) {
-                retry();
-              }
-            }
-
-            @Override
-            public void onFailure(final Throwable t) {
-              throw new RuntimeException("Programmer bug - this should be unreachable");
-            }
+      connector.connect() // TODO: Ensure failed connect results in exception.
+          .thenAccept(client -> onSuccessfullConnect(client))
+          .exceptionally(t -> {
+            onFailedConnect(t);
+            return null;
           });
-        }
-
-        @Override
-        public void onFailure(final Throwable t) {
-          ReconnectingClient.this.onFailure();
-        }
-      });
     } catch (final Exception e) {
-      ReconnectingClient.this.onFailure();
+      ReconnectingClient.this.scheduleRetryAttempt();
     }
   }
 
-  private void onFailure() {
+  private void onSuccessfullConnect(RawMemcacheClient newClient) {
+
+    log.info("Successfully connected to {}", address);
+    reconnectCount = 0;
+    client.shutdown();
+    client = newClient;
+
+    // Protection against races with shutdown()
+    if (!stayConnected) {
+      newClient.shutdown();
+      notifyConnectionChange();
+      return;
+    }
+
+    notifyConnectionChange();
+
+    ConnectFuture.disconnectFuture(newClient) // Register callback on newClient disconnect
+        .thenAccept(__ -> onClientDisconnect())
+        .exceptionally(t -> {
+          throw new RuntimeException("Programmer bug - this should be unreachable", t);
+        });
+  }
+
+  private void onFailedConnect(Throwable t) {
+    log.warn("Failed to connect: {}", t.getMessage());
+    scheduleRetryAttempt();
+  }
+
+  private void onClientDisconnect() {
+    log.info("Lost connection to {}", address);
+    notifyConnectionChange();
+    if (stayConnected) {
+      connectWithRetries();
+    }
+  }
+
+  private void scheduleRetryAttempt() {
     final long backOff = backoffFunction.getBackoffTimeMillis(reconnectCount);
 
     if (stayConnected) {
@@ -175,7 +175,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       public void run() {
         reconnectCount++;
         if (stayConnected) {
-          retry();
+          connectWithRetries();
         }
       }
     }, backOff, TimeUnit.MILLISECONDS);
@@ -186,7 +186,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   }
 
   interface Connector {
-    ListenableFuture<RawMemcacheClient> connect();
+    CompletionStage<RawMemcacheClient> connect();
   }
 
   @Override

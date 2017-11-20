@@ -15,19 +15,18 @@
  */
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
@@ -51,7 +50,7 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).get();
-      assertEquals(null, client.get("Räksmörgås").get());
+      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
       ConnectFuture.disconnectFuture(client).get();
@@ -66,7 +65,7 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).get();
-      assertEquals(null, client.get("Räksmörgås").get());
+      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
       ConnectFuture.disconnectFuture(client).get();
@@ -81,7 +80,7 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).get();
-      client.get("Key").get();
+      client.get("Key").toCompletableFuture().get();
     } finally {
       client.shutdown();
       ConnectFuture.disconnectFuture(client).get();
@@ -97,13 +96,13 @@ public class MemcacheClientBuilderTest {
     ConnectFuture.connectFuture(client).get();
 
     try {
-      List<ListenableFuture<String>> futures = Lists.newArrayList();
+      List<CompletionStage<String>> futures = Lists.newArrayList();
       for (int i = 0; i < 400; i++) {
         futures.add(client.get("key"));
       }
-      for (ListenableFuture<String> future : futures) {
+      for (CompletionStage<String> future : futures) {
         try {
-          future.get();
+          future.toCompletableFuture().get();
         } catch (ExecutionException e) {
           throw e.getCause();
         }
@@ -124,8 +123,9 @@ public class MemcacheClientBuilderTest {
     ConnectFuture.connectFuture(client).get();
 
     try {
-      assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set("key", "value", 100).get());
-      assertEquals(null, client.get("key").get());
+      assertEquals(MemcacheStatus.VALUE_TOO_LARGE,
+          client.set("key", "value", 100).toCompletableFuture().get());
+      assertEquals(null, client.get("key").toCompletableFuture().get());
     } finally {
       client.shutdown();
       ConnectFuture.disconnectFuture(client).get();

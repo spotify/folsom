@@ -18,9 +18,6 @@ package com.spotify.folsom.client;
 
 import com.google.common.collect.Queues;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
@@ -32,6 +29,8 @@ import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +96,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
    */
   private int requestSequenceId = 0;
 
-  public static ListenableFuture<RawMemcacheClient> connect(
+  public static CompletionStage<RawMemcacheClient> connect(
           final HostAndPort address,
           final int outstandingRequestLimit,
           final boolean binary,
@@ -127,7 +126,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       }
     };
 
-    final SettableFuture<RawMemcacheClient> clientFuture = SettableFuture.create();
+    final CompletableFuture<RawMemcacheClient> clientFuture = new CompletableFuture<>();
 
     final Bootstrap bootstrap = new Bootstrap()
         .group(EVENT_LOOP_GROUP)
@@ -151,10 +150,10 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               timeoutMillis,
               metrics,
               maxSetLength);
-          clientFuture.set(client);
+          clientFuture.complete(client);
         } else {
           future.channel().close();
-          clientFuture.setException(future.cause());
+          clientFuture.completeExceptionally(future.cause());
         }
       }
     });
@@ -189,43 +188,54 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
-    if (!tryIncrementPending()) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
 
+    if (!tryIncrementPending()) {
       // Do the disconnect check in here instead of outside
       // to get better performance in the happy case.
       String disconnectReason = this.disconnectReason.get();
       if (disconnectReason != null) {
-        MemcacheClosedException exception = new MemcacheClosedException(disconnectReason);
-        return onExecutor(Futures.<T>immediateFailedFuture(exception));
+        return newExceptionallyCompletedFuture(new MemcacheClosedException(disconnectReason));
       }
 
-      return onExecutor(Futures.<T>immediateFailedFuture(new MemcacheOverloadedException(
-              "too many outstanding requests")));
+      return newExceptionallyCompletedFuture(new MemcacheOverloadedException(
+              "too many outstanding requests"));
     }
+
     if (request instanceof SetRequest) {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        return (ListenableFuture<T>) onExecutor(
-                Futures.immediateFuture(MemcacheStatus.VALUE_TOO_LARGE));
+        // Is this cast correct. Shouldn't return type be CompletionStage<MemcacheStatus>?
+        return (CompletionStage<T>) newCompletedFuture(MemcacheStatus.VALUE_TOO_LARGE);
       }
     }
+
     channel.write(request, new RequestWritePromise(channel, request));
     flusher.flush();
     return onExecutor(request);
   }
 
-  private <T> ListenableFuture<T> onExecutor(ListenableFuture<T> future) {
+  private static <T> CompletionStage<T> newCompletedFuture(T result) {
+    return CompletableFuture.completedFuture(result);
+  }
+
+  private static <T> CompletionStage<T> newExceptionallyCompletedFuture(Exception exception) {
+    CompletableFuture<T> future = new CompletableFuture<>();
+    future.completeExceptionally(exception);
+    return future;
+  }
+
+  private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
     return onExecutor(future, executor);
   }
 
-  private static <T> ListenableFuture<T> onExecutor(ListenableFuture<T> future, Executor executor) {
+  private static <T> CompletionStage<T> onExecutor(CompletionStage<T> future, Executor executor) {
     if (executor == null) {
       return future;
     }
     CallbackSettableFuture<T> newFuture = new CallbackSettableFuture<>(future);
-    future.addListener(newFuture, executor);
+    future.thenRunAsync(newFuture, executor);
     return newFuture;
   }
 

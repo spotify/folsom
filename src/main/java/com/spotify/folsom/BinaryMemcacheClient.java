@@ -15,9 +15,8 @@
  */
 package com.spotify.folsom;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A memcache client using the binary protocol
@@ -35,7 +34,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @param cas The CAS value, must match the value on the server for the set to go through
    * @return A future representing completion of the request, containing the new CAS value
    */
-  ListenableFuture<MemcacheStatus> add(String key, V value, int ttl, long cas);
+  CompletionStage<MemcacheStatus> add(String key, V value, int ttl, long cas);
 
   /**
    * Replace a key in memcache with the provided value, with the specified TTL. Key must exist
@@ -46,7 +45,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @param cas The CAS value, must match the value on the server for the set to go through
    * @return A future representing completion of the request, containing the new CAS value
    */
-  ListenableFuture<MemcacheStatus> replace(String key, V value, int ttl, long cas);
+  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, long cas);
 
   /**
    * Get the value for the provided key and sets the expiration
@@ -55,7 +54,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @return A future representing completion of the request, with the value, or null if the key
    *         does not exist
    */
-  ListenableFuture<V> getAndTouch(String key, int ttl);
+  CompletionStage<V> getAndTouch(String key, int ttl);
 
   /**
    * Get the values for the provided keys and sets the expiration
@@ -65,7 +64,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @return A future representing completion of the request, with the values. Any non existing
    * values will be null. Order will be maintained from the input keys
    */
-  ListenableFuture<List<V>> getAndTouch(List<String> keys, int ttl);
+  CompletionStage<List<V>> getAndTouch(List<String> keys, int ttl);
 
   /**
    * Get the value for the provided key, including the CAS value, and sets the expiration
@@ -75,7 +74,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @return A future representing completion of the request, with the value, including the CAS
    * value, or null if the value does not exists.
    */
-  ListenableFuture<GetResult<V>> casGetAndTouch(String key, int ttl);
+  CompletionStage<GetResult<V>> casGetAndTouch(String key, int ttl);
 
   /**
    * Increment a counter for the provided key
@@ -86,7 +85,7 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @param ttl     The TTL, in seconds
    * @return A future representing completion of the request, with the new value of the counter
    */
-  ListenableFuture<Long> incr(String key, long by, long initial, int ttl);
+  CompletionStage<Long> incr(String key, long by, long initial, int ttl);
 
   /**
    * Decrement a counter for the provided key
@@ -97,16 +96,16 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @param ttl     The TTL, in seconds
    * @return A future representing completion of the request, with the new value of the counter
    */
-  ListenableFuture<Long> decr(String key, long by, long initial, int ttl);
+  CompletionStage<Long> decr(String key, long by, long initial, int ttl);
 
-  ListenableFuture<MemcacheStatus> append(String key, V value, long cas);
+  CompletionStage<MemcacheStatus> append(String key, V value, long cas);
 
-  ListenableFuture<MemcacheStatus> prepend(String key, V value, long cas);
+  CompletionStage<MemcacheStatus> prepend(String key, V value, long cas);
 
   /**
    * Send a noop request
    *
    * @return A future representing completion of the request
    */
-  ListenableFuture<Void> noop();
+  CompletionStage<Void> noop();
 }

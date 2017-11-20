@@ -15,10 +15,11 @@
  */
 package com.spotify.folsom;
 
+import static com.spotify.futures.CompletableFutures.exceptionallyCompletedFuture;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -27,10 +28,11 @@ import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
@@ -52,22 +54,22 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(Request<T> request) {
+  public <T> CompletionStage<T> send(Request<T> request) {
     if (!connected) {
-      return Futures.immediateFailedFuture(new MemcacheClosedException("Disconnected"));
+      return exceptionallyCompletedFuture(new MemcacheClosedException("Disconnected"));
     }
 
     if (request instanceof SetRequest) {
       map.put(ByteBuffer.wrap(request.getKey()), ((SetRequest) request).getValue());
-      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
+      return (CompletionStage<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
     }
 
     if (request instanceof GetRequest) {
       byte[] value = map.get(ByteBuffer.wrap(request.getKey()));
       if (value == null) {
-        return (ListenableFuture<T>) Futures.immediateFuture(null);
+        return CompletableFuture.completedFuture(null);
       }
-      return (ListenableFuture<T>) Futures.immediateFuture(GetResult.success(value, 0L));
+      return (CompletionStage<T>) CompletableFuture.completedFuture(GetResult.success(value, 0L));
     }
 
     if (request instanceof MultiRequest) {
@@ -81,12 +83,12 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
           result.add(null);
         }
       }
-      return (ListenableFuture<T>) Futures.<List<GetResult<byte[]>>>immediateFuture(result);
+      return (CompletionStage<T>) CompletableFuture.completedFuture(result);
     }
 
     // Don't actually do anything here
     if (request instanceof TouchRequest) {
-      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
+      return (CompletionStage<T>) CompletableFuture.completedFuture(MemcacheStatus.OK);
     }
 
     if (request instanceof IncrRequest) {
@@ -94,17 +96,17 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
       byte[] key = request.getKey();
       byte[] value = map.get(ByteBuffer.wrap(key));
       if (value == null) {
-        return (ListenableFuture<T>) Futures.<Long>immediateFuture(null);
+        return (CompletionStage<T>) CompletableFuture.completedFuture(null);
       }
       long longValue = Long.parseLong(new String(value));
       long newValue = longValue + incrRequest.multiplier() * incrRequest.getBy();
       map.put(ByteBuffer.wrap(key), Long.toString(newValue).getBytes());
-      return (ListenableFuture<T>) Futures.<Long>immediateFuture(newValue);
+      return (CompletionStage<T>) CompletableFuture.completedFuture(newValue);
     }
 
     if (request instanceof DeleteRequest) {
       map.remove(ByteBuffer.wrap(request.getKey()));
-      return (ListenableFuture<T>) Futures.<MemcacheStatus>immediateFuture(MemcacheStatus.OK);
+      return (CompletionStage<T>) CompletableFuture.completedFuture(MemcacheStatus.OK);
     }
 
     throw new RuntimeException("Unsupported operation: " + request.getClass());

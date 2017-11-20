@@ -16,25 +16,24 @@
 
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class SrvKetamaIntegrationTest {
 
@@ -95,31 +94,31 @@ public class SrvKetamaIntegrationTest {
 
   @Test
   public void testSetGet() throws Exception {
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    List<CompletionStage<?>> futures = Lists.newArrayList();
     final int numKeys = 1000;
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
+      CompletionStage<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
-    Futures.allAsList(futures).get();
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
     futures.clear();
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
     for (int i = 0; i < numKeys; i++) {
-      assertEquals("value-" + i, futures.get(i).get());
+      assertEquals("value-" + i, futures.get(i).toCompletableFuture().get());
     }
     futures.clear();
 
@@ -133,18 +132,18 @@ public class SrvKetamaIntegrationTest {
     assertTrue(client.numActiveConnections() == client.numTotalConnections() - 1);
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
 
     }
     int misses = 0;
     for (int i = 0; i < numKeys; i++) {
-      misses += futures.get(i).get() == null ? 1 : 0;
+      misses += futures.get(i).toCompletableFuture().get() == null ? 1 : 0;
     }
 
     // About 1/3 should be misses.
@@ -155,5 +154,4 @@ public class SrvKetamaIntegrationTest {
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);
   }
-
 }

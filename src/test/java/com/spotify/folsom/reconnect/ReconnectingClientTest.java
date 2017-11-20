@@ -15,27 +15,6 @@
  */
 package com.spotify.folsom.reconnect;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-
-import com.spotify.folsom.AbstractRawMemcacheClient;
-import com.spotify.folsom.BackoffFunction;
-import com.spotify.folsom.ConnectFuture;
-import com.spotify.folsom.ConnectionChangeListener;
-import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.Request;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
@@ -45,6 +24,25 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import com.google.common.net.HostAndPort;
+import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.BackoffFunction;
+import com.spotify.folsom.ConnectFuture;
+import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.Request;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ReconnectingClientTest {
 
@@ -75,10 +73,9 @@ public class ReconnectingClientTest {
 
     ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
     when(connector.connect())
-            .thenReturn(Futures.<RawMemcacheClient>immediateFailedFuture(new RuntimeException()))
-            .thenReturn(Futures.<RawMemcacheClient>immediateFailedFuture(new RuntimeException()))
-            .thenReturn(Futures.<RawMemcacheClient>immediateFuture(delegate));
-
+            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+            .thenReturn(CompletableFuture.<RawMemcacheClient>completedFuture(delegate));
 
     ReconnectingClient client = new ReconnectingClient(
             backoffFunction, scheduledExecutorService,
@@ -109,10 +106,10 @@ public class ReconnectingClientTest {
 
     ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
     when(connector.connect())
-            .thenReturn(Futures.<RawMemcacheClient>immediateFuture(delegate1))
-            .thenReturn(Futures.<RawMemcacheClient>immediateFailedFuture(new RuntimeException()))
-            .thenReturn(Futures.<RawMemcacheClient>immediateFailedFuture(new RuntimeException()))
-            .thenReturn(Futures.<RawMemcacheClient>immediateFuture(delegate2));
+            .thenReturn(CompletableFuture.<RawMemcacheClient>completedFuture(delegate1))
+            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+            .thenReturn(CompletableFuture.<RawMemcacheClient>completedFuture(delegate2));
 
 
     ReconnectingClient client = new ReconnectingClient(
@@ -143,7 +140,7 @@ public class ReconnectingClientTest {
 
     ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
     when(connector.connect())
-            .thenReturn(Futures.<RawMemcacheClient>immediateFuture(delegate));
+            .thenReturn(CompletableFuture.<RawMemcacheClient>completedFuture(delegate));
 
     ReconnectingClient client = new ReconnectingClient(
             backoffFunction, scheduledExecutorService,
@@ -166,7 +163,7 @@ public class ReconnectingClientTest {
     }
 
     @Override
-    public <T> ListenableFuture<T> send(Request<T> request) {
+    public <T> CompletionStage<T> send(Request<T> request) {
       throw new RuntimeException("Not implemented");
     }
 

@@ -15,10 +15,10 @@
  */
 package com.spotify.folsom.client;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class NotConnectedClient extends AbstractRawMemcacheClient {
 
@@ -28,7 +28,7 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     return fail();
   }
 
@@ -52,7 +52,9 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
     return 0;
   }
 
-  private <T> ListenableFuture<T> fail() {
-    return Futures.immediateFailedFuture(new MemcacheClosedException("Not connected"));
+  private <T> CompletionStage<T> fail() {
+    CompletableFuture<T> result = new CompletableFuture();
+    result.completeExceptionally(new MemcacheClosedException("Not connected"));
+    return result;
   }
 }

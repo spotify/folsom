@@ -16,15 +16,15 @@
 
 package com.spotify.folsom;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.client.Request;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A raw memcache client, mostly useful internally
  */
 public interface RawMemcacheClient extends ObservableClient {
 
-  <T> ListenableFuture<T> send(Request<T> request);
+  <T> CompletionStage<T> send(Request<T> request);
 
   /**
    * Shut down the client. Use {@link #registerForConnectionChanges(ConnectionChangeListener)} to
