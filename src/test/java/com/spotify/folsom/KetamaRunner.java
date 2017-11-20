@@ -19,10 +19,10 @@ package com.spotify.folsom;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.transcoder.StringTranscoder;
 
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 public class KetamaRunner {
@@ -43,21 +43,21 @@ public class KetamaRunner {
 
       client.set(key, value, 1000);
 
-      System.out.println(client.get(key).get());
+      System.out.println(client.get(key).toCompletableFuture().get());
     }
 
     client.shutdown();
   }
 
-  private static void checkKeyOkOrNotFound(final CompletableFuture<?> future) throws Throwable {
+  private static void checkKeyOkOrNotFound(final CompletionStage<?> future) throws Throwable {
     checkStatus(future, ImmutableSet.of(MemcacheStatus.KEY_NOT_FOUND, MemcacheStatus.OK));
   }
 
-  private static void checkStatus(final CompletableFuture<?> future,
+  private static void checkStatus(final CompletionStage<?> future,
                                   final Set<MemcacheStatus> expected)
       throws Throwable {
     try {
-      final Object v = future.get();
+      final Object v = future.toCompletableFuture().get();
       if (v == null && expected.contains(MemcacheStatus.KEY_NOT_FOUND)) {
         // ok
       } else if (v != null && expected.contains(MemcacheStatus.OK)) {
