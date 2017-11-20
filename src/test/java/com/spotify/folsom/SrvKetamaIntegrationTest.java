@@ -25,6 +25,9 @@ import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -103,10 +106,10 @@ public class SrvKetamaIntegrationTest {
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
-    Futures.allAsList(futures).get();
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
     futures.clear();
 
     for (int i = 0; i < numKeys; i++) {
@@ -115,11 +118,11 @@ public class SrvKetamaIntegrationTest {
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
     for (int i = 0; i < numKeys; i++) {
-      assertEquals("value-" + i, futures.get(i).get());
+      assertEquals("value-" + i, futures.get(i).toCompletableFuture().get());
     }
     futures.clear();
 
@@ -138,13 +141,13 @@ public class SrvKetamaIntegrationTest {
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
 
     }
     int misses = 0;
     for (int i = 0; i < numKeys; i++) {
-      misses += futures.get(i).get() == null ? 1 : 0;
+      misses += futures.get(i).toCompletableFuture().get() == null ? 1 : 0;
     }
 
     // About 1/3 should be misses.
@@ -155,5 +158,4 @@ public class SrvKetamaIntegrationTest {
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);
   }
-
 }

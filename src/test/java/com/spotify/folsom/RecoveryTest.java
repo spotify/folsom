@@ -28,6 +28,7 @@ import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
 
+import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,7 +111,7 @@ public class RecoveryTest {
     int overloaded = 0;
     for (final CompletionStage<String> f : overloadFutures) {
       try {
-        f.get();
+        f.toCompletableFuture().get();
       } catch (ExecutionException e) {
         final Throwable cause = e.getCause();
         if (cause instanceof MemcacheOverloadedException) {
@@ -140,7 +141,7 @@ public class RecoveryTest {
       recoveryFutures.add(client.get("foo"));
     }
     for (final CompletionStage<String> f : recoveryFutures) {
-      f.get();
+      f.toCompletableFuture().get();
     }
   }
 

@@ -24,8 +24,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
 
+import java.sql.ResultSet;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -83,7 +88,8 @@ public class MemcacheClientStressTest {
   @Test
   @Ignore
   public void stressTest() throws Exception {
-    client.set(KEY, VALUE, 100000).get();
+
+    client.set(KEY, VALUE, 100000).toCompletableFuture().get();
 
     while (true) {
       final List<CompletionStage<byte[]>> futures = Lists.newArrayList();
@@ -94,12 +100,10 @@ public class MemcacheClientStressTest {
         addRequest(client, futures, successes, failures);
       }
 
-      client.shutdown();
-      client = MemcacheClientBuilder.newByteArrayClient()
-          .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
-          .connectBinary();
-      Futures.successfulAsList(futures).get();
+      // Complete them
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
 
+      // Report
       System.out.println("success: " + successes.get());
       for (final Map.Entry<String, AtomicInteger> entry : failures.entrySet()) {
         System.out.println("failure: " + entry.getKey() + " = " + entry.getValue().get());
@@ -110,6 +114,12 @@ public class MemcacheClientStressTest {
         totalFails += integer.get();
       }
       assertEquals(N, successes.get() + totalFails);
+
+      // Reset client
+      client.shutdown();
+      client = MemcacheClientBuilder.newByteArrayClient()
+          .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
+          .connectBinary();
     }
   }
 
@@ -117,28 +127,21 @@ public class MemcacheClientStressTest {
                           final List<CompletionStage<byte[]>> futures,
                           final AtomicInteger successes,
                           final ConcurrentMap<String, AtomicInteger> failures) {
-    final CompletionStage<byte[]> future = client.get(KEY);
-    Futures.addCallback(future, new FutureCallback<byte[]>() {
-      @Override
-      public void onSuccess(final byte[] result) {
-        successes.incrementAndGet();
-      }
 
-      @Override
-      public void onFailure(final Throwable t) {
-        final AtomicInteger newCounter = new AtomicInteger();
-        String message = t.getMessage();
-        if (message == null) {
-          message = "";
-        }
-        final AtomicInteger old = failures.putIfAbsent(message, newCounter);
-        if (old == null) {
-          newCounter.incrementAndGet();
-        } else {
-          old.incrementAndGet();
-        }
-      }
-    });
+    final CompletionStage<byte[]> future = client.get(KEY)
+                .thenApply(result -> {
+                  successes.incrementAndGet();
+                  return result;
+                })
+        .exceptionally(t -> {
+              AtomicInteger newCounter = new AtomicInteger();
+              String message = Optional.ofNullable(t.getMessage()).orElse("");
+              Optional.ofNullable(failures.putIfAbsent(message, newCounter))
+                  .orElse(newCounter)
+                  .incrementAndGet();
+              return null;
+            });
+
     futures.add(future);
   }
 
@@ -150,6 +153,4 @@ public class MemcacheClientStressTest {
     ConnectFuture.disconnectFuture(client).get();
     assertEquals(0, Utils.getGlobalConnectionCount());
   }
-
-
 }
