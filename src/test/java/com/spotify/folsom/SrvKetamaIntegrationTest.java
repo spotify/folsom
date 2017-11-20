@@ -16,16 +16,17 @@
 
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.spotify.futures.CompletableFutures;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.junit.After;
@@ -33,11 +34,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class SrvKetamaIntegrationTest {
 

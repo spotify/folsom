@@ -16,19 +16,26 @@
 
 package com.spotify.folsom;
 
+import static io.netty.util.CharsetUtil.UTF_8;
+import static org.hamcrest.Matchers.is;
+import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.thimbleware.jmemcached.Cache;
 import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
-
+import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,17 +44,6 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static io.netty.util.CharsetUtil.UTF_8;
-import static org.hamcrest.Matchers.is;
-import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RecoveryTest {

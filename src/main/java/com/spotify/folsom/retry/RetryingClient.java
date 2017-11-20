@@ -15,9 +15,6 @@
  */
 package com.spotify.folsom.retry;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;

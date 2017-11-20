@@ -19,15 +19,22 @@
 
 package com.spotify.folsom;
 
+import static java.util.concurrent.TimeUnit.DAYS;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
@@ -40,19 +47,6 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
 import net.spy.memcached.protocol.binary.BinaryOperationFactory;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import static com.spotify.folsom.client.Utils.SAME_THREAD_EXECUTOR;
-import static java.util.concurrent.TimeUnit.DAYS;
 
 public class SimpleMemcacheClientBenchmark {
 
@@ -116,7 +110,8 @@ public class SimpleMemcacheClientBenchmark {
                   if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
                     settable.complete(null);
                   } else {
-                    settable.completeExceptionally(new RuntimeException(future.getStatus().getMessage()));
+                    settable.completeExceptionally(
+                        new RuntimeException(future.getStatus().getMessage()));
                   }
                 }
               });

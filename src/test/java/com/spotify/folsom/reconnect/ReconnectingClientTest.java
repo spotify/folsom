@@ -15,29 +15,6 @@
  */
 package com.spotify.folsom.reconnect;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-
-import com.spotify.folsom.AbstractRawMemcacheClient;
-import com.spotify.folsom.BackoffFunction;
-import com.spotify.folsom.ConnectFuture;
-import com.spotify.folsom.ConnectionChangeListener;
-import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.Request;
-
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
@@ -47,6 +24,25 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import com.google.common.net.HostAndPort;
+import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.BackoffFunction;
+import com.spotify.folsom.ConnectFuture;
+import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.Request;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ReconnectingClientTest {
 

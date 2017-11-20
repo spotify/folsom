@@ -17,9 +17,6 @@
 package com.spotify.folsom;
 
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-
-import com.spotify.futures.CompletableFutures;
 import org.junit.Test;
 
 public class MemcacheClientConnectTest {

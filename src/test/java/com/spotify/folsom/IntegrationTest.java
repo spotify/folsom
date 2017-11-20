@@ -16,26 +16,26 @@
 
 package com.spotify.folsom;
 
+import static com.spotify.folsom.MemcacheStatus.ITEM_NOT_STORED;
+import static com.spotify.folsom.MemcacheStatus.KEY_EXISTS;
+import static com.spotify.folsom.MemcacheStatus.KEY_NOT_FOUND;
+import static com.spotify.folsom.MemcacheStatus.OK;
+import static com.spotify.folsom.MemcacheStatus.VALUE_TOO_LARGE;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import junit.framework.AssertionFailedError;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -45,15 +45,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import junit.framework.AssertionFailedError;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class IntegrationTest {
@@ -217,12 +219,12 @@ public class IntegrationTest {
 
   @Test
   public void testAppendMissing() throws Throwable {
-    checkStatus(client.append(KEY1, VALUE2), MemcacheStatus.ITEM_NOT_STORED);
+    checkStatus(client.append(KEY1, VALUE2), ITEM_NOT_STORED);
   }
 
   @Test
   public void testPrependMissing() throws Throwable {
-    checkStatus(client.prepend(KEY1, VALUE2), MemcacheStatus.ITEM_NOT_STORED);
+    checkStatus(client.prepend(KEY1, VALUE2), ITEM_NOT_STORED);
   }
 
   @Test
@@ -243,7 +245,7 @@ public class IntegrationTest {
 
     binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
-    checkStatus(binaryClient.append(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
+    checkStatus(binaryClient.append(KEY1, VALUE2, cas + 666), KEY_EXISTS);
   }
 
   @Test
@@ -253,7 +255,7 @@ public class IntegrationTest {
 
     binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
-    checkStatus(binaryClient.prepend(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
+    checkStatus(binaryClient.prepend(KEY1, VALUE2, cas + 666), KEY_EXISTS);
   }
 
   @Test
@@ -297,7 +299,7 @@ public class IntegrationTest {
   @Test
   public void testAddKeyExists() throws Throwable {
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
-    checkStatus(client.add(KEY1, VALUE1, TTL), MemcacheStatus.ITEM_NOT_STORED);
+    checkStatus(client.add(KEY1, VALUE1, TTL), ITEM_NOT_STORED);
   }
 
   @Test
@@ -324,7 +326,6 @@ public class IntegrationTest {
       keys.add("key-" + i);
     }
 
-    // final List<CompletionStage<MemcacheStatus>> futures = Lists.newArrayList();
     final List<CompletionStage<MemcacheStatus>> futures = Lists.newArrayList();
     try {
       for (final String key : keys) {
@@ -360,7 +361,8 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
-    assertEquals(asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
+    assertEquals(asList(VALUE1, VALUE2),
+        client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test
@@ -385,7 +387,8 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
-    assertEquals(asList(VALUE1, null, VALUE2), client.get(Arrays.asList(KEY1, KEY3, KEY2)).toCompletableFuture().get());
+    assertEquals(asList(VALUE1, null, VALUE2),
+        client.get(Arrays.asList(KEY1, KEY3, KEY2)).toCompletableFuture().get());
   }
 
   @Test
@@ -398,8 +401,10 @@ public class IntegrationTest {
     assumeBinary();
     assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
 
-    assertEquals(new Long(3), binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
-    assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
+    assertEquals(new Long(3),
+        binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(new Long(5),
+        binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
   }
 
   private boolean isEmbedded() {
@@ -505,7 +510,7 @@ public class IntegrationTest {
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
-    checkStatus(client.set(KEY1, VALUE2, TTL, 666), MemcacheStatus.KEY_EXISTS);
+    checkStatus(client.set(KEY1, VALUE2, TTL, 666), KEY_EXISTS);
   }
 
   @Test
@@ -513,7 +518,7 @@ public class IntegrationTest {
     assumeNotEmbedded("touch is broken on embedded server");
 
     MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
-    assertEquals(MemcacheStatus.KEY_NOT_FOUND, result);
+    assertEquals(KEY_NOT_FOUND, result);
   }
 
   @Test
@@ -522,7 +527,7 @@ public class IntegrationTest {
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
-    assertEquals(MemcacheStatus.OK, result);
+    assertEquals(OK, result);
   }
 
   @Test
@@ -574,16 +579,18 @@ public class IntegrationTest {
   @Test
   public void testAlmostTooLargeValues() throws Exception {
     String value = createValue(1024 * 1024 - 1000);
-    assertEquals(MemcacheStatus.OK, client.set(KEY1, value, TTL).toCompletableFuture().get());
+    assertEquals(OK, client.set(KEY1, value, TTL).toCompletableFuture().get());
     assertEquals(value, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testTooLargeValues() throws Exception {
     String value = createValue(2 * 1024 * 1024);
-    assertEquals(MemcacheStatus.OK, client.set(KEY1, "", TTL).toCompletableFuture().get());
-    assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set(KEY1, value, TTL).toCompletableFuture().get());
-    assertEquals("", client.get(KEY1).toCompletableFuture().get());
+    assertEquals(OK, client.set(KEY1, "", TTL).toCompletableFuture().get());
+    assertEquals(VALUE_TOO_LARGE,
+        client.set(KEY1, value, TTL).toCompletableFuture().get());
+    assertEquals("",
+        client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
@@ -593,7 +600,7 @@ public class IntegrationTest {
 
     String smallValue = createValue(1000);
     for (int i = 0; i < 1000; i++) {
-      assertEquals(MemcacheStatus.OK, client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
+      assertEquals(OK, client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
       assertEquals(smallValue, client.get(KEY1).toCompletableFuture().get());
     }
   }
@@ -623,7 +630,7 @@ public class IntegrationTest {
   }
 
   static void checkKeyNotFound(final CompletionStage<?> future) throws Throwable {
-    checkStatus(future, MemcacheStatus.KEY_NOT_FOUND);
+    checkStatus(future, KEY_NOT_FOUND);
   }
 
   static void checkStatus(final CompletionStage<?> future, final MemcacheStatus... expected)
@@ -637,9 +644,9 @@ public class IntegrationTest {
           throw new AssertionFailedError(status + " not in " + expectedSet);
         }
       } else {
-        if (v == null && expectedSet.contains(MemcacheStatus.KEY_NOT_FOUND)) {
+        if (v == null && expectedSet.contains(KEY_NOT_FOUND)) {
           // ok
-        } else if (v != null && expectedSet.contains(MemcacheStatus.OK)) {
+        } else if (v != null && expectedSet.contains(OK)) {
           // ok
         } else {
           throw new AssertionFailedError();

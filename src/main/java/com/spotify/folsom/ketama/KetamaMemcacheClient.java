@@ -16,18 +16,14 @@
 
 package com.spotify.folsom.ketama;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
-import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.MultiRequest;
-
-import java.util.Arrays;
+import com.spotify.folsom.client.Request;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

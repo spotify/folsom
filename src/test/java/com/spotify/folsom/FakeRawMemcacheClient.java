@@ -15,10 +15,11 @@
  */
 package com.spotify.folsom;
 
+import static com.spotify.futures.CompletableFutures.exceptionallyCompletedFuture;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -27,8 +28,6 @@ import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
-
-import com.spotify.futures.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   @Override
   public <T> CompletionStage<T> send(Request<T> request) {
     if (!connected) {
-      return CompletableFutures.exceptionallyCompletedFuture(new MemcacheClosedException("Disconnected"));
+      return exceptionallyCompletedFuture(new MemcacheClosedException("Disconnected"));
     }
 
     if (request instanceof SetRequest) {

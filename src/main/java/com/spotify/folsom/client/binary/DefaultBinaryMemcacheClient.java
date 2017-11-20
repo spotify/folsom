@@ -27,13 +27,10 @@ import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.TransformerUtil;
-import com.spotify.folsom.client.Utils;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

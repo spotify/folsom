@@ -93,8 +93,11 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getMultigetFailures().count());
     assertEquals(0, metrics.getMultigetSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).toCompletableFuture().get());
-    assertEquals(Arrays.asList("value", null), client.get(Arrays.asList("key", "key-miss")).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK,
+        client.set("key", "value", 0).toCompletableFuture().get());
+
+    assertEquals(Arrays.asList("value", null),
+        client.get(Arrays.asList("key", "key-miss")).toCompletableFuture().get());
 
     awaitCount(1, metrics.getMultigets());
     assertEquals(1, metrics.getGetHits().count());

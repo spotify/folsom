@@ -15,20 +15,18 @@
  */
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
@@ -125,7 +123,8 @@ public class MemcacheClientBuilderTest {
     ConnectFuture.connectFuture(client).get();
 
     try {
-      assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set("key", "value", 100).toCompletableFuture().get());
+      assertEquals(MemcacheStatus.VALUE_TOO_LARGE,
+          client.set("key", "value", 100).toCompletableFuture().get());
       assertEquals(null, client.get("key").toCompletableFuture().get());
     } finally {
       client.shutdown();

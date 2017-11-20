@@ -16,14 +16,8 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -58,7 +52,7 @@ public class LoadTestRunner {
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
     long failures = futures.stream()
         .map(cs -> cs.toCompletableFuture().join())
-        .filter(r -> r.booleanValue() == false)
+        .filter(r -> r.booleanValue())
         .count();
 
     System.out.println(failures + " failed of " + futures.size());

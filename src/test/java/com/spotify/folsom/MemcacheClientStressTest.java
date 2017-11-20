@@ -16,39 +16,30 @@
 
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-
 import com.spotify.folsom.client.Utils;
-import com.spotify.futures.CompletableFutures;
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
-
-import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 public class MemcacheClientStressTest {
 

@@ -15,25 +15,22 @@
  */
 package com.spotify.folsom.retry;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.Futures;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.binary.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletableFuture;
-import org.junit.Test;
-
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Test;
 
 public class RetryingClientTest {
 

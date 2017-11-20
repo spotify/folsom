@@ -208,7 +208,8 @@ public class KetamaIntegrationTest {
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
-    assertEquals(asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
+    assertEquals(asList(VALUE1, VALUE2),
+        client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test
