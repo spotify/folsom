@@ -73,7 +73,7 @@ public abstract class Request<V> extends AbstractFuture<V> {
     checkNotNull(charset, "charset");
     byte[] keyBytes = key.getBytes(charset);
     int length = keyBytes.length;
-    if (length > 250) {
+    if (length >= 250) {
       throw new IllegalArgumentException("Key is too long: " + key);
     }
     if (length <= 0) {
