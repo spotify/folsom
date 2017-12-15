@@ -35,8 +35,7 @@ public class IncrRequestTest extends RequestTestTemplate {
   @Test
   public void testBuffer() throws Exception {
     IncrRequest req = new IncrRequest(
-      KEY,
-      Charsets.UTF_8,
+      KEY.getBytes(Charsets.UTF_8),
       OpCode.INCREMENT,
       2,
       3,

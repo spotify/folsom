@@ -27,7 +27,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,13 +46,13 @@ public class MultigetRequest
     this.keys = keys;
   }
 
-  public static MultigetRequest create(final List<String> keys, Charset charset, boolean withCas) {
+  public static MultigetRequest create(final List<byte[]> keys, boolean withCas) {
     byte[] cmd = withCas ? CAS_GET : GET;
     final int size = keys.size();
     if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(encodeKeys(keys, charset), cmd);
+    return new MultigetRequest(keys, cmd);
   }
 
   @Override

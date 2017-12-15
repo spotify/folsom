@@ -18,17 +18,11 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.client.Request;
-
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 public abstract class AsciiRequest<T> extends Request<T> {
   protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(Charsets.US_ASCII);
   protected static final byte SPACE_BYTES = ' ';
-
-  protected AsciiRequest(String key, Charset charset) {
-    super(key, charset);
-  }
 
   protected AsciiRequest(byte[] key) {
     super(key);

@@ -16,6 +16,11 @@
 
 package com.spotify.folsom;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +41,6 @@ import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
 import com.spotify.folsom.transcoder.ByteArrayTranscoder;
 import com.spotify.folsom.transcoder.SerializableObjectTranscoder;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -45,10 +49,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 
 public class MemcacheClientBuilder<V> {
@@ -113,6 +113,7 @@ public class MemcacheClientBuilder<V> {
 
   private long timeoutMillis = 3000;
   private int maxSetLength = DEFAULT_MAX_SET_LENGTH;
+  private int maxKeyLength = MAX_KEY_LEN;
 
   /**
    * Create a client builder for byte array values.
@@ -359,11 +360,30 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
+   * Set the maximum key length of the byte representation of the input string.
+   * The default value is 250, and the valid range is [0, 250]
+   * @param maxKeyLength The maximum key length in bytes
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withMaxKeyLength(final int maxKeyLength) {
+    if (maxKeyLength < 0) {
+      throw new IllegalArgumentException("maxKeyLength must be non-negative");
+    }
+    if (maxKeyLength > MAX_KEY_LEN) {
+      throw new IllegalArgumentException(
+          "maxKeyLength must be smaller than " + MAX_KEY_LEN + " but was " + maxKeyLength);
+    }
+    this.maxKeyLength = maxKeyLength;
+    return this;
+  }
+
+  /**
    * Create a client that uses the binary memcache protocol.
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
-    return new DefaultBinaryMemcacheClient<>(connectRaw(true), metrics, valueTranscoder, charset);
+    return new DefaultBinaryMemcacheClient<>(
+        connectRaw(true), metrics, valueTranscoder, charset, maxKeyLength);
   }
 
   /**
@@ -371,7 +391,8 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
-    return new DefaultAsciiMemcacheClient<>(connectRaw(false), metrics, valueTranscoder, charset);
+    return new DefaultAsciiMemcacheClient<>(
+        connectRaw(false), metrics, valueTranscoder, charset, maxKeyLength);
   }
 
   /**

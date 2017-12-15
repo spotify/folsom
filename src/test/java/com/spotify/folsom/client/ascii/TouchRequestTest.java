@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TouchRequestTest extends RequestTestTemplate {
 
-  private TouchRequest req = new TouchRequest("foo", Charsets.UTF_8, 123);
+  private TouchRequest req = new TouchRequest("foo".getBytes(Charsets.UTF_8), 123);
 
   @Test
   public void testRequest() throws Exception {

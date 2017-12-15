@@ -21,14 +21,13 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class TouchRequest extends AsciiRequest<MemcacheStatus> {
   private static final byte[] CMD = "touch ".getBytes();
   private final int ttl;
 
-  public TouchRequest(String key, Charset charset, int ttl) {
-    super(key, charset);
+  public TouchRequest(byte[] key, int ttl) {
+    super(key);
     this.ttl = ttl;
   }
 

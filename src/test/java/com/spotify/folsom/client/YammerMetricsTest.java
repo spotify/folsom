@@ -46,7 +46,7 @@ public class YammerMetricsTest {
         fakeRawMemcacheClient,
         metrics,
         StringTranscoder.UTF8_INSTANCE,
-        Charsets.UTF_8);
+        Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
     ConnectFuture.connectFuture(client).get();
   }
 

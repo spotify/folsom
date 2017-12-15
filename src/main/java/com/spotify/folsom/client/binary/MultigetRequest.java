@@ -26,10 +26,8 @@ import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class MultigetRequest
@@ -46,13 +44,12 @@ public class MultigetRequest
     this.ttl = ttl;
   }
 
-  public static MultigetRequest create(final List<String> keys, Charset charset,
-                                       final int ttl) {
+  public static MultigetRequest create(final List<byte[]> keys, final int ttl) {
     final int size = keys.size();
     if (size > MemcacheEncoder.MAX_MULTIGET_SIZE) {
       throw new IllegalArgumentException("Too large multiget request");
     }
-    return new MultigetRequest(encodeKeys(keys, charset), ttl);
+    return new MultigetRequest(keys, ttl);
   }
 
   @Override

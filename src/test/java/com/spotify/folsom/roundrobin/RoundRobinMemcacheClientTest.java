@@ -19,6 +19,7 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
@@ -51,7 +52,8 @@ public class RoundRobinMemcacheClientTest {
     roundRobinMemcacheClient = new RoundRobinMemcacheClient(clientList);
     memcacheClient = new DefaultAsciiMemcacheClient<>(
             roundRobinMemcacheClient, new NoopMetrics(),
-            StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
+            StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8,
+        MemcacheEncoder.MAX_KEY_LEN);
   }
 
   @Test

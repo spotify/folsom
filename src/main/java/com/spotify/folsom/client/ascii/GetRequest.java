@@ -23,7 +23,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,8 +35,8 @@ public class GetRequest
 
   private final byte[] cmd;
 
-  public GetRequest(final String key, Charset charset, boolean withCas) {
-    super(key, charset);
+  public GetRequest(final byte[] key, boolean withCas) {
+    super(key);
     this.cmd = withCas ? CAS_GET : GET;
   }
 

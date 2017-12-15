@@ -102,7 +102,8 @@ public class DefaultRawMemcacheClientTest {
     DefaultAsciiMemcacheClient<String> asciiClient =
             new DefaultAsciiMemcacheClient<>(
                     rawClient, new NoopMetrics(),
-                    new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8);
+                    new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8,
+                MemcacheEncoder.MAX_KEY_LEN);
 
     try {
       List<ListenableFuture<?>> futures = Lists.newArrayList();
@@ -151,7 +152,7 @@ public class DefaultRawMemcacheClientTest {
   private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient)
       throws InterruptedException {
     try {
-      rawClient.send(new AsciiRequest<String>("key", Charsets.UTF_8) {
+      rawClient.send(new AsciiRequest<String>("key".getBytes(Charsets.UTF_8)) {
         @Override
         protected void handle(AsciiResponse response) throws IOException {
           throw new IOException(exceptionString);
@@ -179,7 +180,7 @@ public class DefaultRawMemcacheClientTest {
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, 5000, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024).get();
 
-    final Future<?> future = rawClient.send(new GetRequest("foo", Charsets.UTF_8, false));
+    final Future<?> future = rawClient.send(new GetRequest("foo".getBytes(Charsets.UTF_8), false));
     try {
       future.get();
       fail();
@@ -205,8 +206,9 @@ public class DefaultRawMemcacheClientTest {
         new NoopMetrics(), maxSetLength).get();
 
     try {
+      byte[] key = "foo".getBytes(Charsets.UTF_8);
       final com.spotify.folsom.client.binary.GetRequest request =
-          new com.spotify.folsom.client.binary.GetRequest("foo", Charsets.UTF_8, OpCode.GET, 123);
+          new com.spotify.folsom.client.binary.GetRequest(key, OpCode.GET, 123);
 
       // Send request once
       rawClient.send(request).get();
@@ -238,7 +240,7 @@ public class DefaultRawMemcacheClientTest {
 
     try {
       final GetRequest request =
-          new GetRequest("foo", Charsets.UTF_8, false);
+          new GetRequest("foo".getBytes(Charsets.UTF_8), false);
 
       // Send request once
       rawClient.send(request).get();
@@ -283,14 +285,14 @@ public class DefaultRawMemcacheClientTest {
     // Try to fill up the outstanding request limit
     for (int i = 0; i < 100; i++) {
       try {
-        rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+        rawClient.send(new GetRequest("key".getBytes(Charsets.UTF_8), false)).get();
       } catch (ExecutionException e) {
         // Ignore any errors here
       }
     }
 
     try {
-      rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+      rawClient.send(new GetRequest("key".getBytes(Charsets.UTF_8), false)).get();
     } catch (ExecutionException e) {
       throw e.getCause();
     }
@@ -310,7 +312,7 @@ public class DefaultRawMemcacheClientTest {
     assertFalse(rawClient.isConnected());
 
     try {
-      rawClient.send(new GetRequest("key", Charsets.UTF_8, false)).get();
+      rawClient.send(new GetRequest("key".getBytes(Charsets.UTF_8), false)).get();
     } catch (ExecutionException e) {
       throw e.getCause();
     }
@@ -342,10 +344,10 @@ public class DefaultRawMemcacheClientTest {
         assertEquals(0, metrics.getGauge().getOutstandingRequests());
 
         List<ListenableFuture<GetResult<byte[]>>> futures = new ArrayList<>();
-        futures.add(rawClient.send(new GetRequest("key", charset, false)));
+        futures.add(rawClient.send(new GetRequest("key".getBytes(charset), false)));
         assertEquals(1, metrics.getGauge().getOutstandingRequests());
 
-        futures.add(rawClient.send(new GetRequest("key", charset, false)));
+        futures.add(rawClient.send(new GetRequest("key".getBytes(charset), false)));
         assertEquals(2, metrics.getGauge().getOutstandingRequests());
 
         // ensure that counter goes back to zero after request is done

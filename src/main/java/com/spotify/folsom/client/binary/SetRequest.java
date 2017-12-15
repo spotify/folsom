@@ -24,7 +24,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class SetRequest
         extends BinaryRequest<MemcacheStatus>
@@ -36,12 +35,11 @@ public class SetRequest
   private final long cas;
 
   public SetRequest(final byte opcode,
-                    final String key,
-                    final Charset charset,
+                    final byte[] key,
                     final byte[] value,
                     final int ttl,
                     final long cas) {
-    super(key, charset);
+    super(key);
     this.opcode = opcode;
     this.value = value;
     this.ttl = ttl;

@@ -33,7 +33,7 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferNoCas() throws Exception {
-    TouchRequest req = new TouchRequest(KEY, Charsets.UTF_8, 123);
+    TouchRequest req = new TouchRequest(KEY.getBytes(Charsets.UTF_8), 123);
     req.setOpaque(OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
@@ -48,7 +48,7 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferTtl() throws Exception {
-    GetRequest get = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123);
+    GetRequest get = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 123);
     get.setOpaque(OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

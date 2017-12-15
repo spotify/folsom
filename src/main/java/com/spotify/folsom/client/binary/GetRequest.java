@@ -25,7 +25,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,11 +34,10 @@ public class GetRequest
   private final byte opcode;
   private final int ttl;
 
-  public GetRequest(final String key,
-                    final Charset charset,
+  public GetRequest(final byte[] key,
                     final byte opcode,
                     final int ttl) {
-    super(key, charset);
+    super(key);
     this.opcode = checkNotNull(opcode, "opcode");
     this.ttl = checkNotNull(ttl, "ttl");
   }

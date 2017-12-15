@@ -54,8 +54,7 @@ public class SetRequestTest extends RequestTestTemplate {
   private void verifySetRequest(int ttl, long cas) throws Exception {
     SetRequest req = new SetRequest(
       OpCode.SET,
-      KEY,
-      Charsets.UTF_8,
+      KEY.getBytes(Charsets.UTF_8),
       TRANSCODER.encode(VALUE),
       ttl,
       cas
