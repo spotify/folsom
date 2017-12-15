@@ -25,16 +25,14 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class TouchRequest extends BinaryRequest<MemcacheStatus> {
 
   private final int ttl;
 
-  public TouchRequest(final String key,
-                      final Charset charset,
+  public TouchRequest(final byte[] key,
                       final int ttl) {
-    super(key, charset);
+    super(key);
     this.ttl = ttl;
   }
 

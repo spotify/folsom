@@ -20,7 +20,6 @@ import com.spotify.folsom.client.Request;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public abstract class BinaryRequest<V> extends Request<V> {
 
@@ -29,10 +28,6 @@ public abstract class BinaryRequest<V> extends Request<V> {
 
   protected int opaque;
   protected boolean opaqueSet;
-
-  protected BinaryRequest(final String key, Charset charset) {
-    this(encodeKey(key, charset));
-  }
 
   protected BinaryRequest(final byte[] key) {
     super(key);

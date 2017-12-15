@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 
 public class DeleteRequestTest extends RequestTestTemplate {
 
-  private DeleteRequest req = new DeleteRequest("foo", Charsets.UTF_8);
+  private DeleteRequest req = new DeleteRequest("foo".getBytes(Charsets.UTF_8));
 
   @Test
   public void testRequest() throws Exception {

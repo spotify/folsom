@@ -23,13 +23,11 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
-  public DeleteRequest(final String key,
-                       final Charset charset) {
-    super(key, charset);
+  public DeleteRequest(final byte[] key) {
+    super(key);
   }
 
   @Override

@@ -24,7 +24,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class IncrRequest extends BinaryRequest<Long> {
   private final byte opcode;
@@ -32,13 +31,12 @@ public class IncrRequest extends BinaryRequest<Long> {
   private final long initial;
   private final int ttl;
 
-  public IncrRequest(final String key,
-                     final Charset charset,
+  public IncrRequest(final byte[] key,
                      final byte opcode,
                      final long by,
                      final long initial,
                      final int ttl) {
-    super(key, charset);
+    super(key);
     this.opcode = opcode;
     this.by = by;
     this.initial = initial;

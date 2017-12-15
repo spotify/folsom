@@ -23,6 +23,7 @@ import com.google.common.net.HostAndPort;
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
@@ -104,10 +105,10 @@ public class KetamaMemcacheClientTest {
   private MemcacheClient<String> buildClient(final RawMemcacheClient client, boolean binary) {
     if (binary) {
       return new DefaultBinaryMemcacheClient<>(client, new NoopMetrics(),
-              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
+              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
     } else {
       return new DefaultAsciiMemcacheClient<>(client, new NoopMetrics(),
-              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8);
+              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
     }
   }
 }

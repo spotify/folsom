@@ -23,7 +23,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 public class IncrRequest extends AsciiRequest<Long> {
 
@@ -34,19 +33,19 @@ public class IncrRequest extends AsciiRequest<Long> {
   private final long by;
 
   private IncrRequest(final byte[] operation,
-                      final String key,
-                      final long by, Charset charset) {
-    super(key, charset);
+                      final byte[] key,
+                      final long by) {
+    super(key);
     this.operation = operation;
     this.by = by;
   }
 
-  public static IncrRequest createIncr(final String key, Charset charset, final long value) {
-    return new IncrRequest(INCR_CMD, key, value, charset);
+  public static IncrRequest createIncr(final byte[] key, final long value) {
+    return new IncrRequest(INCR_CMD, key, value);
   }
 
-  public static IncrRequest createDecr(final String key, Charset charset, final long value) {
-    return new IncrRequest(DECR_CMD, key, value, charset);
+  public static IncrRequest createDecr(final byte[] key, final long value) {
+    return new IncrRequest(DECR_CMD, key, value);
   }
 
   @Override

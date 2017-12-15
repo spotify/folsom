@@ -29,19 +29,19 @@ public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
   public void testIncrRequest() throws Exception {
-    IncrRequest req = IncrRequest.createIncr("foo", Charsets.UTF_8, 2);
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
     assertRequest(req, "incr" + " foo 2\r\n");
   }
 
   @Test
   public void testDecrRequest() throws Exception {
-    IncrRequest req = IncrRequest.createDecr("foo", Charsets.UTF_8, 2);
+    IncrRequest req = IncrRequest.createDecr("foo".getBytes(Charsets.UTF_8), 2);
     assertRequest(req, "decr" + " foo 2\r\n");
   }
 
   @Test
   public void testResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.createIncr("foo", Charsets.UTF_8, 2);
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
 
     AsciiResponse response = new NumericAsciiResponse(123);
     req.handle(response);
@@ -51,7 +51,7 @@ public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
   public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.createIncr("foo", Charsets.UTF_8, 2);
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
 
     req.handle(AsciiResponse.NOT_FOUND);
     assertEquals(null, req.get());

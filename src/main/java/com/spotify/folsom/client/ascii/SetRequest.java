@@ -23,7 +23,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.EnumMap;
 
 public class SetRequest
@@ -48,28 +47,29 @@ public class SetRequest
   private final int ttl;
   private final long cas;
 
-  private SetRequest(Operation operation, final String key,
-                     Charset charset, final byte[] value, final int ttl, final long cas) {
-    super(key, charset);
+  private SetRequest(final Operation operation,
+                     final byte[] key,
+                     final byte[] value, final int ttl, final long cas) {
+    super(key);
     this.operation = operation;
     this.value = value;
     this.ttl = ttl;
     this.cas = cas;
   }
 
-  public static SetRequest casSet(final String key, Charset charset, final byte[] value,
+  public static SetRequest casSet(final byte[] key, final byte[] value,
                                   final int ttl, final long cas) {
-    return new SetRequest(Operation.CAS, key, charset, value, ttl, cas);
+    return new SetRequest(Operation.CAS, key, value, ttl, cas);
   }
 
   public static SetRequest create(final Operation operation,
-                                  final String key, Charset charset,
+                                  final byte[] key,
                                   final byte[] value,
                                   final int ttl) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }
-    return new SetRequest(operation, key, charset, value, ttl, 0);
+    return new SetRequest(operation, key, value, ttl, 0);
   }
 
   @Override

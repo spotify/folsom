@@ -46,7 +46,7 @@ public class BinaryMemcacheDecoderTest {
 
   @Test
   public void test() throws Exception {
-    GetRequest request = new GetRequest(KEY, Charsets.UTF_8, OpCode.GET, 123);
+    GetRequest request = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 123);
     request.setOpaque(OPAQUE);
     BinaryMemcacheDecoder decoder = new BinaryMemcacheDecoder();
 

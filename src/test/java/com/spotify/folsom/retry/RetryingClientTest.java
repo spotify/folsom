@@ -36,9 +36,9 @@ import static org.mockito.Mockito.when;
 public class RetryingClientTest {
 
   public static final GetRequest GET_REQUEST = new GetRequest(
-          "key1", Charsets.UTF_8, OpCode.GET, -1);
+          "key1".getBytes(Charsets.UTF_8), OpCode.GET, -1);
   public static final GetRequest FAIL_REQUEST = new GetRequest(
-          "key2", Charsets.UTF_8, OpCode.GET, -1);
+          "key2".getBytes(Charsets.UTF_8), OpCode.GET, -1);
 
   @Test
   public void testSimple() throws Exception {
