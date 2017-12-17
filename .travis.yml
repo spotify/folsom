@@ -14,12 +14,6 @@ matrix:
     - os: linux
       dist: trusty
       jdk: oraclejdk9
-    - os: linux
-      dist: precise
-      jdk: oraclejdk7
-    - os: linux
-      dist: precise
-      jdk: openjdk7
 
 install:
   - mvn install -DskipTests=true -Dgpg.skip=true
