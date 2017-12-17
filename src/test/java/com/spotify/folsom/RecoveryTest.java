@@ -17,7 +17,6 @@
 package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -68,7 +67,7 @@ public class RecoveryTest {
     int port = server.getPort();
 
     final MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-        .withAddress(HostAndPort.fromParts("127.0.0.1", port))
+        .withAddress("127.0.0.1", port)
         .withConnections(1)
         .withMaxOutstandingRequests(MAX_OUTSTANDING_REQUESTS)
         .withMetrics(NoopMetrics.INSTANCE)

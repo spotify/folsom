@@ -15,19 +15,19 @@
  */
 package com.spotify.folsom;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.common.net.HostAndPort;
+import com.spotify.dns.LookupResult;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.folsom.ketama.SrvKetamaClient;
 import org.jmock.lib.concurrent.DeterministicScheduler;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.spotify.folsom.SrvKetamaIntegrationTest.toResult;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -60,7 +60,7 @@ public class SrvKetamaClientTest {
     assertFalse(ketamaClient.isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(toResult(Arrays.asList(hostNameA, hostNameB)));
+            .thenReturn(ImmutableList.of(result("a"), result("b")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -69,7 +69,7 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameB).isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(toResult(Arrays.asList(hostNameB, hostNameC)));
+            .thenReturn(ImmutableList.of(result("b"), result("c")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -79,7 +79,7 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameC).isConnected());
 
     Mockito.when(resolver.resolve(Mockito.anyString()))
-            .thenReturn(toResult(Arrays.asList(hostNameC, hostNameD)));
+        .thenReturn(ImmutableList.of(result("c"), result("d")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -90,5 +90,9 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameD).isConnected());
 
     ketamaClient.shutdown();
+  }
+
+  private LookupResult result(final String hostname) {
+    return LookupResult.create(hostname, 1, 100, 100, 100);
   }
 }

@@ -17,7 +17,7 @@ package com.spotify.folsom.ketama;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;

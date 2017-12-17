@@ -60,7 +60,7 @@ public class SrvChangeIntegrationTest {
   public void setUp() throws Exception {
     assertEquals(0, Utils.getGlobalConnectionCount());
 
-    fullResults = toResult(servers.getAddresses());
+    fullResults = toResult(servers.getPorts());
     oneMissing = ImmutableList.copyOf(
         fullResults.subList(0, fullResults.size() - 1));
 

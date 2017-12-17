@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.net.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 
@@ -64,7 +63,7 @@ public class MemcacheClientStressTest {
 
 
     client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
+        .withAddress("127.0.0.1", daemon.getPort())
         .connectAscii();
     ConnectFuture.connectFuture(client).toCompletableFuture().get();
   }
@@ -95,7 +94,7 @@ public class MemcacheClientStressTest {
 
       client.shutdown();
       client = MemcacheClientBuilder.newByteArrayClient()
-          .withAddress(HostAndPort.fromParts("127.0.0.1", daemon.getPort()))
+          .withAddress("127.0.0.1", daemon.getPort())
           .connectBinary();
       CompletableFutures.allAsList(futures).get();
 

@@ -21,7 +21,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.net.HostAndPort;
 import com.spotify.folsom.client.Utils;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -80,7 +79,7 @@ public class SimpleMemcacheClientBenchmark {
     } else {
       client = MemcacheClientBuilder.newStringClient()
               .withMaxOutstandingRequests(100000)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", 11211))
+              .withAddress("127.0.0.1", 11211)
               .withConnections(NUM_CLIENT_CONNECTIONS)
               .withRetry(false)
               .connectBinary();

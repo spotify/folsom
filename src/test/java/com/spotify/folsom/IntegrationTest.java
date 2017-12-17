@@ -20,7 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.NoopMetrics;
@@ -135,7 +135,7 @@ public class IntegrationTest {
     int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts(address, port))
+            .withAddress(address, port)
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)

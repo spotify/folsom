@@ -16,8 +16,6 @@
 
 package com.spotify.folsom;
 
-import com.google.common.net.HostAndPort;
-
 import com.spotify.folsom.client.Utils;
 import org.junit.Test;
 
@@ -26,7 +24,7 @@ public class MemcacheClientConnectTest {
   @Test(expected = MemcacheClosedException.class)
   public void testConnectFails() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("dummy.dummy", 56742))
+        .withAddress("dummy.dummy", 56742)
         .connectBinary();
     try {
       client.get("foo").toCompletableFuture().get();
@@ -41,7 +39,7 @@ public class MemcacheClientConnectTest {
   @Test(expected = MemcacheClosedException.class)
   public void testConnectPort() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("127.0.0.1", 56742))
+        .withAddress("127.0.0.1", 56742)
         .connectBinary();
     try {
       client.get("foo").toCompletableFuture().get();

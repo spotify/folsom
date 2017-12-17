@@ -16,9 +16,7 @@
 
 package com.spotify.folsom;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.net.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.transcoder.StringTranscoder;
 
@@ -28,12 +26,10 @@ import java.util.concurrent.ExecutionException;
 public class KetamaRunner {
 
   public static void main(final String[] args) throws Throwable {
-    ImmutableList<HostAndPort> addresses = ImmutableList.of(
-            HostAndPort.fromParts("127.0.0.1", 11211),
-            HostAndPort.fromParts("127.0.0.1", 11213));
     final BinaryMemcacheClient<String> client =
             new MemcacheClientBuilder<>(StringTranscoder.UTF8_INSTANCE)
-                    .withAddresses(addresses)
+                    .withAddress("127.0.0.1", 11211)
+                    .withAddress("127.0.0.1", 11213)
                     .connectBinary();
 
     for (int i = 0; i < 10; i++) {

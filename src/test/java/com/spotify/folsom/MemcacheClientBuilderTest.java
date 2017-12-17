@@ -17,7 +17,6 @@ package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.Before;
@@ -47,7 +46,7 @@ public class MemcacheClientBuilderTest {
   public void testValidLatin1() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.ISO_8859_1)
-            .withAddress(HostAndPort.fromParts("127.0.0.6", server.getPort()))
+            .withAddress("127.0.0.6", server.getPort())
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).toCompletableFuture().get();
@@ -62,7 +61,7 @@ public class MemcacheClientBuilderTest {
   public void testValidUTF8() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_8)
-            .withAddress(HostAndPort.fromParts("127.0.0.7", server.getPort()))
+            .withAddress("127.0.0.7", server.getPort())
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).toCompletableFuture().get();
@@ -77,7 +76,7 @@ public class MemcacheClientBuilderTest {
   public void testInvalidUTF16() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_16)
-            .withAddress(HostAndPort.fromParts("127.0.0.3", server.getPort()))
+            .withAddress("127.0.0.3", server.getPort())
             .connectAscii();
     try {
       ConnectFuture.connectFuture(client).toCompletableFuture().get();
@@ -91,7 +90,7 @@ public class MemcacheClientBuilderTest {
   @Test(expected = MemcacheOverloadedException.class)
   public void testOverloaded() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.5", server.getPort()))
+            .withAddress("127.0.0.5", server.getPort())
             .withMaxOutstandingRequests(100)
             .connectAscii();
     ConnectFuture.connectFuture(client).toCompletableFuture().get();
@@ -118,7 +117,7 @@ public class MemcacheClientBuilderTest {
   @Test
   public void testMaxSetLength() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.4", server.getPort()))
+            .withAddress("127.0.0.4", server.getPort())
             .withMaxSetLength(1)
             .connectAscii();
     ConnectFuture.connectFuture(client).toCompletableFuture().get();

@@ -15,7 +15,7 @@
  */
 package com.spotify.folsom.reconnect;
 
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

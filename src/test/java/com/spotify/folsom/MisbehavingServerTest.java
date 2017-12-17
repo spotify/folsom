@@ -17,7 +17,6 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
-import com.google.common.net.HostAndPort;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -193,7 +192,7 @@ public class MisbehavingServerTest {
   private MemcacheClient<String> setupAscii(String response) throws Exception {
     server = new Server(response);
     MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.8", server.port))
+            .withAddress("127.0.0.8", server.port)
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();

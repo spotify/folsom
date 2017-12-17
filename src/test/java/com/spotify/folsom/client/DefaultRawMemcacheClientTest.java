@@ -17,7 +17,7 @@ package com.spotify.folsom.client;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.MoreExecutors;

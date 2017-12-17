@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import com.spotify.futures.CompletableFutures;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
@@ -57,7 +56,7 @@ public class SrvKetamaIntegrationTest {
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
-            .withSrvResolver(s -> toResult(servers.getAddresses()))
+            .withSrvResolver(s -> toResult(servers.getPorts()))
             .withSRVShutdownDelay(1000)
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -70,9 +69,9 @@ public class SrvKetamaIntegrationTest {
     servers.flush();
   }
 
-  public static List<LookupResult> toResult(List<HostAndPort> addresses) {
-    return addresses.stream()
-        .map(input -> LookupResult.create(input.getHostText(), input.getPort(), 100, 100, 100))
+  public static List<LookupResult> toResult(List<Integer> ports) {
+    return ports.stream()
+        .map(port -> LookupResult.create("127.0.0.2", port, 100, 100, 100))
         .collect(Collectors.toList());
   }
 
@@ -141,7 +140,7 @@ public class SrvKetamaIntegrationTest {
     // About 1/3 should be misses.
     // Due to random ports in the embedded server, this is actually somewhat non-deterministic.
     // This is why we use a large number of keys.
-    double missWithPerfectDistribution = numKeys / servers.getAddresses().size();
+    double missWithPerfectDistribution = numKeys / servers.getPorts().size();
     double diff = Math.abs(misses - missWithPerfectDistribution);
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);

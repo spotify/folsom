@@ -18,7 +18,7 @@ package com.spotify.folsom.ketama;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;

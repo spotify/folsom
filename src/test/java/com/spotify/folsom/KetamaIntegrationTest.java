@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import org.junit.After;
@@ -102,13 +101,15 @@ public class KetamaIntegrationTest {
       throw new IllegalArgumentException(protocol);
     }
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddresses(servers.getAddresses())
             .withConnections(1)
             .withMaxOutstandingRequests(100)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(10 * 1000);
+    for (Integer port : servers.ports) {
+      builder.withAddress("127.0.0.2", port);
+    }
 
     if (ascii) {
       client = builder.connectAscii();
@@ -240,15 +241,15 @@ public class KetamaIntegrationTest {
 
   public static class Servers {
     private final List<EmbeddedServer> daemons;
-    private final List<HostAndPort> addresses;
+    private final List<Integer> ports;
 
     public Servers(int instances, boolean binary) {
       daemons = Lists.newArrayList();
-      addresses = Lists.newArrayList();
+      ports = Lists.newArrayList();
       for (int i = 0; i < instances; i++) {
         EmbeddedServer daemon = new EmbeddedServer(binary);
         daemons.add(daemon);
-        addresses.add(HostAndPort.fromParts("127.0.0.2", daemon.getPort()));
+        ports.add(daemon.getPort());
       }
     }
 
@@ -258,8 +259,8 @@ public class KetamaIntegrationTest {
       }
     }
 
-    public List<HostAndPort> getAddresses() {
-      return addresses;
+    public List<Integer> getPorts() {
+      return ports;
     }
 
     public void flush() {
