@@ -90,6 +90,7 @@ public class SimpleMemcacheClientBenchmark {
               .withConnections(NUM_CLIENT_CONNECTIONS)
               .withRetry(false)
               .connectBinary();
+      ConnectFuture.connectFuture(client).get();
       System.out.println(client);
     }
     // Set up test data
