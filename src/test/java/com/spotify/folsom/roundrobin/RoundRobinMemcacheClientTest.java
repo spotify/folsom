@@ -70,7 +70,7 @@ public class RoundRobinMemcacheClientTest {
   @Test
   public void testDistribution() throws Exception {
     for (int i = 0; i < clientList.size() * 1000; i++) {
-      memcacheClient.set("key" + i, "value" + i, 0).get();
+      memcacheClient.set("key" + i, "value" + i, 0).toCompletableFuture().get();
     }
 
     assertEquals(1000, client1.getMap().size());
@@ -78,14 +78,14 @@ public class RoundRobinMemcacheClientTest {
     assertEquals(1000, client3.getMap().size());
 
     for (int i = 0; i < clientList.size() * 1000; i++) {
-      assertEquals("value" + i, memcacheClient.get("key" + i).get());
+      assertEquals("value" + i, memcacheClient.get("key" + i).toCompletableFuture().get());
     }
   }
 
   @Test
   public void testAvoidDisconnected() throws Exception {
     for (int i = 0; i < 3000; i++) {
-      memcacheClient.set("key" + i, "value" + i, 0).get();
+      memcacheClient.set("key" + i, "value" + i, 0).toCompletableFuture().get();
     }
 
     assertEquals(1000, client1.getMap().size());
@@ -96,7 +96,7 @@ public class RoundRobinMemcacheClientTest {
     client2.shutdown();
 
     for (int i = 0; i < 3000; i++) {
-      memcacheClient.set("key2-" + i, "value2-" + i, 0).get();
+      memcacheClient.set("key2-" + i, "value2-" + i, 0).toCompletableFuture().get();
     }
 
     assertEquals(2500, client1.getMap().size());
@@ -114,7 +114,7 @@ public class RoundRobinMemcacheClientTest {
     client2.shutdown();
     client3.shutdown();
     try {
-      memcacheClient.set("key", "value", 0).get();
+      memcacheClient.set("key", "value", 0).toCompletableFuture().get();
     } catch (ExecutionException e) {
       throw e.getCause();
     }

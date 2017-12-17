@@ -18,7 +18,7 @@ package com.spotify.folsom;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletionStage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,11 +50,11 @@ public class MemcacheClientBuilderTest {
             .withAddress(HostAndPort.fromParts("127.0.0.6", server.getPort()))
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).get();
-      assertEquals(null, client.get("Räksmörgås").get());
+      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -65,11 +65,11 @@ public class MemcacheClientBuilderTest {
             .withAddress(HostAndPort.fromParts("127.0.0.7", server.getPort()))
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).get();
-      assertEquals(null, client.get("Räksmörgås").get());
+      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -80,11 +80,11 @@ public class MemcacheClientBuilderTest {
             .withAddress(HostAndPort.fromParts("127.0.0.3", server.getPort()))
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).get();
-      client.get("Key").get();
+      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      client.get("Key").toCompletableFuture().get();
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -94,16 +94,16 @@ public class MemcacheClientBuilderTest {
             .withAddress(HostAndPort.fromParts("127.0.0.5", server.getPort()))
             .withMaxOutstandingRequests(100)
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
+    ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
     try {
-      List<ListenableFuture<String>> futures = Lists.newArrayList();
+      List<CompletionStage<String>> futures = Lists.newArrayList();
       for (int i = 0; i < 400; i++) {
         futures.add(client.get("key"));
       }
-      for (ListenableFuture<String> future : futures) {
+      for (CompletionStage<String> future : futures) {
         try {
-          future.get();
+          future.toCompletableFuture().get();
         } catch (ExecutionException e) {
           throw e.getCause();
         }
@@ -111,7 +111,7 @@ public class MemcacheClientBuilderTest {
       fail("No MemcacheOverloadedException was triggered");
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -121,14 +121,16 @@ public class MemcacheClientBuilderTest {
             .withAddress(HostAndPort.fromParts("127.0.0.4", server.getPort()))
             .withMaxSetLength(1)
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
+    ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
     try {
-      assertEquals(MemcacheStatus.VALUE_TOO_LARGE, client.set("key", "value", 100).get());
-      assertEquals(null, client.get("key").get());
+      assertEquals(
+          MemcacheStatus.VALUE_TOO_LARGE,
+          client.set("key", "value", 100).toCompletableFuture().get());
+      assertEquals(null, client.get("key").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 

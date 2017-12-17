@@ -456,12 +456,7 @@ public class MemcacheClientBuilder<V> {
     SrvKetamaClient client = new SrvKetamaClient(srvRecord, resolver,
             DefaultScheduledExecutor.INSTANCE,
             dnsRefreshPeriod, TimeUnit.MILLISECONDS,
-            new SrvKetamaClient.Connector() {
-              @Override
-              public RawMemcacheClient connect(HostAndPort input) {
-                return createClient(input, binary);
-              }
-            },
+        input -> createClient(input, binary),
             shutdownDelay, TimeUnit.MILLISECONDS);
 
     client.start();

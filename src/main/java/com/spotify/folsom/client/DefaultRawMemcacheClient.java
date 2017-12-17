@@ -18,9 +18,9 @@ package com.spotify.folsom.client;
 
 import com.google.common.collect.Queues;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
@@ -32,6 +32,7 @@ import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
 
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +98,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
    */
   private int requestSequenceId = 0;
 
-  public static ListenableFuture<RawMemcacheClient> connect(
+  public static CompletionStage<RawMemcacheClient> connect(
           final HostAndPort address,
           final int outstandingRequestLimit,
           final boolean binary,
@@ -127,7 +128,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       }
     };
 
-    final SettableFuture<RawMemcacheClient> clientFuture = SettableFuture.create();
+    final CompletableFuture<RawMemcacheClient> clientFuture = new CompletableFuture<>();
 
     final Bootstrap bootstrap = new Bootstrap()
         .group(EVENT_LOOP_GROUP)
@@ -138,24 +139,21 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     final ChannelFuture connectFuture = bootstrap.connect(
         new InetSocketAddress(address.getHostText(), address.getPort()));
 
-    connectFuture.addListener(new ChannelFutureListener() {
-      @Override
-      public void operationComplete(final ChannelFuture future) throws Exception {
-        if (future.isSuccess()) {
-          // Create client
-          final RawMemcacheClient client = new DefaultRawMemcacheClient(
-              address,
-              future.channel(),
-              outstandingRequestLimit,
-              executor,
-              timeoutMillis,
-              metrics,
-              maxSetLength);
-          clientFuture.set(client);
-        } else {
-          future.channel().close();
-          clientFuture.setException(future.cause());
-        }
+    connectFuture.addListener((ChannelFutureListener) future -> {
+      if (future.isSuccess()) {
+        // Create client
+        final RawMemcacheClient client = new DefaultRawMemcacheClient(
+            address,
+            future.channel(),
+            outstandingRequestLimit,
+            executor,
+            timeoutMillis,
+            metrics,
+            maxSetLength);
+        clientFuture.complete(client);
+      } else {
+        future.channel().close();
+        clientFuture.completeExceptionally(future.cause());
       }
     });
 
@@ -178,18 +176,13 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     GLOBAL_CONNECTION_COUNT.incrementAndGet();
 
-    metrics.registerOutstandingRequestsGauge(new Metrics.OutstandingRequestsGauge() {
-      @Override
-      public int getOutstandingRequests() {
-        return pendingCounter.get();
-      }
-    });
+    metrics.registerOutstandingRequestsGauge(pendingCounter::get);
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
+  public <T> CompletionStage<T> send(final Request<T> request) {
     if (!tryIncrementPending()) {
 
       // Do the disconnect check in here instead of outside
@@ -197,18 +190,19 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       String disconnectReason = this.disconnectReason.get();
       if (disconnectReason != null) {
         MemcacheClosedException exception = new MemcacheClosedException(disconnectReason);
-        return onExecutor(Futures.<T>immediateFailedFuture(exception));
+        return onExecutor(CompletableFutures.exceptionallyCompletedFuture(exception));
       }
 
-      return onExecutor(Futures.<T>immediateFailedFuture(new MemcacheOverloadedException(
-              "too many outstanding requests")));
+      return onExecutor(
+          CompletableFutures.exceptionallyCompletedFuture(
+              new MemcacheOverloadedException("too many outstanding requests")));
     }
     if (request instanceof SetRequest) {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        return (ListenableFuture<T>) onExecutor(
-                Futures.immediateFuture(MemcacheStatus.VALUE_TOO_LARGE));
+        return (CompletionStage<T>) onExecutor(
+                CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
       }
     }
     channel.write(request, new RequestWritePromise(channel, request));
@@ -216,17 +210,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return onExecutor(request);
   }
 
-  private <T> ListenableFuture<T> onExecutor(ListenableFuture<T> future) {
+  private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
     return onExecutor(future, executor);
   }
 
-  private static <T> ListenableFuture<T> onExecutor(ListenableFuture<T> future, Executor executor) {
+  private static <T> CompletionStage<T> onExecutor(CompletionStage<T> future, Executor executor) {
     if (executor == null) {
       return future;
     }
-    CallbackSettableFuture<T> newFuture = new CallbackSettableFuture<>(future);
-    future.addListener(newFuture, executor);
-    return newFuture;
+    return future.thenApplyAsync(Function.identity(), executor);
   }
 
   /**
@@ -279,17 +271,14 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     ConnectionHandler() {
       final long pollIntervalMillis = Math.min(timeoutMillis, SECONDS.toMillis(1));
-      timeoutCheckTask = channel.eventLoop().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          final Request<?> head = outstanding.peek();
-          if (head == null) {
-            return;
-          }
-          if (timeoutChecker.check(head)) {
-            log.error("Request timeout: {} {}", channel, head);
-            DefaultRawMemcacheClient.this.setDisconnected("Timeout");
-          }
+      timeoutCheckTask = channel.eventLoop().scheduleWithFixedDelay(() -> {
+        final Request<?> head = outstanding.peek();
+        if (head == null) {
+          return;
+        }
+        if (timeoutChecker.check(head)) {
+          log.error("Request timeout: {} {}", channel, head);
+          DefaultRawMemcacheClient.this.setDisconnected("Timeout");
         }
       }, pollIntervalMillis, pollIntervalMillis, MILLISECONDS);
     }

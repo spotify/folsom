@@ -72,7 +72,7 @@ public class KetamaMemcacheClientTest {
       final MemcacheClient<String> memcacheClient = buildClient(client, binary);
 
       for (int j = 0; j < keysFound; j++) {
-        memcacheClient.set("key-" + j, "value-" + j + "-" + i, 1000).get();
+        memcacheClient.set("key-" + j, "value-" + j + "-" + i, 1000).toCompletableFuture().get();
       }
     }
 
@@ -83,7 +83,7 @@ public class KetamaMemcacheClientTest {
     for (int i = 0; i < requestSize; i++) {
       requestedKeys.add("key-" + random.nextInt(keysFound * 2));
     }
-    final List<String> values = memcacheClient.get(requestedKeys).get();
+    final List<String> values = memcacheClient.get(requestedKeys).toCompletableFuture().get();
     assertEquals(requestSize, values.size());
 
     for (int i = 0; i < requestSize; i++) {

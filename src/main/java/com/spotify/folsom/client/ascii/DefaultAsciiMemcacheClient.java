@@ -21,8 +21,9 @@ import static com.spotify.folsom.client.Request.encodeKey;
 import static com.spotify.folsom.client.Request.encodeKeys;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
@@ -66,7 +67,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> set(final String key, final V value, final int ttl) {
+  public CompletionStage<MemcacheStatus> set(final String key, final V value, final int ttl) {
     checkNotNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
@@ -75,103 +76,103 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
         encodeKey(key, charset, maxKeyLength),
         valueBytes,
         ttl);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> set(String key, V value, int ttl, long cas) {
+  public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     byte[] byteKey = encodeKey(key, charset, maxKeyLength);
     SetRequest request = SetRequest.casSet(byteKey, valueBytes, ttl, cas);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> delete(final String key) {
+  public CompletionStage<MemcacheStatus> delete(final String key) {
     DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength));
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> add(String key, V value, int ttl) {
+  public CompletionStage<MemcacheStatus> add(String key, V value, int ttl) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = SetRequest.create(
             SetRequest.Operation.ADD, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> replace(String key, V value, int ttl) {
+  public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = SetRequest.create(
             SetRequest.Operation.REPLACE, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> append(String key, V value) {
+  public CompletionStage<MemcacheStatus> append(String key, V value) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = SetRequest.create(
             SetRequest.Operation.APPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> prepend(String key, V value) {
+  public CompletionStage<MemcacheStatus> prepend(String key, V value) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request = SetRequest.create(
             SetRequest.Operation.PREPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<Long> incr(String key, long by) {
+  public CompletionStage<Long> incr(String key, long by) {
     IncrRequest request = IncrRequest.createIncr(encodeKey(key, charset, maxKeyLength), by);
-    ListenableFuture<Long> future = rawMemcacheClient.send(request);
+    CompletionStage<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<Long> decr(String key, long by) {
+  public CompletionStage<Long> decr(String key, long by) {
     IncrRequest request = IncrRequest.createDecr(encodeKey(key, charset, maxKeyLength), by);
-    ListenableFuture<Long> future = rawMemcacheClient.send(request);
+    CompletionStage<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     return future;
   }
 
   @Override
-  public ListenableFuture<V> get(final String key) {
+  public CompletionStage<V> get(final String key) {
     return transformerUtil.unwrap(get(key, false));
   }
 
   @Override
-  public ListenableFuture<GetResult<V>> casGet(final String key) {
+  public CompletionStage<GetResult<V>> casGet(final String key) {
     return get(key, true);
   }
 
-  private ListenableFuture<GetResult<V>> get(final String key, final boolean withCas) {
+  private CompletionStage<GetResult<V>> get(final String key, final boolean withCas) {
 
-    final ListenableFuture<GetResult<byte[]>> future =
+    final CompletionStage<GetResult<byte[]>> future =
             rawMemcacheClient.send(new GetRequest(encodeKey(key, charset, maxKeyLength), withCas));
 
     metrics.measureGetFuture(future);
@@ -179,34 +180,34 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
-  public ListenableFuture<List<V>> get(final List<String> keys) {
+  public CompletionStage<List<V>> get(final List<String> keys) {
     final List<byte[]> byteKeys = encodeKeys(keys, charset, maxKeyLength);
     return transformerUtil.unwrapList(multiget(byteKeys, false));
   }
 
   @Override
-  public ListenableFuture<List<GetResult<V>>> casGet(final List<String> keys) {
+  public CompletionStage<List<GetResult<V>>> casGet(final List<String> keys) {
     final List<byte[]> byteKeys = encodeKeys(keys, charset, maxKeyLength);
     return multiget(byteKeys, true);
   }
 
   @Override
-  public ListenableFuture<MemcacheStatus> touch(String key, int ttl) {
+  public CompletionStage<MemcacheStatus> touch(String key, int ttl) {
     TouchRequest request = new TouchRequest(encodeKey(key, charset, maxKeyLength), ttl);
-    ListenableFuture<MemcacheStatus> future = rawMemcacheClient.send(request);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
     return future;
   }
 
-  private ListenableFuture<List<GetResult<V>>> multiget(List<byte[]> keys, boolean withCas) {
+  private CompletionStage<List<GetResult<V>>> multiget(List<byte[]> keys, boolean withCas) {
     final int size = keys.size();
     if (size == 0) {
-      return Futures.immediateFuture(Collections.<GetResult<V>>emptyList());
+      return CompletableFuture.completedFuture(Collections.<GetResult<V>>emptyList());
     }
 
     final List<List<byte[]>> keyPartition =
             Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
-    final List<ListenableFuture<List<GetResult<byte[]>>>> futureList =
+    final List<CompletionStage<List<GetResult<byte[]>>>> futureList =
             new ArrayList<>(keyPartition.size());
 
     for (final List<byte[]> part : keyPartition) {
@@ -214,8 +215,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
       futureList.add(rawMemcacheClient.send(request));
     }
 
-    final ListenableFuture<List<GetResult<byte[]>>> future =
-            Utils.transform(Futures.allAsList(futureList), Utils.<GetResult<byte[]>>flatten());
+    final CompletionStage<List<GetResult<byte[]>>> future =
+        ((CompletionStage<List<List<GetResult<byte[]>>>>) CompletableFutures.allAsList(futureList))
+            .thenApplyAsync(Utils.flatten(), Utils.SAME_THREAD_EXECUTOR);
 
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);

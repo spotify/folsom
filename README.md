@@ -1,7 +1,7 @@
 ## Folsom
 
 Folsom is an attempt at a small and stable memcache client. Folsom is fully
-asynchronous, based on Netty and uses Guava's ListenableFuture through-out the
+asynchronous, based on Netty and uses Java 8's CompletionStage through-out the
 API.
 
 ### Build status
@@ -16,7 +16,7 @@ API.
 
 ### Build dependencies
 
-* Java 7 or higher
+* Java 8 or higher
 * Maven
 
 ### Runtime dependencies
@@ -52,7 +52,7 @@ and connectAscii() constructs MemcacheClient instances utilising the [binary pro
 [ascii protocol] respectively. For details on their differences see **Protocol** below.
 
 All calls to the folsom API that interacts with a memcache server is asynchronous and the
-result is typically accessible from ListenableFuture instances. An exception to this rule
+result is typically accessible from CompletionStage instances. An exception to this rule
 are the methods that connects clients to their remote endpoints,
 MemcacheClientBuilder.connectBinary() and MemcacheClientBuilder.connectAscii() which will
 return a MemcacheClient immediately while asynchronously attempting to connect to the configured

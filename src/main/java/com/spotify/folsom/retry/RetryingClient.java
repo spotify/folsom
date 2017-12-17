@@ -15,9 +15,10 @@
  */
 package com.spotify.folsom.retry;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import static com.spotify.folsom.client.Utils.unwrap;
+
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -42,19 +43,16 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(final Request<T> request) {
-    final ListenableFuture<T> future = delegate.send(request);
-    return Futures.catchingAsync(future, MemcacheClosedException.class,
-        new AsyncFunction<MemcacheClosedException, T>() {
-          @Override
-          public ListenableFuture<T> apply(final MemcacheClosedException e) {
-            if (delegate.isConnected()) {
-              return delegate.send(request);
-            } else {
-              return Futures.immediateFailedFuture(e);
-            }
-          }
-        });
+  public <T> CompletionStage<T> send(final Request<T> request) {
+    final CompletionStage<T> future = delegate.send(request);
+    return CompletableFutures.exceptionallyCompose(future, e -> {
+      e = unwrap(e);
+      if (e instanceof MemcacheClosedException && delegate.isConnected()) {
+        return delegate.send(request);
+      } else {
+        return CompletableFutures.exceptionallyCompletedFuture(e);
+      }
+    });
   }
 
   @Override

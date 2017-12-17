@@ -25,7 +25,7 @@ public interface ObservableClient {
   /**
    * Register for connection change events. This should trigger at least once for every
    * connection change. You should immediately get an initial callback, so that if you
-   * are creating a ListenableFuture looking for a connection state that has already
+   * are creating a CompletionStage looking for a connection state that has already
    * been reached it will return immediately.
    *
    * @param listener the listener to notify of connection changes

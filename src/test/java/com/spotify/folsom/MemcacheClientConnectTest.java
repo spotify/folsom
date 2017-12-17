@@ -17,8 +17,8 @@
 package com.spotify.folsom;
 
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
 
+import com.spotify.folsom.client.Utils;
 import org.junit.Test;
 
 public class MemcacheClientConnectTest {
@@ -29,10 +29,12 @@ public class MemcacheClientConnectTest {
         .withAddress(HostAndPort.fromParts("dummy.dummy", 56742))
         .connectBinary();
     try {
-      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+      client.get("foo").toCompletableFuture().get();
+    } catch (Exception e) {
+      throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -42,10 +44,12 @@ public class MemcacheClientConnectTest {
         .withAddress(HostAndPort.fromParts("127.0.0.1", 56742))
         .connectBinary();
     try {
-      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+      client.get("foo").toCompletableFuture().get();
+    } catch (Exception e) {
+      throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 }

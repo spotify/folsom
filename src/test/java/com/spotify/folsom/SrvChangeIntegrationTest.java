@@ -90,14 +90,9 @@ public class SrvChangeIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
 
-    waitUntilSuccess(1000, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(0, Utils.getGlobalConnectionCount());
-      }
-    });
+    waitUntilSuccess(1000, () -> assertEquals(0, Utils.getGlobalConnectionCount()));
   }
 
   @Test
@@ -105,22 +100,16 @@ public class SrvChangeIntegrationTest {
     for (int i = 0; i < 10; i++) {
       when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(1000, new Runnable() {
-            @Override
-            public void run() {
-              assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections());
-            }
-          }
+      waitUntilSuccess(
+          1000,
+          () -> assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections())
       );
 
       when(dnsSrvResolver.resolve(anyString())).thenReturn(oneMissing);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(1000, new Runnable() {
-            @Override
-            public void run() {
-              assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections());
-            }
-          }
+      waitUntilSuccess(
+          1000,
+          () -> assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections())
       );
     }
   }

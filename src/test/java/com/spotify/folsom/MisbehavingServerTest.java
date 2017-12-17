@@ -148,7 +148,7 @@ public class MisbehavingServerTest {
   private void testAsciiGet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.get("key").get();
+      client.get("key").toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -156,14 +156,14 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.touch("key", 123).get();
+      client.touch("key", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -171,14 +171,14 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
   private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.set("key", "value", 123).get();
+      client.set("key", "value", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -186,7 +186,7 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
   }
 
@@ -197,7 +197,7 @@ public class MisbehavingServerTest {
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
+    ConnectFuture.connectFuture(client).toCompletableFuture().get();
     return client;
   }
 

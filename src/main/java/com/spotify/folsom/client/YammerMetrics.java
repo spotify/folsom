@@ -16,9 +16,7 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -31,8 +29,6 @@ import com.yammer.metrics.core.TimerContext;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-
 
 public class YammerMetrics implements Metrics {
 
@@ -118,39 +114,31 @@ public class YammerMetrics implements Metrics {
   }
 
   @Override
-  public void measureGetFuture(ListenableFuture<GetResult<byte[]>> future) {
+  public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
     final TimerContext ctx = gets.time();
 
-    final FutureCallback<GetResult<byte[]>> metricsCallback =
-            new FutureCallback<GetResult<byte[]>>() {
-      @Override
-      public void onSuccess(final GetResult<byte[]> result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         getSuccesses.mark();
         if (result != null) {
           getHits.mark();
         } else {
           getMisses.mark();
         }
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         getFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public void measureMultigetFuture(ListenableFuture<List<GetResult<byte[]>>> future) {
+  public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
     final TimerContext ctx = multigets.time();
 
-    final FutureCallback<List<GetResult<byte[]>>> metricsCallback =
-            new FutureCallback<List<GetResult<byte[]>>>() {
-      @Override
-      public void onSuccess(final List<GetResult<byte[]>> result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         multigetSuccesses.mark();
         int hits = 0;
         int total = result.size();
@@ -161,96 +149,66 @@ public class YammerMetrics implements Metrics {
         }
         getHits.mark(hits);
         getMisses.mark(total - hits);
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         multigetFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public void measureDeleteFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = deletes.time();
 
-    final FutureCallback<MemcacheStatus> metricsCallback = new FutureCallback<MemcacheStatus>() {
-      @Override
-      public void onSuccess(final MemcacheStatus result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         deleteSuccesses.mark();
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         deleteFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public void measureSetFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = sets.time();
 
-    final FutureCallback<MemcacheStatus> metricsCallback = new FutureCallback<MemcacheStatus>() {
-      @Override
-      public void onSuccess(final MemcacheStatus result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         setSuccesses.mark();
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         setFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public void measureIncrDecrFuture(ListenableFuture<Long> future) {
+  public void measureIncrDecrFuture(CompletionStage<Long> future) {
     final TimerContext ctx = incrDecrs.time();
 
-    final FutureCallback<Long> metricsCallback = new FutureCallback<Long>() {
-      @Override
-      public void onSuccess(final Long result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         incrDecrSuccesses.mark();
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         incrDecrFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public void measureTouchFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = touches.time();
 
-    final FutureCallback<MemcacheStatus> metricsCallback = new FutureCallback<MemcacheStatus>() {
-      @Override
-      public void onSuccess(final MemcacheStatus result) {
+    future.whenCompleteAsync((result, t) -> {
+      ctx.stop();
+      if (t == null) {
         touchSuccesses.mark();
-        ctx.stop();
-      }
-
-      @Override
-      public void onFailure(final Throwable t) {
+      } else {
         touchFailures.mark();
-        ctx.stop();
       }
-    };
-    Futures.addCallback(future, metricsCallback, Utils.SAME_THREAD_EXECUTOR);
+    }, Utils.SAME_THREAD_EXECUTOR);
   }
 
   @Override

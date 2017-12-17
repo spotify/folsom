@@ -77,16 +77,13 @@ public class SlowStaticServer implements Closeable {
           if (!line.startsWith("get ")) {
             throw new RuntimeException("Unimplemented command: " + line);
           }
-          executor.schedule(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                socket.getOutputStream().write(response);
-                socket.getOutputStream().flush();
-                log.debug("sent response");
-              } catch (IOException e) {
-                log.error("exception with socket", e);
-              }
+          executor.schedule(() -> {
+            try {
+              socket.getOutputStream().write(response);
+              socket.getOutputStream().flush();
+              log.debug("sent response");
+            } catch (IOException e) {
+              log.error("exception with socket", e);
             }
           }, delayMillis, TimeUnit.MILLISECONDS);
         }

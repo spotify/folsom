@@ -16,7 +16,6 @@
 package com.spotify.folsom.retry;
 
 import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.Futures;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -24,6 +23,8 @@ import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.binary.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
 
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
@@ -47,24 +48,24 @@ public class RetryingClientTest {
     MemcacheClosedException ex = new MemcacheClosedException("reason");
     GetResult<byte[]> result = GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123);
     when(delegate.send(GET_REQUEST))
-        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex))
-        .thenReturn(Futures.immediateFuture(result));
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(ex))
+        .thenReturn(CompletableFuture.completedFuture(result));
 
     MemcacheClosedException ex1 = new MemcacheClosedException("reason1");
     MemcacheClosedException ex2 = new MemcacheClosedException("reason2");
     when(delegate.send(FAIL_REQUEST))
-        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex1))
-        .thenReturn(Futures.<GetResult<byte[]>>immediateFailedFuture(ex2));
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(ex1))
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(ex2));
 
     when(delegate.isConnected()).thenReturn(true);
 
     RetryingClient retryingClient = new RetryingClient(delegate);
 
-    byte[] responseBytes = retryingClient.send(GET_REQUEST).get().getValue();
+    byte[] responseBytes = retryingClient.send(GET_REQUEST).toCompletableFuture().get().getValue();
     assertEquals("bar", StringTranscoder.UTF8_INSTANCE.decode(responseBytes));
 
     try {
-      retryingClient.send(FAIL_REQUEST).get();
+      retryingClient.send(FAIL_REQUEST).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();

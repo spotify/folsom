@@ -46,13 +46,10 @@ public class SrvKetamaClientTest {
 
     final Map<HostAndPort, FakeRawMemcacheClient> knownClients = Maps.newHashMap();
 
-    SrvKetamaClient.Connector connector = new SrvKetamaClient.Connector() {
-      @Override
-      public RawMemcacheClient connect(HostAndPort input) {
-        FakeRawMemcacheClient fakeRawMemcacheClient = new FakeRawMemcacheClient();
-        knownClients.put(input, fakeRawMemcacheClient);
-        return fakeRawMemcacheClient;
-      }
+    SrvKetamaClient.Connector connector = input -> {
+      FakeRawMemcacheClient fakeRawMemcacheClient = new FakeRawMemcacheClient();
+      knownClients.put(input, fakeRawMemcacheClient);
+      return fakeRawMemcacheClient;
     };
 
     SrvKetamaClient ketamaClient = new SrvKetamaClient(

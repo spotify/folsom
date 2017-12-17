@@ -19,7 +19,7 @@ package com.spotify.folsom;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletionStage;
 
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
@@ -77,14 +77,14 @@ public class RecoveryTest {
         .withRequestTimeoutMillis(TIMEOUT_MILLIS);
 
     client = builder.connectBinary();
-    ConnectFuture.connectFuture(client).get();
+    ConnectFuture.connectFuture(client).toCompletableFuture().get();
   }
 
   @After
   public void tearDown() throws Exception {
     if (client != null) {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
     }
     if (server != null) {
       server.stop();
@@ -102,15 +102,15 @@ public class RecoveryTest {
 
     // Overload the client
     final int overload = 10;
-    final List<ListenableFuture<String>> overloadFutures = Lists.newArrayList();
+    final List<CompletionStage<String>> overloadFutures = Lists.newArrayList();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS + overload; i++) {
       overloadFutures.add(client.get("foo"));
     }
     int timeout = 0;
     int overloaded = 0;
-    for (final ListenableFuture<String> f : overloadFutures) {
+    for (final CompletionStage<String> f : overloadFutures) {
       try {
-        f.get();
+        f.toCompletableFuture().get();
       } catch (ExecutionException e) {
         final Throwable cause = e.getCause();
         if (cause instanceof MemcacheOverloadedException) {
@@ -129,18 +129,18 @@ public class RecoveryTest {
     assertThat(timeout, is(MAX_OUTSTANDING_REQUESTS));
 
     // Wait for the client to reconnect
-    ConnectFuture.connectFuture(client).get();
+    ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
     // Have memcached reply to all GET requests
     answer.set(elements("foo", "bar"));
 
     // Verify that the client recovers and successfully processes requests
-    final List<ListenableFuture<String>> recoveryFutures = Lists.newArrayList();
+    final List<CompletionStage<String>> recoveryFutures = Lists.newArrayList();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS; i++) {
       recoveryFutures.add(client.get("foo"));
     }
-    for (final ListenableFuture<String> f : recoveryFutures) {
-      f.get();
+    for (final CompletionStage<String> f : recoveryFutures) {
+      f.toCompletableFuture().get();
     }
   }
 

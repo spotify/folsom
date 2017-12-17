@@ -18,9 +18,7 @@ package com.spotify.folsom.ketama;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletionStage;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
@@ -33,7 +31,6 @@ import com.spotify.folsom.client.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -56,12 +53,6 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private final long shutdownDelay;
   private final TimeUnit shutdownUnit;
   private final MyConnectionChangeListener listener = new MyConnectionChangeListener();
-  private final Runnable refreshRunnable = new Runnable() {
-    @Override
-    public void run() {
-      updateDNS();
-    }
-  };
 
   private ScheduledFuture<?> refreshJob;
 
@@ -95,7 +86,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
     if (refreshJob != null) {
       throw new RuntimeException("You may only start this once");
     }
-    refreshJob = this.executor.schedule(refreshRunnable, 0, TimeUnit.MILLISECONDS);
+    refreshJob = this.executor.schedule(this::updateDNS, 0, TimeUnit.MILLISECONDS);
   }
 
   public void updateDNS() {
@@ -121,7 +112,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
         }
       } finally {
         long delay = clamp(MIN_DNS_WAIT_TIME, MAX_DNS_WAIT_TIME, ttl);
-        refreshJob = this.executor.schedule(refreshRunnable, delay, TimeUnit.SECONDS);
+        refreshJob = this.executor.schedule(this::updateDNS, delay, TimeUnit.SECONDS);
       }
     }
   }
@@ -139,7 +130,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public <T> ListenableFuture<T> send(Request<T> request) {
+  public <T> CompletionStage<T> send(Request<T> request) {
     return currentClient.send(request);
   }
 
@@ -191,29 +182,21 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       pendingClient = newPending;
     }
 
-    ListenableFuture<Void> future = ConnectFuture.connectFuture(newPending);
-    Futures.addCallback(future, new FutureCallback<Void>() {
-      @Override
-      public void onSuccess(@Nullable Void result) {
-        final RawMemcacheClient oldClient;
-        synchronized (sync) {
-          if (newPending != pendingClient) {
-            // We don't care about this event if it's not the expected client
-            return;
-          }
-
-          oldClient = currentClient;
-          currentClient = pendingClient;
-          pendingClient = null;
+    CompletionStage<Void> future = ConnectFuture.connectFuture(newPending);
+    future.thenRun(() -> {
+      final RawMemcacheClient oldClient;
+      synchronized (sync) {
+        if (newPending != pendingClient) {
+          // We don't care about this event if it's not the expected client
+          return;
         }
-        notifyConnectionChange();
-        executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
-      }
 
-      @Override
-      public void onFailure(Throwable t) {
-        throw new RuntimeException("Programmer bug - this is unreachable code");
+        oldClient = currentClient;
+        currentClient = pendingClient;
+        pendingClient = null;
       }
+      notifyConnectionChange();
+      executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
     });
     if (oldPending != null) {
       oldPending.unregisterForConnectionChanges(listener);
