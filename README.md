@@ -34,17 +34,10 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom</artifactId>
-      <version>0.8.1</version>
+      <version>1.0.0</version>
     </dependency>
 
-We are using [semantic versioning](http://semver.org) which means and we are currently still in
-the initial development phase. This does not mean that the code is not stable,
-it just means that the API is not necessarily finalized.
-
-    Major version zero (0.y.z) is for initial development.
-    Anything may change at any time. The public API should not be considered stable.
-
-### Usage
+We are using [semantic versioning](http://semver.org)
 
 The main entry point to the folsom API is the MemcacheClientBuilder class. It has
 chainable setter methods to configure various aspects of the client. The methods connectBinary()
@@ -65,19 +58,29 @@ to wait for the initial connection to succeed, as can be seen in the example bel
 
 ```Java
 final MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-    .withAddresses(Collections.singletonList(host))
+    .withAddress(hostname)
     .connectAscii();
 // make we wait until the client has connected to the server
-ConnectFuture.connectFuture(client).get();
+ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
-client.set("key", "value", 10000).get();
-client.get("key").get();
+client.set("key", "value", 10000).toCompletableFuture().get();
+client.get("key").toCompletableFuture().get();
 
 client.shutdown();
 ```
 
 Clients are single use, after `shutdown` has been invoked the client can no
 longer be used.
+
+### Java 7 usage
+
+If you are still on Java 7, you can depend on the older version:
+
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom</artifactId>
+      <version>0.8.1</version>
+    </dependency>
 
 ### Design goals
 
