@@ -32,7 +32,6 @@ import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
 
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -218,7 +217,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     if (executor == null) {
       return future;
     }
-    return future.thenApplyAsync(Function.identity(), executor);
+    return future.whenCompleteAsync((result, t) -> { }, executor);
   }
 
   /**
