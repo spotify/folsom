@@ -1,3 +1,6 @@
+### 0.8.1
+* Added withMaxKeyLength which can be used if the memcache server has different key length restrictions
+
 ### 0.8.0
 * Fixed race condition in ReconnectingClient, causing shutdowns to fail
 * Make more robust client shutdown logic
