@@ -61,7 +61,6 @@ public class SrvKetamaIntegrationTest {
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 

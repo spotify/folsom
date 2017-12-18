@@ -140,7 +140,6 @@ public class IntegrationTest {
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(100);
 
     if (ascii) {

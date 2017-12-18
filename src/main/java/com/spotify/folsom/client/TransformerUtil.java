@@ -38,7 +38,7 @@ public class TransformerUtil<T> {
 
 
   public CompletionStage<T> unwrap(CompletionStage<GetResult<T>> future) {
-    return future.thenApplyAsync(getResultToValue, Utils.SAME_THREAD_EXECUTOR);
+    return future.thenApply(getResultToValue);
   }
 
   public CompletionStage<GetResult<T>> decode(CompletionStage<GetResult<byte[]>> future) {
@@ -46,12 +46,12 @@ public class TransformerUtil<T> {
   }
 
   public CompletionStage<List<T>> unwrapList(CompletionStage<List<GetResult<T>>> future) {
-    return future.thenApplyAsync(listResultUnwrapper, Utils.SAME_THREAD_EXECUTOR);
+    return future.thenApply(listResultUnwrapper);
   }
 
   public CompletionStage<List<GetResult<T>>> decodeList(
           CompletionStage<List<GetResult<byte[]>>> future) {
-    return future.thenApplyAsync(listResultDecoder, Utils.SAME_THREAD_EXECUTOR);
+    return future.thenApply(listResultDecoder);
   }
 
   private static class ResultUnwrapper<T> implements Function<GetResult<T>, T> {

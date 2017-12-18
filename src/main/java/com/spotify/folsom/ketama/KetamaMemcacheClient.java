@@ -27,7 +27,6 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.MultiRequest;
-import com.spotify.folsom.client.Utils;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -97,8 +96,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     }
     final ArrayList<CompletionStage<List<T>>> list = new ArrayList<>(futures.values());
     final CompletionStage<List<List<T>>> allFutures = CompletableFutures.allAsList(list);
-    return allFutures.thenApplyAsync(
-        new Assembler<>(futures, routing2), Utils.SAME_THREAD_EXECUTOR);
+    return allFutures.thenApply(new Assembler<>(futures, routing2));
   }
 
   private static class Assembler<T, R> implements Function<List<List<T>>, List<T>> {

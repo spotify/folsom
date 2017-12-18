@@ -117,7 +117,7 @@ public class YammerMetrics implements Metrics {
   public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
     final TimerContext ctx = gets.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         getSuccesses.mark();
@@ -129,14 +129,14 @@ public class YammerMetrics implements Metrics {
       } else {
         getFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override
   public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
     final TimerContext ctx = multigets.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         multigetSuccesses.mark();
@@ -152,63 +152,63 @@ public class YammerMetrics implements Metrics {
       } else {
         multigetFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override
   public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = deletes.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         deleteSuccesses.mark();
       } else {
         deleteFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override
   public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = sets.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         setSuccesses.mark();
       } else {
         setFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override
   public void measureIncrDecrFuture(CompletionStage<Long> future) {
     final TimerContext ctx = incrDecrs.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         incrDecrSuccesses.mark();
       } else {
         incrDecrFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override
   public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
     final TimerContext ctx = touches.time();
 
-    future.whenCompleteAsync((result, t) -> {
+    future.whenComplete((result, t) -> {
       ctx.stop();
       if (t == null) {
         touchSuccesses.mark();
       } else {
         touchFailures.mark();
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   @Override

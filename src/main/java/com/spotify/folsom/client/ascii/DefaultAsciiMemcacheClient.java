@@ -217,7 +217,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
     final CompletionStage<List<GetResult<byte[]>>> future =
         ((CompletionStage<List<List<GetResult<byte[]>>>>) CompletableFutures.allAsList(futureList))
-            .thenApplyAsync(Utils.flatten(), Utils.SAME_THREAD_EXECUTOR);
+            .thenApply(Utils.flatten());
 
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);

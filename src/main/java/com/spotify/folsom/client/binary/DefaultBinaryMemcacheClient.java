@@ -206,7 +206,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
     final CompletionStage<List<GetResult<byte[]>>> future =
         CompletableFutures.allAsList(futureList)
-            .thenApplyAsync(Utils.flatten(), Utils.SAME_THREAD_EXECUTOR);
+            .thenApply(Utils.flatten());
 
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);

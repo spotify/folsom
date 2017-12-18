@@ -72,7 +72,6 @@ public class RecoveryTest {
         .withMaxOutstandingRequests(MAX_OUTSTANDING_REQUESTS)
         .withMetrics(NoopMetrics.INSTANCE)
         .withRetry(false)
-        .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
         .withRequestTimeoutMillis(TIMEOUT_MILLIS);
 
     client = builder.connectBinary();

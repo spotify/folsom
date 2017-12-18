@@ -21,7 +21,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.spotify.folsom.client.Utils;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -158,7 +157,7 @@ public class SimpleMemcacheClientBenchmark {
                                  final ScheduledExecutorService backoffExecutor) {
     final CompletionStage<List<String>> future = client.get(keys);
     final long start = System.nanoTime();
-    future.whenCompleteAsync((response, throwable) -> {
+    future.whenComplete((response, throwable) -> {
       if (throwable == null) {
         final long end = System.nanoTime();
         final long latency = end - start;
@@ -170,7 +169,7 @@ public class SimpleMemcacheClientBenchmark {
       } else {
         System.err.println(throwable.getMessage());
       }
-    }, Utils.SAME_THREAD_EXECUTOR);
+    });
   }
 
   private static void sendSpyMemcached(final MemcachedClient client,

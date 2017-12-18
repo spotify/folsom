@@ -21,28 +21,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 
 public final class Utils {
-
-  private static final Logger log = LoggerFactory.getLogger(Utils.class);
-
-
-  /**
-   * The Guava {@link com.google.common.util.concurrent.MoreExecutors#sameThreadExecutor()}
-   * takes locks, so roll our own.
-   */
-  public static final Executor SAME_THREAD_EXECUTOR = command -> {
-    try {
-      command.run();
-    } catch (final Exception e) {
-      log.error("caught exception", e);
-    }
-  };
 
   private Utils() {
   }

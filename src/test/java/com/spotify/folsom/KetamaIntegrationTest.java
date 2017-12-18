@@ -105,7 +105,6 @@ public class KetamaIntegrationTest {
             .withMaxOutstandingRequests(100)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(10 * 1000);
     for (Integer port : servers.ports) {
       builder.withAddress("127.0.0.2", port);
