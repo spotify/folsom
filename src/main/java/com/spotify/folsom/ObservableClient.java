@@ -58,18 +58,20 @@ public interface ObservableClient {
     return ConnectFuture.disconnectFuture(this);
   }
 
-  default void awaitConnected(final long waitTime, final TimeUnit unit) throws TimeoutException {
+  default void awaitConnected(final long waitTime, final TimeUnit unit)
+      throws TimeoutException, InterruptedException {
     try {
       connectFuture().toCompletableFuture().get(waitTime, unit);
-    } catch (final InterruptedException | ExecutionException e) {
+    } catch (final ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
 
-  default void awaitDisconnected(final long waitTime, final TimeUnit unit) throws TimeoutException {
+  default void awaitDisconnected(final long waitTime, final TimeUnit unit)
+      throws TimeoutException, InterruptedException {
     try {
       disconnectFuture().toCompletableFuture().get(waitTime, unit);
-    } catch (final InterruptedException | ExecutionException e) {
+    } catch (final ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
