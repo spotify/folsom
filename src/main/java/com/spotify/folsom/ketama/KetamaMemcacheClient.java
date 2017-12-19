@@ -17,7 +17,7 @@
 package com.spotify.folsom.ketama;
 
 import com.spotify.futures.CompletableFutures;
-import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -94,12 +94,13 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       CompletionStage<List<T>> send = client.send(subRequest);
       futures.put(client, send);
     }
-    final ArrayList<CompletionStage<List<T>>> list = new ArrayList<>(futures.values());
-    final CompletionStage<List<List<T>>> allFutures = CompletableFutures.allAsList(list);
-    return allFutures.thenApply(new Assembler<>(futures, routing2));
+    final Collection<CompletionStage<List<T>>> values = futures.values();
+    return CompletableFuture
+        .allOf(values.toArray(new CompletableFuture<?>[values.size()]))
+        .thenApply(new Assembler<>(futures, routing2));
   }
 
-  private static class Assembler<T, R> implements Function<List<List<T>>, List<T>> {
+  private static class Assembler<T, R> implements Function<Void, List<T>> {
     private final Map<R, CompletionStage<List<T>>> futures;
     private final List<R> routing2;
 
@@ -109,7 +110,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     }
 
     @Override
-    public List<T> apply(final List<List<T>> ignored) {
+    public List<T> apply(final Void ignored) {
       final Map<R, Iterator<T>> map = Maps.newIdentityHashMap();
       for (final Map.Entry<R, CompletionStage<List<T>>> entry : futures.entrySet()) {
         final R client = entry.getKey();
