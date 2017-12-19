@@ -16,7 +16,7 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -27,32 +27,32 @@ public class NoopMetrics implements Metrics {
   public static final NoopMetrics INSTANCE = new NoopMetrics();
 
   @Override
-  public void measureGetFuture(ListenableFuture<GetResult<byte[]>> future) {
+  public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
 
   }
 
   @Override
-  public void measureMultigetFuture(ListenableFuture<List<GetResult<byte[]>>> future) {
+  public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
 
   }
 
   @Override
-  public void measureDeleteFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 
   @Override
-  public void measureSetFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 
   @Override
-  public void measureIncrDecrFuture(ListenableFuture<Long> future) {
+  public void measureIncrDecrFuture(CompletionStage<Long> future) {
 
   }
 
   @Override
-  public void measureTouchFuture(ListenableFuture<MemcacheStatus> future) {
+  public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
 
   }
 

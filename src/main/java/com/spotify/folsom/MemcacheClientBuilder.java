@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
@@ -25,7 +24,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.DnsSrvResolvers;
@@ -43,6 +42,7 @@ import com.spotify.folsom.transcoder.SerializableObjectTranscoder;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -93,7 +93,7 @@ public class MemcacheClientBuilder<V> {
                             .build());
   }
 
-  private List<HostAndPort> addresses = null;
+  private final List<HostAndPort> addresses = new ArrayList<>();
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
@@ -181,32 +181,25 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Define which memcache server to connect to.
+   * This may be called multiple times to connect to multiple hosts.
+   * If more than one address is given, Ketama will be used to distribute requests.
    * @param hostname a server, using the default memcached port (11211).
    * @return itself
    */
   public MemcacheClientBuilder<V> withAddress(final String hostname) {
-    return withAddress(HostAndPort.fromParts(hostname, DEFAULT_PORT));
+    return withAddress(hostname, DEFAULT_PORT);
   }
 
   /**
    * Define which memcache server to connect to.
-   * @param address a server.
-   * @return itself
-   */
-  public MemcacheClientBuilder<V> withAddress(HostAndPort address) {
-    this.addresses = ImmutableList.of(address);
-    return this;
-  }
-
-  /**
-   * Define which memcache servers to connect to.
+   * This may be called multiple times to connect to multiple hosts.
    * If more than one address is given, Ketama will be used to distribute requests.
-   * @param addresses a list of servers.
+   * @param host The server hostname
+   * @param port The port where memcached is running
    * @return itself
    */
-  public MemcacheClientBuilder<V> withAddresses(final List<HostAndPort> addresses) {
-    checkArgument(!addresses.isEmpty());
-    this.addresses = ImmutableList.copyOf(checkNotNull(addresses));
+  public MemcacheClientBuilder<V> withAddress(final String host, final int port) {
+    this.addresses.add(HostAndPort.fromParts(host, port));
     return this;
   }
 
@@ -405,12 +398,12 @@ public class MemcacheClientBuilder<V> {
     List<HostAndPort> addresses = this.addresses;
     RawMemcacheClient client;
     if (srvRecord != null) {
-      if (addresses != null) {
+      if (!addresses.isEmpty()) {
         throw new IllegalStateException("You may not specify both srvRecord and addresses");
       }
       client = createSRVClient(binary);
     } else {
-      if (addresses == null) {
+      if (addresses.isEmpty()) {
         addresses = ImmutableList.of(
                 HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
       }
@@ -456,12 +449,7 @@ public class MemcacheClientBuilder<V> {
     SrvKetamaClient client = new SrvKetamaClient(srvRecord, resolver,
             DefaultScheduledExecutor.INSTANCE,
             dnsRefreshPeriod, TimeUnit.MILLISECONDS,
-            new SrvKetamaClient.Connector() {
-              @Override
-              public RawMemcacheClient connect(HostAndPort input) {
-                return createClient(input, binary);
-              }
-            },
+        input -> createClient(input, binary),
             shutdownDelay, TimeUnit.MILLISECONDS);
 
     client.start();

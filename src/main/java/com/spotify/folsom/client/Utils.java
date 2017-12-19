@@ -16,49 +16,15 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.base.Function;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 
 public final class Utils {
-
-  private static final Logger log = LoggerFactory.getLogger(Utils.class);
-
-
-  /**
-   * The Guava {@link com.google.common.util.concurrent.MoreExecutors#sameThreadExecutor()}
-   * takes locks, so roll our own.
-   */
-  public static final Executor SAME_THREAD_EXECUTOR = new Executor() {
-    @Override
-    public void execute(final Runnable command) {
-      try {
-        command.run();
-      } catch (final Exception e) {
-        log.error("caught exception", e);
-      }
-    }
-  };
-
-  public static <I, O> ListenableFuture<O> transform(
-          final ListenableFuture<I> input,
-          final AsyncFunction<? super I, ? extends O> function) {
-    return Futures.transformAsync(input, function, SAME_THREAD_EXECUTOR);
-  }
-
-  public static <I, O> ListenableFuture<O> transform(
-          final ListenableFuture<I> input,
-          final Function<? super I, ? extends O> function) {
-    return Futures.transform(input, function, SAME_THREAD_EXECUTOR);
-  }
 
   private Utils() {
   }
@@ -68,12 +34,7 @@ public final class Utils {
   }
 
   public static <T> Function<List<List<T>>, List<T>> flatten() {
-    return new Function<List<List<T>>, List<T>>() {
-      @Override
-      public List<T> apply(final List<List<T>> input) {
-        return Lists.newArrayList(Iterables.concat(input));
-      }
-    };
+    return input -> Lists.newArrayList(Iterables.concat(input));
   }
 
   /**
@@ -83,4 +44,10 @@ public final class Utils {
     return DefaultRawMemcacheClient.getGlobalConnectionCount();
   }
 
+  public static Throwable unwrap(final Throwable e) {
+    if (e instanceof ExecutionException || e instanceof CompletionException) {
+      return unwrap(e.getCause());
+    }
+    return e;
+  }
 }

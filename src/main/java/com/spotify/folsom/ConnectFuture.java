@@ -15,12 +15,12 @@
  */
 package com.spotify.folsom;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class ConnectFuture
-        extends AbstractFuture<Void>
-        implements ConnectionChangeListener {
+    extends CompletableFuture<Void>
+    implements ConnectionChangeListener {
 
   private final boolean awaitedState;
 
@@ -35,11 +35,11 @@ public class ConnectFuture
     check(client);
   }
 
-  public static ListenableFuture<Void> disconnectFuture(ObservableClient client) {
+  public static CompletionStage<Void> disconnectFuture(ObservableClient client) {
     return new ConnectFuture(client, false);
   }
 
-  public static ListenableFuture<Void> connectFuture(ObservableClient client) {
+  public static CompletionStage<Void> connectFuture(ObservableClient client) {
     return new ConnectFuture(client, true);
   }
 
@@ -50,7 +50,7 @@ public class ConnectFuture
 
   private void check(ObservableClient client) {
     if (awaitedState == client.isConnected()) {
-      if (set(null)) {
+      if (complete(null)) {
         client.unregisterForConnectionChanges(this);
       }
     }

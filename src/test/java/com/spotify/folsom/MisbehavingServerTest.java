@@ -17,7 +17,7 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
-import com.google.common.net.HostAndPort;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -148,7 +148,7 @@ public class MisbehavingServerTest {
   private void testAsciiGet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.get("key").get();
+      client.get("key").toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -156,14 +156,14 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.touch("key", 123).get();
+      client.touch("key", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -171,14 +171,14 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
   private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
     try {
-      client.set("key", "value", 123).get();
+      client.set("key", "value", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -186,18 +186,18 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
   private MemcacheClient<String> setupAscii(String response) throws Exception {
     server = new Server(response);
     MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress(HostAndPort.fromParts("127.0.0.8", server.port))
+            .withAddress("127.0.0.8", server.port)
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
-    ConnectFuture.connectFuture(client).get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
     return client;
   }
 

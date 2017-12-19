@@ -21,20 +21,15 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
 import net.spy.memcached.internal.BulkFuture;
-import net.spy.memcached.internal.BulkGetCompletionListener;
-import net.spy.memcached.internal.BulkGetFuture;
-import net.spy.memcached.internal.OperationCompletionListener;
-import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -50,7 +45,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.spotify.folsom.client.Utils.SAME_THREAD_EXECUTOR;
 import static java.util.concurrent.TimeUnit.DAYS;
 
 public class SimpleMemcacheClientBenchmark {
@@ -65,7 +59,7 @@ public class SimpleMemcacheClientBenchmark {
   public static final int NUM_CLIENT_CONNECTIONS = 3;
 
   public static void main(final String[] args)
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException, IOException, TimeoutException {
     // Set up client
 
     BinaryMemcacheClient<String> client;
@@ -86,11 +80,11 @@ public class SimpleMemcacheClientBenchmark {
     } else {
       client = MemcacheClientBuilder.newStringClient()
               .withMaxOutstandingRequests(100000)
-              .withAddress(HostAndPort.fromParts("127.0.0.1", 11211))
+              .withAddress("127.0.0.1", 11211)
               .withConnections(NUM_CLIENT_CONNECTIONS)
               .withRetry(false)
               .connectBinary();
-      ConnectFuture.connectFuture(client).get();
+      client.awaitConnected(10, TimeUnit.SECONDS);
       System.out.println(client);
     }
     // Set up test data
@@ -98,7 +92,7 @@ public class SimpleMemcacheClientBenchmark {
     final List<List<String>> keys = Lists.newArrayList();
     final List<List<String>> values = Lists.newArrayList();
 
-    final List<ListenableFuture<MemcacheStatus>> futures = Lists.newArrayList();
+    final List<CompletionStage<MemcacheStatus>> futures = Lists.newArrayList();
     for (int i = 0; i < CONCURRENCY; i++) {
       final List<String> keys2 = Lists.newArrayList();
       final List<String> values2 = Lists.newArrayList();
@@ -108,16 +102,14 @@ public class SimpleMemcacheClientBenchmark {
         keys2.add(key);
         values2.add(value);
         if (TEST_SPYMEMCACHED) {
-          final SettableFuture<MemcacheStatus> settable = SettableFuture.create();
+          final CompletableFuture<MemcacheStatus> settable = new CompletableFuture<>();
           spyClient.set(key, Integer.MAX_VALUE, value)
-              .addListener(new OperationCompletionListener() {
-                @Override
-                public void onComplete(final OperationFuture<?> future) throws Exception {
-                  if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
-                    settable.set(null);
-                  } else {
-                    settable.setException(new RuntimeException(future.getStatus().getMessage()));
-                  }
+              .addListener(future -> {
+                if (future.getStatus().getStatusCode() == StatusCode.SUCCESS) {
+                  settable.complete(null);
+                } else {
+                  settable.completeExceptionally(
+                      new RuntimeException(future.getStatus().getMessage()));
                 }
               });
           futures.add(settable);
@@ -128,8 +120,8 @@ public class SimpleMemcacheClientBenchmark {
       keys.add(keys2);
       values.add(values2);
     }
-    for (final ListenableFuture<MemcacheStatus> future : futures) {
-      future.get();
+    for (final CompletionStage<MemcacheStatus> future : futures) {
+      future.toCompletableFuture().get();
     }
 
     // Run benchmark
@@ -165,11 +157,10 @@ public class SimpleMemcacheClientBenchmark {
                                  final List<String> keys, final List<String> expected,
                                  final ProgressMeter meter,
                                  final ScheduledExecutorService backoffExecutor) {
-    final ListenableFuture<List<String>> future = client.get(keys);
+    final CompletionStage<List<String>> future = client.get(keys);
     final long start = System.nanoTime();
-    Futures.addCallback(future, new FutureCallback<List<String>>() {
-      @Override
-      public void onSuccess(final List<String> response) {
+    future.whenComplete((response, throwable) -> {
+      if (throwable == null) {
         final long end = System.nanoTime();
         final long latency = end - start;
         meter.inc(keys.size(), latency);
@@ -177,13 +168,10 @@ public class SimpleMemcacheClientBenchmark {
           throw new AssertionError("expected: " + expected + ", got: " + response);
         }
         sendFolsom(client, keys, expected, meter, backoffExecutor);
-      }
-
-      @Override
-      public void onFailure(final Throwable throwable) {
+      } else {
         System.err.println(throwable.getMessage());
       }
-    }, SAME_THREAD_EXECUTOR);
+    });
   }
 
   private static void sendSpyMemcached(final MemcachedClient client,
@@ -193,22 +181,19 @@ public class SimpleMemcacheClientBenchmark {
                                        final ScheduledExecutorService backoffExecutor) {
     final long start = System.nanoTime();
     final BulkFuture<Map<String, Object>> future = client.asyncGetBulk(keys);
-    future.addListener(new BulkGetCompletionListener() {
-      @Override
-      public void onComplete(final BulkGetFuture<?> getFuture) throws Exception {
-        final OperationStatus status = getFuture.getStatus();
-        if (status.isSuccess()) {
-          final Map<String, String> response = (Map<String, String>) getFuture.get();
-          final long end = System.nanoTime();
-          final long latency = end - start;
-          meter.inc(keys.size(), latency);
-          if (!expectedMap.equals(response)) {
-            throw new AssertionError("expected: " + expectedMap + ", got: " + response);
-          }
-          sendSpyMemcached(client, keys, expectedMap, meter, backoffExecutor);
-        } else {
-          System.err.println("failure!");
+    future.addListener(getFuture -> {
+      final OperationStatus status = getFuture.getStatus();
+      if (status.isSuccess()) {
+        final Map<String, String> response = (Map<String, String>) getFuture.get();
+        final long end = System.nanoTime();
+        final long latency = end - start;
+        meter.inc(keys.size(), latency);
+        if (!expectedMap.equals(response)) {
+          throw new AssertionError("expected: " + expectedMap + ", got: " + response);
         }
+        sendSpyMemcached(client, keys, expectedMap, meter, backoffExecutor);
+      } else {
+        System.err.println("failure!");
       }
     });
   }

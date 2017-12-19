@@ -16,15 +16,14 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Function;
+import com.spotify.futures.CompletableFutures;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.spotify.dns.DnsSrvResolver;
+import java.util.concurrent.CompletionStage;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -58,17 +57,11 @@ public class SrvKetamaIntegrationTest {
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
-            .withSrvResolver(new DnsSrvResolver() {
-              @Override
-              public List<LookupResult> resolve(String s) {
-                return toResult(servers.getAddresses());
-              }
-            })
+            .withSrvResolver(s -> toResult(servers.getPorts()))
             .withSRVShutdownDelay(1000)
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 
@@ -76,50 +69,47 @@ public class SrvKetamaIntegrationTest {
     servers.flush();
   }
 
-  public static List<LookupResult> toResult(List<HostAndPort> addresses) {
-    return Lists.transform(addresses, new Function<HostAndPort, LookupResult>() {
-      @Override
-      public LookupResult apply(HostAndPort input) {
-        return LookupResult.create(input.getHostText(), input.getPort(), 100, 100, 100);
-      }
-    });
+  public static List<LookupResult> toResult(List<Integer> ports) {
+    return ports.stream()
+        .map(port -> LookupResult.create("127.0.0.2", port, 100, 100, 100))
+        .collect(Collectors.toList());
   }
 
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
 
     assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
   @Test
   public void testSetGet() throws Exception {
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    List<CompletionStage<?>> futures = Lists.newArrayList();
     final int numKeys = 1000;
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
+      CompletionStage<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
-    Futures.allAsList(futures).get();
+    CompletableFutures.allAsList(futures).get();
     futures.clear();
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
     }
     for (int i = 0; i < numKeys; i++) {
-      assertEquals("value-" + i, futures.get(i).get());
+      assertEquals("value-" + i, futures.get(i).toCompletableFuture().get());
     }
     futures.clear();
 
@@ -133,24 +123,24 @@ public class SrvKetamaIntegrationTest {
     assertTrue(client.numActiveConnections() == client.numTotalConnections() - 1);
 
     for (int i = 0; i < numKeys; i++) {
-      ListenableFuture<String> future = client.get("key-" + i);
+      CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
 
       // Do this to avoid making the embedded memcached sad
       if (i % 10 == 0) {
-        future.get();
+        future.toCompletableFuture().get();
       }
 
     }
     int misses = 0;
     for (int i = 0; i < numKeys; i++) {
-      misses += futures.get(i).get() == null ? 1 : 0;
+      misses += futures.get(i).toCompletableFuture().get() == null ? 1 : 0;
     }
 
     // About 1/3 should be misses.
     // Due to random ports in the embedded server, this is actually somewhat non-deterministic.
     // This is why we use a large number of keys.
-    double missWithPerfectDistribution = numKeys / servers.getAddresses().size();
+    double missWithPerfectDistribution = numKeys / servers.getPorts().size();
     double diff = Math.abs(misses - missWithPerfectDistribution);
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);

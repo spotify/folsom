@@ -30,6 +30,7 @@ import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.ketama.SrvKetamaClient;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -60,7 +61,7 @@ public class SrvChangeIntegrationTest {
   public void setUp() throws Exception {
     assertEquals(0, Utils.getGlobalConnectionCount());
 
-    fullResults = toResult(servers.getAddresses());
+    fullResults = toResult(servers.getPorts());
     oneMissing = ImmutableList.copyOf(
         fullResults.subList(0, fullResults.size() - 1));
 
@@ -75,7 +76,6 @@ public class SrvChangeIntegrationTest {
         .withMaxOutstandingRequests(10000)
         .withMetrics(NoopMetrics.INSTANCE)
         .withRetry(false)
-        .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
         .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 
@@ -90,14 +90,9 @@ public class SrvChangeIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
 
-    waitUntilSuccess(1000, new Runnable() {
-      @Override
-      public void run() {
-        assertEquals(0, Utils.getGlobalConnectionCount());
-      }
-    });
+    waitUntilSuccess(1000, () -> assertEquals(0, Utils.getGlobalConnectionCount()));
   }
 
   @Test
@@ -105,22 +100,16 @@ public class SrvChangeIntegrationTest {
     for (int i = 0; i < 10; i++) {
       when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(1000, new Runnable() {
-            @Override
-            public void run() {
-              assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections());
-            }
-          }
+      waitUntilSuccess(
+          1000,
+          () -> assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections())
       );
 
       when(dnsSrvResolver.resolve(anyString())).thenReturn(oneMissing);
       srvKetamaClient.updateDNS();
-      waitUntilSuccess(1000, new Runnable() {
-            @Override
-            public void run() {
-              assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections());
-            }
-          }
+      waitUntilSuccess(
+          1000,
+          () -> assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections())
       );
     }
   }

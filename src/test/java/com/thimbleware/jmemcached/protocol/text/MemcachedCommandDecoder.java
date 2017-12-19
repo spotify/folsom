@@ -48,11 +48,9 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
      * Index finder which locates a byte which is neither a {@code CR ('\r')}
      * nor a {@code LF ('\n')}.
      */
-    static ChannelBufferIndexFinder CRLF_OR_WS = new ChannelBufferIndexFinder() {
-        public final boolean find(ChannelBuffer buffer, int guessedIndex) {
-            byte b = buffer.getByte(guessedIndex);
-            return b == ' ' || b == '\r' || b == '\n';
-        }
+    static ChannelBufferIndexFinder CRLF_OR_WS = (buffer, guessedIndex) -> {
+        byte b = buffer.getByte(guessedIndex);
+        return b == ' ' || b == '\r' || b == '\n';
     };
 
     static boolean eol(int pos, ChannelBuffer buffer) {
@@ -65,7 +63,7 @@ public final class MemcachedCommandDecoder extends FrameDecoder {
             ChannelBuffer in = buffer.slice();
 
             // split into pieces
-            List<ChannelBuffer> pieces = new ArrayList<ChannelBuffer>(6);
+            List<ChannelBuffer> pieces = new ArrayList<>(6);
             if (in.readableBytes() < MIN_BYTES_LINE) return null;
             int pos = in.bytesBefore(CRLF_OR_WS);
             boolean eol = false;

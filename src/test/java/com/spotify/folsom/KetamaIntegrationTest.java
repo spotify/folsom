@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import org.junit.After;
@@ -76,12 +75,9 @@ public class KetamaIntegrationTest {
       throws Exception {
     final CountDownLatch done = new CountDownLatch(1);
 
-    client.registerForConnectionChanges(new ConnectionChangeListener() {
-      @Override
-      public void connectionChanged(ObservableClient ignored) {
-        if (client.numActiveConnections() == client.numTotalConnections()) {
-          done.countDown();
-        }
+    client.registerForConnectionChanges(ignored -> {
+      if (client.numActiveConnections() == client.numTotalConnections()) {
+        done.countDown();
       }
     });
 
@@ -105,13 +101,14 @@ public class KetamaIntegrationTest {
       throw new IllegalArgumentException(protocol);
     }
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddresses(servers.getAddresses())
             .withConnections(1)
             .withMaxOutstandingRequests(100)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withReplyExecutor(Utils.SAME_THREAD_EXECUTOR)
             .withRequestTimeoutMillis(10 * 1000);
+    for (Integer port : servers.ports) {
+      builder.withAddress("127.0.0.2", port);
+    }
 
     if (ascii) {
       client = builder.connectAscii();
@@ -126,7 +123,7 @@ public class KetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
@@ -143,24 +140,24 @@ public class KetamaIntegrationTest {
 
   @Test
   public void testSetGet() throws Exception {
-    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
-    assertEquals(VALUE1, client.get(KEY1).get());
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testLargeSet() throws Exception {
     String value = Collections.nCopies(10000, "Hello world ").toString();
-    client.set(KEY1, value, TTL).get();
-    assertEquals(value, client.get(KEY1).get());
+    client.set(KEY1, value, TTL).toCompletableFuture().get();
+    assertEquals(value, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testAppend() throws Exception {
-    client.set(KEY1, VALUE1, TTL).get();
-    client.append(KEY1, VALUE2).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.append(KEY1, VALUE2).toCompletableFuture().get();
 
-    assertEquals(VALUE1 + VALUE2, client.get(KEY1).get());
+    assertEquals(VALUE1 + VALUE2, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
@@ -175,40 +172,42 @@ public class KetamaIntegrationTest {
 
   @Test
   public void testPrepend() throws Exception {
-    client.set(KEY1, VALUE1, TTL).get();
-    client.prepend(KEY1, VALUE2).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.prepend(KEY1, VALUE2).toCompletableFuture().get();
 
-    assertEquals(VALUE2 + VALUE1, client.get(KEY1).get());
+    assertEquals(VALUE2 + VALUE1, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testAddGet() throws Exception {
-    client.add(KEY1, VALUE1, TTL).get();
+    client.add(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
-    assertEquals(VALUE1, client.get(KEY1).get());
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testAddKeyExists() throws Throwable {
-    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     IntegrationTest.checkStatus(client.add(KEY1, VALUE1, TTL), MemcacheStatus.ITEM_NOT_STORED);
   }
 
   @Test
   public void testReplaceGet() throws Exception {
-    client.set(KEY1, VALUE1, TTL).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
-    client.replace(KEY1, VALUE2, TTL).get();
+    client.replace(KEY1, VALUE2, TTL).toCompletableFuture().get();
 
-    assertEquals(VALUE2, client.get(KEY1).get());
+    assertEquals(VALUE2, client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testMultiGetAllKeysExistsIterable() throws Throwable {
-    client.set(KEY1, VALUE1, TTL).get();
-    client.set(KEY2, VALUE2, TTL).get();
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
-    assertEquals(asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).get());
+    assertEquals(
+        asList(VALUE1, VALUE2),
+        client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test
@@ -219,10 +218,10 @@ public class KetamaIntegrationTest {
   @Test
   public void testMultiget() throws Exception {
     for (int i = 0; i < 100; i++) {
-      client.set("key-" + i, "value-" + i, 0).get();
+      client.set("key-" + i, "value-" + i, 0).toCompletableFuture().get();
     }
     for (int i = 0; i < 100; i++) {
-      assertEquals("value-" + i, client.get("key-" + i).get());
+      assertEquals("value-" + i, client.get("key-" + i).toCompletableFuture().get());
     }
     int listSize = 10;
     for (int i = 0; i <= 100 - listSize; i++) {
@@ -232,7 +231,7 @@ public class KetamaIntegrationTest {
         keys.add("key-" + (i + j));
         expectedValues.add("value-" + (i + j));
       }
-      assertEquals(expectedValues, client.get(keys).get());
+      assertEquals(expectedValues, client.get(keys).toCompletableFuture().get());
     }
     for (EmbeddedServer daemon : servers.daemons) {
       assertTrue(daemon.getCache().getCurrentItems() > 10);
@@ -241,15 +240,15 @@ public class KetamaIntegrationTest {
 
   public static class Servers {
     private final List<EmbeddedServer> daemons;
-    private final List<HostAndPort> addresses;
+    private final List<Integer> ports;
 
     public Servers(int instances, boolean binary) {
       daemons = Lists.newArrayList();
-      addresses = Lists.newArrayList();
+      ports = Lists.newArrayList();
       for (int i = 0; i < instances; i++) {
         EmbeddedServer daemon = new EmbeddedServer(binary);
         daemons.add(daemon);
-        addresses.add(HostAndPort.fromParts("127.0.0.2", daemon.getPort()));
+        ports.add(daemon.getPort());
       }
     }
 
@@ -259,8 +258,8 @@ public class KetamaIntegrationTest {
       }
     }
 
-    public List<HostAndPort> getAddresses() {
-      return addresses;
+    public List<Integer> getPorts() {
+      return ports;
     }
 
     public void flush() {

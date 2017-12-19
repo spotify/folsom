@@ -60,16 +60,14 @@ public class ProgressMeter {
 
   public ProgressMeter(final String unit) {
     this.unit = unit;
-    worker = new Thread(new Runnable() {
-      public void run() {
-        while (run) {
-          try {
-            Thread.sleep(interval);
-          } catch (InterruptedException e) {
-            continue;
-          }
-          progress();
+    worker = new Thread(() -> {
+      while (run) {
+        try {
+          Thread.sleep(interval);
+        } catch (InterruptedException e) {
+          continue;
         }
+        progress();
       }
     });
     worker.start();

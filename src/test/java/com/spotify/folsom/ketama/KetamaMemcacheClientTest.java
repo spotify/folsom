@@ -18,7 +18,7 @@ package com.spotify.folsom.ketama;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.net.HostAndPort;
+import com.spotify.folsom.guava.HostAndPort;
 
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;
@@ -72,7 +72,7 @@ public class KetamaMemcacheClientTest {
       final MemcacheClient<String> memcacheClient = buildClient(client, binary);
 
       for (int j = 0; j < keysFound; j++) {
-        memcacheClient.set("key-" + j, "value-" + j + "-" + i, 1000).get();
+        memcacheClient.set("key-" + j, "value-" + j + "-" + i, 1000).toCompletableFuture().get();
       }
     }
 
@@ -83,7 +83,7 @@ public class KetamaMemcacheClientTest {
     for (int i = 0; i < requestSize; i++) {
       requestedKeys.add("key-" + random.nextInt(keysFound * 2));
     }
-    final List<String> values = memcacheClient.get(requestedKeys).get();
+    final List<String> values = memcacheClient.get(requestedKeys).toCompletableFuture().get();
     assertEquals(requestSize, values.size());
 
     for (int i = 0; i < requestSize; i++) {

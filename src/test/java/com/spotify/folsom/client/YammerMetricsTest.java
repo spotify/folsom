@@ -17,13 +17,13 @@ package com.spotify.folsom.client;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.AsciiMemcacheClient;
-import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import com.yammer.metrics.core.Metered;
 import com.yammer.metrics.core.MetricsRegistry;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,7 +47,7 @@ public class YammerMetricsTest {
         metrics,
         StringTranscoder.UTF8_INSTANCE,
         Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
-    ConnectFuture.connectFuture(client).get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -58,7 +58,7 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getGetFailures().count());
     assertEquals(0, metrics.getGetSuccesses().count());
 
-    assertNull(client.get("key-miss").get());
+    assertNull(client.get("key-miss").toCompletableFuture().get());
 
     awaitCount(1, metrics.getGets());
     assertEquals(0, metrics.getGetHits().count());
@@ -75,8 +75,10 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getGetFailures().count());
     assertEquals(0, metrics.getGetSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).get());
-    assertEquals("value", client.get("key").get());
+    assertEquals(
+        MemcacheStatus.OK,
+        client.set("key", "value", 0).toCompletableFuture().get());
+    assertEquals("value", client.get("key").toCompletableFuture().get());
 
     awaitCount(1, metrics.getGets());
     assertEquals(1, metrics.getGetHits().count());
@@ -93,8 +95,10 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getMultigetFailures().count());
     assertEquals(0, metrics.getMultigetSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).get());
-    assertEquals(Arrays.asList("value", null), client.get(Arrays.asList("key", "key-miss")).get());
+    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).toCompletableFuture().get());
+    assertEquals(
+        Arrays.asList("value", null),
+        client.get(Arrays.asList("key", "key-miss")).toCompletableFuture().get());
 
     awaitCount(1, metrics.getMultigets());
     assertEquals(1, metrics.getGetHits().count());
@@ -109,7 +113,7 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getSetFailures().count());
     assertEquals(0, metrics.getSetSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).get());
+    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).toCompletableFuture().get());
 
     awaitCount(1, metrics.getSets());
     assertEquals(0, metrics.getSetFailures().count());
@@ -118,13 +122,13 @@ public class YammerMetricsTest {
 
   @Test
   public void testIncrDecr() throws Exception {
-    assertEquals(MemcacheStatus.OK, client.set("key", "0", 0).get());
+    assertEquals(MemcacheStatus.OK, client.set("key", "0", 0).toCompletableFuture().get());
 
     assertEquals(0, metrics.getIncrDecrs().count());
     assertEquals(0, metrics.getIncrDecrFailures().count());
     assertEquals(0, metrics.getIncrDecrSuccesses().count());
 
-    assertEquals(Long.valueOf(1L), client.incr("key", 1).get());
+    assertEquals(Long.valueOf(1L), client.incr("key", 1).toCompletableFuture().get());
 
     awaitCount(1, metrics.getIncrDecrs());
     assertEquals(0, metrics.getIncrDecrFailures().count());
@@ -133,13 +137,13 @@ public class YammerMetricsTest {
 
   @Test
   public void testTouch() throws Exception {
-    assertEquals(MemcacheStatus.OK, client.set("key", "0", 0).get());
+    assertEquals(MemcacheStatus.OK, client.set("key", "0", 0).toCompletableFuture().get());
 
     assertEquals(0, metrics.getTouches().count());
     assertEquals(0, metrics.getTouchFailures().count());
     assertEquals(0, metrics.getTouchSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.touch("key", 1).get());
+    assertEquals(MemcacheStatus.OK, client.touch("key", 1).toCompletableFuture().get());
 
     awaitCount(1, metrics.getTouches());
     assertEquals(0, metrics.getTouchFailures().count());
@@ -152,7 +156,7 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getDeleteFailures().count());
     assertEquals(0, metrics.getDeleteSuccesses().count());
 
-    assertEquals(MemcacheStatus.OK, client.delete("key").get());
+    assertEquals(MemcacheStatus.OK, client.delete("key").toCompletableFuture().get());
 
     awaitCount(1, metrics.getDeletes());
     assertEquals(0, metrics.getDeleteFailures().count());

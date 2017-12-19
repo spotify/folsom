@@ -1,3 +1,11 @@
+### 1.0.0
+Non backwards-compatible change
+* Requires Java 8
+* API now uses CompletionStage instead of ListenableFuture - be careful about exception handling as things may come wrapped in
+CompletionException now!
+* Remove HostAndPort from API and inline internal usage to avoid Guava version conflicts
+* Add utility methods for waiting for connects and disconnects.
+
 ### 0.8.1
 * Added withMaxKeyLength which can be used if the memcache server has different key length restrictions
 

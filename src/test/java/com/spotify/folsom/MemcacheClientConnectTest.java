@@ -16,9 +16,8 @@
 
 package com.spotify.folsom;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.Futures;
-
+import com.spotify.folsom.client.Utils;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class MemcacheClientConnectTest {
@@ -26,26 +25,30 @@ public class MemcacheClientConnectTest {
   @Test(expected = MemcacheClosedException.class)
   public void testConnectFails() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("dummy.dummy", 56742))
+        .withAddress("dummy.dummy", 56742)
         .connectBinary();
     try {
-      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+      client.get("foo").toCompletableFuture().get();
+    } catch (Exception e) {
+      throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
   @Test(expected = MemcacheClosedException.class)
   public void testConnectPort() throws Throwable {
     final BinaryMemcacheClient<byte[]> client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(HostAndPort.fromParts("127.0.0.1", 56742))
+        .withAddress("127.0.0.1", 56742)
         .connectBinary();
     try {
-      Futures.getChecked(client.get("foo"), MemcacheClosedException.class);
+      client.get("foo").toCompletableFuture().get();
+    } catch (Exception e) {
+      throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 }
