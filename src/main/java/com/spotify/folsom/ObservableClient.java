@@ -17,6 +17,11 @@
 
 package com.spotify.folsom;
 
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
  * Implementations of this interface has a notion of connectedness to a remote
  * and the ability to notify listeners of connection state changes.
@@ -44,4 +49,28 @@ public interface ObservableClient {
    * @return true if the client is connected
    */
   boolean isConnected();
+
+  default CompletionStage<Void> connectFuture() {
+    return ConnectFuture.connectFuture(this);
+  }
+
+  default CompletionStage<Void> disconnectFuture() {
+    return ConnectFuture.disconnectFuture(this);
+  }
+
+  default void awaitConnected(final long waitTime, final TimeUnit unit) throws TimeoutException {
+    try {
+      connectFuture().toCompletableFuture().get(waitTime, unit);
+    } catch (final InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  default void awaitDisconnected(final long waitTime, final TimeUnit unit) throws TimeoutException {
+    try {
+      disconnectFuture().toCompletableFuture().get(waitTime, unit);
+    } catch (final InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

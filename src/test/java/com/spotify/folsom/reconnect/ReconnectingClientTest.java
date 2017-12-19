@@ -22,7 +22,6 @@ import java.util.concurrent.CompletionStage;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
-import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.client.Request;
 
@@ -147,7 +146,7 @@ public class ReconnectingClientTest {
 
     assertTrue(client.isConnected());
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertFalse(client.isConnected());
   }
 

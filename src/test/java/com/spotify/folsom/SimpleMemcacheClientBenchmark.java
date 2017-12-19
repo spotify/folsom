@@ -24,6 +24,8 @@ import com.google.common.collect.Maps;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
@@ -57,7 +59,7 @@ public class SimpleMemcacheClientBenchmark {
   public static final int NUM_CLIENT_CONNECTIONS = 3;
 
   public static void main(final String[] args)
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException, IOException, TimeoutException {
     // Set up client
 
     BinaryMemcacheClient<String> client;
@@ -82,7 +84,7 @@ public class SimpleMemcacheClientBenchmark {
               .withConnections(NUM_CLIENT_CONNECTIONS)
               .withRetry(false)
               .connectBinary();
-      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      client.awaitConnected(10, TimeUnit.SECONDS);
       System.out.println(client);
     }
     // Set up test data

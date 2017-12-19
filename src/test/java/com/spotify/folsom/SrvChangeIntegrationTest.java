@@ -30,6 +30,7 @@ import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.ketama.SrvKetamaClient;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -89,7 +90,7 @@ public class SrvChangeIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
 
     waitUntilSuccess(1000, () -> assertEquals(0, Utils.getGlobalConnectionCount()));
   }

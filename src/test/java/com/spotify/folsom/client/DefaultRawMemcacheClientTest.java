@@ -22,7 +22,6 @@ import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
@@ -145,7 +144,7 @@ public class DefaultRawMemcacheClientTest {
       assertEquals(stuck + " out of " + total + " requests got stuck:\n" + sb.toString(), 0, stuck);
     } finally {
       asciiClient.shutdown();
-      ConnectFuture.disconnectFuture(asciiClient).toCompletableFuture().get();
+      asciiClient.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -172,7 +171,7 @@ public class DefaultRawMemcacheClientTest {
   }
 
   @Test
-  public void testRequestTimeout() throws IOException, ExecutionException, InterruptedException {
+  public void testRequestTimeout() throws Exception {
     final ServerSocket server = new ServerSocket();
     server.bind(null);
 
@@ -189,7 +188,7 @@ public class DefaultRawMemcacheClientTest {
     } catch (ExecutionException e) {
       assertTrue(unwrap(e) instanceof MemcacheClosedException);
       rawClient.shutdown();
-      ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+      rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -221,7 +220,7 @@ public class DefaultRawMemcacheClientTest {
       rawClient.send(request).toCompletableFuture().get();
     } finally {
       rawClient.shutdown();
-      ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+      rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -253,12 +252,12 @@ public class DefaultRawMemcacheClientTest {
       rawClient.send(request).toCompletableFuture().get();
     } finally {
       rawClient.shutdown();
-      ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+      rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
   @Test
-  public void testShutdown() throws IOException, ExecutionException, InterruptedException {
+  public void testShutdown() throws Exception {
     final ServerSocket server = new ServerSocket();
     server.bind(null);
 
@@ -268,7 +267,7 @@ public class DefaultRawMemcacheClientTest {
         .toCompletableFuture().get();
 
     rawClient.shutdown();
-    ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+    rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     assertFalse(rawClient.isConnected());
   }
 
@@ -283,7 +282,7 @@ public class DefaultRawMemcacheClientTest {
         .toCompletableFuture().get();
 
     rawClient.shutdown();
-    ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+    rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     assertFalse(rawClient.isConnected());
 
     // Try to fill up the outstanding request limit
@@ -315,7 +314,7 @@ public class DefaultRawMemcacheClientTest {
         .toCompletableFuture().get();
 
     rawClient.shutdown();
-    ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+    rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     assertFalse(rawClient.isConnected());
 
     try {
@@ -363,7 +362,7 @@ public class DefaultRawMemcacheClientTest {
         assertEquals(0, metrics.getGauge().getOutstandingRequests());
       } finally {
         rawClient.shutdown();
-        ConnectFuture.disconnectFuture(rawClient).toCompletableFuture().get();
+        rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
       }
     }
   }

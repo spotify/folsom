@@ -25,6 +25,7 @@ import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -151,7 +152,7 @@ public class IntegrationTest {
       asciiClient = null;
       client = binaryClient;
     }
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
     System.out.printf("Using client: %s protocol: %s and port: %d\n", client, protocol, port);
     cleanup();
   }
@@ -166,7 +167,7 @@ public class IntegrationTest {
   public void tearDown() throws Exception {
     cleanup();
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
 
     assertEquals(0, Utils.getGlobalConnectionCount());
   }

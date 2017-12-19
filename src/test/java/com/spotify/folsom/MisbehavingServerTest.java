@@ -17,6 +17,7 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -155,7 +156,7 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -170,7 +171,7 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -185,7 +186,7 @@ public class MisbehavingServerTest {
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -196,7 +197,7 @@ public class MisbehavingServerTest {
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
     return client;
   }
 

@@ -22,7 +22,6 @@ import java.util.concurrent.CompletionStage;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
-import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
@@ -182,8 +181,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       pendingClient = newPending;
     }
 
-    CompletionStage<Void> future = ConnectFuture.connectFuture(newPending);
-    future.thenRun(() -> {
+    newPending.connectFuture().thenRun(() -> {
       final RawMemcacheClient oldClient;
       synchronized (sync) {
         if (newPending != pendingClient) {

@@ -18,6 +18,7 @@ package com.spotify.folsom;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,11 +50,11 @@ public class MemcacheClientBuilderTest {
             .withAddress("127.0.0.6", server.getPort())
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      client.awaitConnected(10, TimeUnit.SECONDS);
       assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -64,11 +65,11 @@ public class MemcacheClientBuilderTest {
             .withAddress("127.0.0.7", server.getPort())
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      client.awaitConnected(10, TimeUnit.SECONDS);
       assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -79,11 +80,11 @@ public class MemcacheClientBuilderTest {
             .withAddress("127.0.0.3", server.getPort())
             .connectAscii();
     try {
-      ConnectFuture.connectFuture(client).toCompletableFuture().get();
+      client.awaitConnected(10, TimeUnit.SECONDS);
       client.get("Key").toCompletableFuture().get();
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -93,7 +94,7 @@ public class MemcacheClientBuilderTest {
             .withAddress("127.0.0.5", server.getPort())
             .withMaxOutstandingRequests(100)
             .connectAscii();
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
       List<CompletionStage<String>> futures = Lists.newArrayList();
@@ -110,7 +111,7 @@ public class MemcacheClientBuilderTest {
       fail("No MemcacheOverloadedException was triggered");
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -120,7 +121,7 @@ public class MemcacheClientBuilderTest {
             .withAddress("127.0.0.4", server.getPort())
             .withMaxSetLength(1)
             .connectAscii();
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
       assertEquals(
@@ -129,7 +130,7 @@ public class MemcacheClientBuilderTest {
       assertEquals(null, client.get("key").toCompletableFuture().get());
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 

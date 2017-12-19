@@ -20,7 +20,6 @@ import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
-import com.spotify.folsom.ConnectFuture;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
@@ -128,8 +127,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
           }
 
           notifyConnectionChange();
-          final CompletionStage<Void> discFuture = ConnectFuture.disconnectFuture(newClient);
-          discFuture.thenRun(() -> {
+          newClient.disconnectFuture().thenRun(() -> {
             log.info("Lost connection to {}", address);
             notifyConnectionChange();
             if (stayConnected) {

@@ -17,6 +17,7 @@
 package com.spotify.folsom;
 
 import com.spotify.folsom.client.Utils;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class MemcacheClientConnectTest {
@@ -32,7 +33,7 @@ public class MemcacheClientConnectTest {
       throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
@@ -47,7 +48,7 @@ public class MemcacheClientConnectTest {
       throw Utils.unwrap(e);
     } finally {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 }

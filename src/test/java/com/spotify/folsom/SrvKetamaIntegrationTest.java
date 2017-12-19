@@ -22,6 +22,7 @@ import java.util.concurrent.CompletionStage;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -77,7 +78,7 @@ public class SrvKetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
 
     assertEquals(0, Utils.getGlobalConnectionCount());
   }

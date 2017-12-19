@@ -123,7 +123,7 @@ public class KetamaIntegrationTest {
   @After
   public void tearDown() throws Exception {
     client.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(0, Utils.getGlobalConnectionCount());
   }
 

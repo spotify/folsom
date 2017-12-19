@@ -27,6 +27,7 @@ import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
 
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,14 +76,14 @@ public class RecoveryTest {
         .withRequestTimeoutMillis(TIMEOUT_MILLIS);
 
     client = builder.connectBinary();
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
   @After
   public void tearDown() throws Exception {
     if (client != null) {
       client.shutdown();
-      ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
     if (server != null) {
       server.stop();
@@ -127,7 +128,7 @@ public class RecoveryTest {
     assertThat(timeout, is(MAX_OUTSTANDING_REQUESTS));
 
     // Wait for the client to reconnect
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
 
     // Have memcached reply to all GET requests
     answer.set(elements("foo", "bar"));

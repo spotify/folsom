@@ -24,6 +24,8 @@ import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.Utils;
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -65,7 +67,7 @@ public class MemcacheClientStressTest {
     client = MemcacheClientBuilder.newByteArrayClient()
         .withAddress("127.0.0.1", daemon.getPort())
         .connectAscii();
-    ConnectFuture.connectFuture(client).toCompletableFuture().get();
+    client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
   public static void main(final String[] args) throws Exception {
@@ -137,11 +139,11 @@ public class MemcacheClientStressTest {
   }
 
   @After
-  public void tearDown() throws ExecutionException, InterruptedException {
+  public void tearDown() throws ExecutionException, InterruptedException, TimeoutException {
     client.shutdown();
     daemon.stop();
     workerExecutor.shutdown();
-    ConnectFuture.disconnectFuture(client).toCompletableFuture().get();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(0, Utils.getGlobalConnectionCount());
   }
 
