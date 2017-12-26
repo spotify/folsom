@@ -96,7 +96,7 @@ If you are still on Java 7, you can depend on the older version:
   (ketama, reconnecting, retry, roundrobin)
 * Efficiency - We want to support a high traffic throughput without using too much CPU or memory resources.
 * Asynchronous - We fully support the idea of writing asynchronous code instead of blocking threads, and this is
-  achieved through Guava futures.
+  achieved through Java 8 futures.
 * Low amount of synchronization - Code that uses a lot of synchronization primitives is more likely to have
   race condition bugs and deadlocks. We try to isolate that as much as possible to minimize the risk,
   and most of the code base doesn't have to care.
