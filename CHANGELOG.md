@@ -1,3 +1,8 @@
+### 1.1.0
+Add `folsom-semantic-metrics` module containing a [semantic-metrics][]-based implementation of Folsom's `Metrics`.
+
+[semantic-metrics]: https://github.com/spotify/semantic-metrics
+
 ### 1.0.0
 Non backwards-compatible change
 * Requires Java 8
