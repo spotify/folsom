@@ -19,8 +19,6 @@ package com.spotify.folsom.client;
 import com.google.common.collect.Queues;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
@@ -32,20 +30,6 @@ import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.Queue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -58,6 +42,26 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DecoderException;
@@ -69,18 +73,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
-  private static final DefaultThreadFactory DAEMON_THREAD_FACTORY =
-      new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
-  private static final EventLoopGroup EVENT_LOOP_GROUP =
-      new NioEventLoopGroup(0, DAEMON_THREAD_FACTORY);
-
   private static final AtomicInteger GLOBAL_CONNECTION_COUNT = new AtomicInteger();
 
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
 
   private final AtomicInteger pendingCounter = new AtomicInteger();
   private final int outstandingRequestLimit;
-
 
   private final Channel channel;
   private final BatchFlusher flusher;
@@ -105,7 +103,9 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
           final long timeoutMillis,
           final Charset charset,
           final Metrics metrics,
-          final int maxSetLength) {
+          final int maxSetLength,
+          final EventLoopGroup eventLoopGroup,
+          final Class<? extends Channel> channelClass) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -114,7 +114,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       decoder = new AsciiMemcacheDecoder(charset);
     }
 
-    final ChannelHandler initializer = new ChannelInitializer<Channel>() {
+    final ChannelHandler initializer = new ChannelInitializer() {
       @Override
       protected void initChannel(final Channel ch) throws Exception {
         ch.pipeline().addLast(
@@ -129,10 +129,14 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     final CompletableFuture<RawMemcacheClient> clientFuture = new CompletableFuture<>();
 
+    EventLoopGroup effectiveELG = eventLoopGroup != null ? eventLoopGroup : defaultEventLoopGroup();
+    Class<? extends Channel> effectiveChannelClass = channelClass != null ? channelClass :
+            defaultChannelClass(effectiveELG);
+
     final Bootstrap bootstrap = new Bootstrap()
-        .group(EVENT_LOOP_GROUP)
+        .group(effectiveELG)
         .handler(initializer)
-        .channel(NioSocketChannel.class)
+        .channel(effectiveChannelClass)
         .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, SimpleSizeEstimator.INSTANCE);
 
     final ChannelFuture connectFuture = bootstrap.connect(
@@ -159,6 +163,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return onExecutor(clientFuture, executor);
   }
 
+  private static EventLoopGroup defaultEventLoopGroup() {
+    ThreadFactory factory = new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
+    return Epoll.isAvailable() ? new EpollEventLoopGroup(0, factory) :
+            new NioEventLoopGroup(0, factory);
+  }
+
+  private static Class<? extends Channel> defaultChannelClass(EventLoopGroup elg) {
+    return elg instanceof EpollEventLoopGroup ? EpollSocketChannel.class : NioSocketChannel.class;
+  }
 
   private DefaultRawMemcacheClient(final HostAndPort address,
                                    final Channel channel,
@@ -181,6 +194,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <T> CompletionStage<T> send(final Request<T> request) {
     if (!tryIncrementPending()) {
 

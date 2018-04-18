@@ -24,7 +24,7 @@ public class ExponentialBackoffTest {
   public static final double EPSILON = 0.001;
 
   @Test
-  public void testSimple() throws Exception {
+  public void testSimple() {
     int minTime = 10;
     int maxTime = 1000;
     double factor = 2.0;

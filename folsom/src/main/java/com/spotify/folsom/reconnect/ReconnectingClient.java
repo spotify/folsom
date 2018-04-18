@@ -25,6 +25,8 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
+import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +64,13 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final long timeoutMillis,
                             final Charset charset,
                             final Metrics metrics,
-                            final int maxSetLength) {
+                            final int maxSetLength,
+                            final EventLoopGroup eventLoopGroup,
+                            final Class<? extends Channel> channelClass) {
     this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
             address, outstandingRequestLimit,
-            binary, executor, timeoutMillis, charset, metrics, maxSetLength), address);
+            binary, executor, timeoutMillis, charset,
+            metrics, maxSetLength, eventLoopGroup, channelClass), address);
   }
 
   ReconnectingClient(final BackoffFunction backoffFunction,

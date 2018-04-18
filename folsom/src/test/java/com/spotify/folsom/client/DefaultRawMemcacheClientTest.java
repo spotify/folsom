@@ -95,7 +95,9 @@ public class DefaultRawMemcacheClientTest {
         null,
         3000,
         Charsets.UTF_8,
-        new NoopMetrics(), 1024 * 1024
+        new NoopMetrics(), 1024 * 1024,
+        null,
+        null
     ).toCompletableFuture().get();
 
     DefaultAsciiMemcacheClient<String> asciiClient =
@@ -177,7 +179,8 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024)
+        address, 5000, false, null, 1000,
+            Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
         .toCompletableFuture().get();
 
     final CompletionStage<?> future = rawClient.send(
@@ -204,7 +207,7 @@ public class DefaultRawMemcacheClientTest {
     final HostAndPort address = HostAndPort.fromParts("127.0.0.10", binaryServer.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
-        new NoopMetrics(), maxSetLength).toCompletableFuture().get();
+        new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();
 
     try {
       byte[] key = "foo".getBytes(Charsets.UTF_8);
@@ -237,7 +240,7 @@ public class DefaultRawMemcacheClientTest {
     final HostAndPort address = HostAndPort.fromParts("127.0.0.9", asciiServer.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
-        new NoopMetrics(), maxSetLength).toCompletableFuture().get();
+        new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();
 
     try {
       final GetRequest request =
@@ -263,7 +266,8 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024)
+        address, 5000, false, null, 1000,
+            Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
         .toCompletableFuture().get();
 
     rawClient.shutdown();
@@ -278,7 +282,7 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024)
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
         .toCompletableFuture().get();
 
     rawClient.shutdown();
@@ -310,7 +314,7 @@ public class DefaultRawMemcacheClientTest {
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024)
+        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
         .toCompletableFuture().get();
 
     rawClient.shutdown();
@@ -343,7 +347,9 @@ public class DefaultRawMemcacheClientTest {
           3000,
           charset,
           metrics,
-          1024 * 1024
+          1024 * 1024,
+          null,
+          null
       ).toCompletableFuture().get();
 
       try {
