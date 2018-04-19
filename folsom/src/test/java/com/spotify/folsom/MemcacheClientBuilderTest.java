@@ -152,9 +152,7 @@ public class MemcacheClientBuilderTest {
     client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
-      assertEquals(MemcacheStatus.OK, client.set("key", "value", 100).toCompletableFuture().get());
-
-      CompletableFuture<Boolean> isInELG = client.get("key").toCompletableFuture()
+      CompletableFuture<Boolean> isInELG = client.set("key", "value", 100).toCompletableFuture()
               .thenApply(r ->
                 Thread.currentThread().getName().startsWith("defaultRawMemcacheClient")
               );
@@ -179,9 +177,7 @@ public class MemcacheClientBuilderTest {
     client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
-      assertEquals(MemcacheStatus.OK, client.set("key", "value", 100).toCompletableFuture().get());
-
-      CompletableFuture<Boolean> isInELG = client.get("key").toCompletableFuture()
+      CompletableFuture<Boolean> isInELG = client.set("key", "value", 100).toCompletableFuture()
               .thenApply(r ->
                       Thread.currentThread().getName().startsWith("provided_elg")
               );
