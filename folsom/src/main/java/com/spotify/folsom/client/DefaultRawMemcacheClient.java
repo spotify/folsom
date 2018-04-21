@@ -119,7 +119,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       decoder = new AsciiMemcacheDecoder(charset);
     }
 
-    final ChannelHandler initializer = new ChannelInitializer() {
+    final ChannelHandler initializer = new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(final Channel ch) throws Exception {
         ch.pipeline().addLast(
