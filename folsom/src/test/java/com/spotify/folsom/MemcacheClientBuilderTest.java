@@ -170,7 +170,7 @@ public class MemcacheClientBuilderTest {
     EventLoopGroup elg = new NioEventLoopGroup(0, factory);
 
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.1", server.getPort())
+            .withAddress("127.0.0.2", server.getPort())
             .withReplyExecutor(null)
             .withEventLoopGroup(elg)
             .connectAscii();
