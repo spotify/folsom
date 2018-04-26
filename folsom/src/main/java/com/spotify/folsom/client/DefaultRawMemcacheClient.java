@@ -59,7 +59,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -87,12 +87,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final long timeoutMillis;
   private final int maxSetLength;
 
-  private static final
-    AtomicReferenceFieldUpdater<DefaultRawMemcacheClient, String> DISCONNECT_REASON_UPDATER =
-          AtomicReferenceFieldUpdater.newUpdater(DefaultRawMemcacheClient.class,
-                  String.class, "disconnectReason");
-
-  private volatile String disconnectReason;
+  private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
 
   /**
    * Used to set the opaque field for binary requests, to be able to detect messages out of order.
@@ -191,8 +186,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.flusher = new BatchFlusher(channel);
     this.outstandingRequestLimit = outstandingRequestLimit;
 
-    DISCONNECT_REASON_UPDATER.set(this, null);
-
     GLOBAL_CONNECTION_COUNT.incrementAndGet();
 
     metrics.registerOutstandingRequestsGauge(pendingCounter::get);
@@ -207,7 +200,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
       // Do the disconnect check in here instead of outside
       // to get better performance in the happy case.
-      String disconnectReason = DISCONNECT_REASON_UPDATER.get(this);
+      String disconnectReason = this.disconnectReason.get();
       if (disconnectReason != null) {
         MemcacheClosedException exception = new MemcacheClosedException(disconnectReason);
         return onExecutor(CompletableFutures.exceptionallyCompletedFuture(exception));
@@ -265,7 +258,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   @Override
   public boolean isConnected() {
-    return DISCONNECT_REASON_UPDATER.get(this) == null;
+    return disconnectReason.get() == null;
   }
 
   @Override
@@ -329,8 +322,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         if (request == null) {
           break;
         }
-        request.fail(new MemcacheClosedException(
-                DISCONNECT_REASON_UPDATER.get(DefaultRawMemcacheClient.this)));
+        request.fail(new MemcacheClosedException(disconnectReason.get()));
       }
     }
 
@@ -346,8 +338,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
         DefaultRawMemcacheClient.this.setDisconnected(exception);
-        request.fail(new MemcacheClosedException(
-                DISCONNECT_REASON_UPDATER.get(DefaultRawMemcacheClient.this)));
+        request.fail(new MemcacheClosedException(disconnectReason.get()));
         ctx.channel().close();
       }
     }
@@ -416,8 +407,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     private void fail(Throwable cause) {
       setDisconnected(cause);
-      request.fail(new MemcacheClosedException(
-              DISCONNECT_REASON_UPDATER.get(DefaultRawMemcacheClient.this)));
+      request.fail(new MemcacheClosedException(disconnectReason.get()));
     }
   }
 
@@ -430,7 +420,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   private void setDisconnected(String message) {
-    if (DISCONNECT_REASON_UPDATER.compareAndSet(this, null, message)) {
+    if (disconnectReason.compareAndSet(null, message)) {
 
       // Use the pending counter as a way of marking disconnected for performance reasons
       // Once we are disconnected we will not really decrease this value any more anyway.
