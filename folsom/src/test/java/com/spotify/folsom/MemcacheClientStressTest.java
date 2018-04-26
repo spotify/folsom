@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -139,7 +138,7 @@ public class MemcacheClientStressTest {
   }
 
   @After
-  public void tearDown() throws ExecutionException, InterruptedException, TimeoutException {
+  public void tearDown() throws InterruptedException, TimeoutException {
     client.shutdown();
     daemon.stop();
     workerExecutor.shutdown();

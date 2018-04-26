@@ -17,8 +17,15 @@ package com.spotify.folsom;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +34,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
@@ -51,7 +60,7 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
-      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
+      assertNull(client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
@@ -66,7 +75,7 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
-      assertEquals(null, client.get("Räksmörgås").toCompletableFuture().get());
+      assertNull(client.get("Räksmörgås").toCompletableFuture().get());
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
@@ -127,7 +136,53 @@ public class MemcacheClientBuilderTest {
       assertEquals(
           MemcacheStatus.VALUE_TOO_LARGE,
           client.set("key", "value", 100).toCompletableFuture().get());
-      assertEquals(null, client.get("key").toCompletableFuture().get());
+      assertNull(client.get("key").toCompletableFuture().get());
+    } finally {
+      client.shutdown();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void testShouldExecuteInEventLoopGroup() throws Exception {
+    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+            .withAddress("127.0.0.1", server.getPort())
+            .withReplyExecutor(null)
+            .connectAscii();
+    client.awaitConnected(10, TimeUnit.SECONDS);
+
+    try {
+      CompletableFuture<Boolean> isInELG = client.set("key", "value", 100).toCompletableFuture()
+              .thenApply(r ->
+                Thread.currentThread().getName().startsWith("defaultRawMemcacheClient")
+              );
+
+      assertTrue(isInELG.get());
+    } finally {
+      client.shutdown();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void testShouldExecuteInProvidedEventLoopGroup() throws Exception {
+    ThreadFactory factory = new DefaultThreadFactory("provided_elg", true);
+    EventLoopGroup elg = new NioEventLoopGroup(0, factory);
+
+    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+            .withAddress("127.0.0.2", server.getPort())
+            .withReplyExecutor(null)
+            .withEventLoopGroup(elg)
+            .connectAscii();
+    client.awaitConnected(10, TimeUnit.SECONDS);
+
+    try {
+      CompletableFuture<Boolean> isInELG = client.set("key", "value", 100).toCompletableFuture()
+              .thenApply(r ->
+                      Thread.currentThread().getName().startsWith("provided_elg")
+              );
+
+      assertTrue(isInELG.get());
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);

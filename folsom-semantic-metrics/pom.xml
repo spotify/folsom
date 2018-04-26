@@ -8,7 +8,6 @@
   </parent>
 
   <artifactId>folsom-semantic-metrics</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
 
   <developers>
     <developer>

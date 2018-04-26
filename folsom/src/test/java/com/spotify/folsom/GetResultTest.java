@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 public class GetResultTest {
 
   @Test(expected = NullPointerException.class)
-  public void testCstrNullValue() throws Exception {
+  public void testCstrNullValue() {
     GetResult.success(null, 123);
   }
 

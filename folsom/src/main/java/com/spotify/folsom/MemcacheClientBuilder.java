@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.guava.HostAndPort;
@@ -40,6 +39,9 @@ import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
 import com.spotify.folsom.transcoder.ByteArrayTranscoder;
 import com.spotify.folsom.transcoder.SerializableObjectTranscoder;
 import com.spotify.folsom.transcoder.StringTranscoder;
+import io.netty.channel.Channel;
+import io.netty.channel.EventLoopGroup;
+
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -103,7 +105,7 @@ public class MemcacheClientBuilder<V> {
 
   private int connections = 1;
   private boolean retry = true;
-  private Executor executor;
+  private Executor executor = DefaultExecutor.INSTANCE;
   private Charset charset = Charsets.UTF_8;
 
   private DnsSrvResolver srvResolver;
@@ -114,6 +116,8 @@ public class MemcacheClientBuilder<V> {
   private long timeoutMillis = 3000;
   private int maxSetLength = DEFAULT_MAX_SET_LENGTH;
   private int maxKeyLength = MAX_KEY_LEN;
+  private EventLoopGroup eventLoopGroup;
+  private Class<? extends Channel> channelClass;
 
   /**
    * Create a client builder for byte array values.
@@ -300,11 +304,13 @@ public class MemcacheClientBuilder<V> {
   /**
    * Specify an executor to execute all replies on. Default is a shared {@link ForkJoinPool} in
    * async mode with one thread per processor.
+   *
+   * If null is specified, replies will be executed on EventLoopGroup directly.
    * @param executor the executor to use.
    * @return itself
    */
   public MemcacheClientBuilder<V> withReplyExecutor(final Executor executor) {
-    this.executor = Preconditions.checkNotNull(executor);
+    this.executor = executor;
     return this;
   }
 
@@ -349,6 +355,31 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder<V> withMaxSetLength(final int maxSetLength) {
     this.maxSetLength = maxSetLength;
+    return this;
+  }
+
+  /**
+   * Set an Netty {@link EventLoopGroup} for the client.
+   *
+   * If not specified, an event loop group will be created, with default thread count.
+   *
+   * @param eventLoopGroup an event loop group instance
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withEventLoopGroup(final EventLoopGroup eventLoopGroup) {
+    this.eventLoopGroup = eventLoopGroup;
+    return this;
+  }
+
+  /**
+   * Set a Netty {@link Channel} class for the client.
+   *
+   * If not specified, it'll use a Channel class, according to the EventLoopGroup in use.
+   * @param channelClass a class of channel to use.
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withChannelClass(final Class<? extends Channel> channelClass) {
+    this.channelClass = channelClass;
     return this;
   }
 
@@ -468,7 +499,6 @@ public class MemcacheClientBuilder<V> {
   }
 
   private  RawMemcacheClient createReconnectingClient(final HostAndPort address, boolean binary) {
-    final Executor executor = this.executor != null ? this.executor : DefaultExecutor.INSTANCE;
     return new ReconnectingClient(
         backoffFunction,
         ReconnectingClient.singletonExecutor(),
@@ -478,6 +508,9 @@ public class MemcacheClientBuilder<V> {
         executor,
         timeoutMillis,
         charset,
-        metrics, maxSetLength);
+        metrics,
+        maxSetLength,
+        eventLoopGroup,
+        channelClass);
   }
 }
