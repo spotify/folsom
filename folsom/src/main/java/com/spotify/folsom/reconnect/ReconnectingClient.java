@@ -15,6 +15,8 @@
  */
 package com.spotify.folsom.reconnect;
 
+import com.spotify.folsom.authenticate.AuthenticatingClient;
+import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.guava.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -60,6 +62,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final HostAndPort address,
                             final int outstandingRequestLimit,
                             final boolean binary,
+                            final Authenticator authenticator,
                             final Executor executor,
                             final long timeoutMillis,
                             final Charset charset,
@@ -67,9 +70,9 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final int maxSetLength,
                             final EventLoopGroup eventLoopGroup,
                             final Class<? extends Channel> channelClass) {
-    this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
+    this(backoffFunction, scheduledExecutorService, () -> AuthenticatingClient.connect(
             address, outstandingRequestLimit,
-            binary, executor, timeoutMillis, charset,
+            binary, authenticator, executor, timeoutMillis, charset,
             metrics, maxSetLength, eventLoopGroup, channelClass), address);
   }
 

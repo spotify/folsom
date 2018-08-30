@@ -38,7 +38,11 @@ public enum MemcacheStatus {
   NOT_SUPPORTED,
   INTERNAL_ERROR,
   BUSY,
-  TEMPORARY_FAILURE;
+  TEMPORARY_FAILURE,
+
+  // This status code is not defined in the above list, but it is referenced here:
+  // https://github.com/memcached/memcached/wiki/SASLAuthProtocol#unauthorized
+  UNAUTHORIZED;
 
   public static MemcacheStatus fromInt(final int status) throws IOException {
     switch (status) {
@@ -52,6 +56,7 @@ public enum MemcacheStatus {
       case 0x07: return THE_VBUCKET_BELONGS_TO_ANOTHER_SERVER;
       case 0x08: return AUTHENTICATION_ERROR;
       case 0x09: return AUTHENTICATION_CONTINUE;
+      case 0x20: return UNAUTHORIZED;
       case 0x81: return UNKNOWN_COMMAND;
       case 0x82: return OUT_OF_MEMORY;
       case 0x83: return NOT_SUPPORTED;
