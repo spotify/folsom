@@ -214,6 +214,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
+        pendingCounter.decrementAndGet();
         return (CompletionStage<T>) onExecutor(
                 CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
       }
