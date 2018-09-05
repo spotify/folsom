@@ -196,6 +196,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   @Override
   @SuppressWarnings("unchecked")
   public <T> CompletionStage<T> send(final Request<T> request) {
+    if (request instanceof SetRequest) {
+      SetRequest setRequest = (SetRequest) request;
+      byte[] value = setRequest.getValue();
+      if (value.length > maxSetLength) {
+        return (CompletionStage<T>) onExecutor(
+            CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
+      }
+    }
+
     if (!tryIncrementPending()) {
 
       // Do the disconnect check in here instead of outside
@@ -209,14 +218,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       return onExecutor(
           CompletableFutures.exceptionallyCompletedFuture(
               new MemcacheOverloadedException("too many outstanding requests")));
-    }
-    if (request instanceof SetRequest) {
-      SetRequest setRequest = (SetRequest) request;
-      byte[] value = setRequest.getValue();
-      if (value.length > maxSetLength) {
-        return (CompletionStage<T>) onExecutor(
-                CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
-      }
     }
     channel.write(request, new RequestWritePromise(channel, request));
     flusher.flush();
