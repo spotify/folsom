@@ -5,15 +5,10 @@ secure: "H4tUL1Greyj588Kb1/FnRapFT/57KaApQYAZx2KRORkddYSzPq2tovI1S8AnqzCHpVtfjin
 
 language: java
 
-
-matrix:
-  include:
-    - os: linux
-      dist: trusty
-      jdk: oraclejdk8
-    - os: linux
-      dist: trusty
-      jdk: oraclejdk9
+jdk:
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk11
 
 install:
   - mvn install -DskipTests=true -Dgpg.skip=true
