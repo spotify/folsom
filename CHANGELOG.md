@@ -1,3 +1,9 @@
+### 1.1.1
+* Fixed bug with setting too large values
+
+### 1.1.0
+* Added specifiable Netty EventLoopGroup and executor
+
 ### 1.0.0
 Non backwards-compatible change
 * Requires Java 8

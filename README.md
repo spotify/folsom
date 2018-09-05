@@ -34,7 +34,7 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom</artifactId>
-      <version>1.0.0</version>
+      <version>1.1.1</version>
     </dependency>
 
 We are using [semantic versioning](http://semver.org)
