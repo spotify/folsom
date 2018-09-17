@@ -16,40 +16,27 @@
 
 package com.spotify.folsom.authenticate;
 
-import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.DefaultRawMemcacheClient;
-import com.spotify.folsom.guava.HostAndPort;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import java.nio.charset.Charset;
+import com.spotify.folsom.reconnect.Connector;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 
 public class AuthenticatingClient {
 
-  public static CompletionStage<RawMemcacheClient> connect(
-      final HostAndPort address,
-      final int outstandingRequestLimit,
+  public static CompletionStage<RawMemcacheClient> authenticate(
+      Connector connector,
       final boolean binary,
-      final Authenticator authenticator,
-      final Executor executor,
-      final long timeoutMillis,
-      final Charset charset,
-      final Metrics metrics,
-      final int maxSetLength,
-      final EventLoopGroup eventLoopGroup,
-      final Class<? extends Channel> channelClass) {
+      final Authenticator authenticator) {
 
     if(!binary && authenticator != null && !(authenticator instanceof NoopAuthenticator)) {
       throw new IllegalArgumentException("Authentication can only be used for binary clients.");
     }
 
-    CompletionStage<RawMemcacheClient> client = DefaultRawMemcacheClient.connect(
-        address, outstandingRequestLimit,
-        binary, executor, timeoutMillis, charset,
-        metrics, maxSetLength, eventLoopGroup, channelClass);
+    CompletionStage<RawMemcacheClient> client = connector.connect();
 
-    return authenticator.authenticate(client);
+    if(authenticator != null) {
+      return authenticator.authenticate(client);
+    } else {
+      return client;
+    }
   }
 }

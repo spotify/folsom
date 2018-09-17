@@ -68,7 +68,7 @@ public class ReconnectingClientTest {
     when(backoffFunction.getBackoffTimeMillis(0)).thenReturn(0L);
     when(backoffFunction.getBackoffTimeMillis(1)).thenReturn(123L);
 
-    ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
+    Connector connector = mock(Connector.class);
     when(connector.connect())
             .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
             .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
@@ -102,7 +102,7 @@ public class ReconnectingClientTest {
     when(backoffFunction.getBackoffTimeMillis(0)).thenReturn(0L);
     when(backoffFunction.getBackoffTimeMillis(1)).thenReturn(123L);
 
-    ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
+    Connector connector = mock(Connector.class);
     when(connector.connect())
             .thenReturn(CompletableFuture.completedFuture(delegate1))
             .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
@@ -136,7 +136,7 @@ public class ReconnectingClientTest {
     when(backoffFunction.getBackoffTimeMillis(0)).thenReturn(0L);
     when(backoffFunction.getBackoffTimeMillis(1)).thenReturn(123L);
 
-    ReconnectingClient.Connector connector = mock(ReconnectingClient.Connector.class);
+    Connector connector = mock(Connector.class);
     when(connector.connect())
             .thenReturn(CompletableFuture.completedFuture(delegate));
 

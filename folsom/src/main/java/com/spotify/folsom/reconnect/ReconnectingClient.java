@@ -17,6 +17,7 @@ package com.spotify.folsom.reconnect;
 
 import com.spotify.folsom.authenticate.AuthenticatingClient;
 import com.spotify.folsom.authenticate.Authenticator;
+import com.spotify.folsom.authenticate.NoopAuthenticator;
 import com.spotify.folsom.guava.HostAndPort;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -50,7 +51,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
 
   private final BackoffFunction backoffFunction;
   private final ScheduledExecutorService scheduledExecutorService;
-  private final Connector connector;
+  private final com.spotify.folsom.reconnect.Connector connector;
   private final HostAndPort address;
 
   private volatile RawMemcacheClient client = NotConnectedClient.INSTANCE;
@@ -70,15 +71,41 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final int maxSetLength,
                             final EventLoopGroup eventLoopGroup,
                             final Class<? extends Channel> channelClass) {
-    this(backoffFunction, scheduledExecutorService, () -> AuthenticatingClient.connect(
-            address, outstandingRequestLimit,
-            binary, authenticator, executor, timeoutMillis, charset,
-            metrics, maxSetLength, eventLoopGroup, channelClass), address);
+    this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
+        address, outstandingRequestLimit, binary, executor, timeoutMillis, charset,
+        metrics, maxSetLength, eventLoopGroup, channelClass), binary, authenticator, address);
+  }
+
+  public ReconnectingClient(final BackoffFunction backoffFunction,
+                            final ScheduledExecutorService scheduledExecutorService,
+                            final HostAndPort address,
+                            final int outstandingRequestLimit,
+                            final boolean binary,
+                            final Executor executor,
+                            final long timeoutMillis,
+                            final Charset charset,
+                            final Metrics metrics,
+                            final int maxSetLength,
+                            final EventLoopGroup eventLoopGroup,
+                            final Class<? extends Channel> channelClass) {
+    this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
+        address, outstandingRequestLimit, binary, executor, timeoutMillis, charset, metrics,
+        maxSetLength, eventLoopGroup, channelClass), binary, new NoopAuthenticator(), address);
+  }
+
+  private ReconnectingClient(final BackoffFunction backoffFunction,
+                             final ScheduledExecutorService scheduledExecutorService,
+                             final Connector connector,
+                             final boolean binary,
+                             final Authenticator authenticator,
+                             final HostAndPort address) {
+    this(backoffFunction, scheduledExecutorService,
+        () -> AuthenticatingClient.authenticate(connector, binary, authenticator), address);
   }
 
   ReconnectingClient(final BackoffFunction backoffFunction,
                      final ScheduledExecutorService scheduledExecutorService,
-                     final Connector connector,
+                     final com.spotify.folsom.reconnect.Connector connector,
                      final HostAndPort address) {
     super();
     this.backoffFunction = backoffFunction;
@@ -167,10 +194,6 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
 
   public static ScheduledExecutorService singletonExecutor() {
     return SCHEDULED_EXECUTOR_SERVICE;
-  }
-
-  interface Connector {
-    CompletionStage<RawMemcacheClient> connect();
   }
 
   @Override

@@ -26,8 +26,17 @@ public class MemcachedServer {
   private final MemcacheClient<String> client;
 
   public MemcachedServer() {
-    container = new GenericContainer("memcached:1.5.10-alpine");
+    this(null, null);
+
+  }
+
+  public MemcachedServer(String username, String password) {
+    container = new GenericContainer("bitnami/memcached:1.5.10");
     container.addExposedPort(11211);
+    if (username != null && password != null) {
+      container.withEnv("MEMCACHED_USERNAME", username);
+      container.withEnv("MEMCACHED_PASSWORD", password);
+    }
     container.start();
 
     client = MemcacheClientBuilder.newStringClient()

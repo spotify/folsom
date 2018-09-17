@@ -16,7 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
-import static com.spotify.folsom.MemcacheStatus.AUTHENTICATION_ERROR;
+import static com.spotify.folsom.MemcacheStatus.OK;
 import static com.spotify.folsom.MemcacheStatus.UNAUTHORIZED;
 
 import com.google.common.base.Charsets;
@@ -30,7 +30,7 @@ import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> {
+public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> {
 
   private static final byte[] KEY = "PLAIN".getBytes(Charsets.US_ASCII);
 
@@ -72,10 +72,9 @@ class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> {
     }
 
     MemcacheStatus status = reply.status;
-    if (status == MemcacheStatus.AUTHENTICATION_CONTINUE ||
-        status == AUTHENTICATION_ERROR ||
-        status == UNAUTHORIZED) {
-      fail(new IOException("Invalid status, but be authentication error/continue"));
+    if (status != OK && status != UNAUTHORIZED) {
+      fail(new IOException(
+          String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString())));
     }
 
     succeed(status);
