@@ -67,7 +67,7 @@ public class MultigetRequest
       extrasLength = 0;
     }
 
-    int multigetOpaque = this.getOpaque();
+    int multigetOpaque = opaque;
     int sequenceNumber = numKeys;
     for (final byte[] key : keys) {
       final int keyLength = key.length;
@@ -103,7 +103,7 @@ public class MultigetRequest
       result.add(null);
     }
 
-    int expectedOpaque = this.getOpaque();
+    int expectedOpaque = opaque;
 
     for (final ResponsePacket reply : replies) {
       if (OpCode.getKind(reply.opcode) != OpCode.GET) {
