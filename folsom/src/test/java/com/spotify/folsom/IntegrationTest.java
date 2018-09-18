@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -35,10 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +46,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
@@ -59,46 +53,17 @@ public class IntegrationTest {
 
   private static final HostAndPort DEFAULT_SERVER_ADDRESS
           = HostAndPort.fromParts("127.0.0.1", 11211);
-  private static EmbeddedServer asciiEmbeddedServer;
-  private static EmbeddedServer binaryEmbeddedServer;
+  private static MemcachedServer server;
 
-  private static HostAndPort getServerAddress() {
-    String addressOverride = System.getProperty("memcached-address");
-    if (addressOverride != null) {
-      return HostAndPort.fromString(addressOverride).withDefaultPort(11211);
-    } else {
-      return DEFAULT_SERVER_ADDRESS;
-    }
-  }
-
-  private static boolean memcachedRunning() {
-    try (Socket socket = new Socket()) {
-      HostAndPort serverAddress = getServerAddress();
-      socket.connect(new InetSocketAddress(serverAddress.getHostText(), serverAddress.getPort()));
-      return true;
-    } catch (ConnectException e) {
-      System.err.println("memcached not running, disabling test");
-      return false;
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Parameterized.Parameters(name = "{0}-{1}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
-    res.add(new Object[]{"embedded", "ascii"});
-    res.add(new Object[]{"embedded", "binary"});
-    if (memcachedRunning()) {
-      res.add(new Object[]{"integration", "ascii"});
-      res.add(new Object[]{"integration", "binary"});
-    }
+    res.add(new Object[]{"ascii"});
+    res.add(new Object[]{"binary"});
     return res;
   }
 
   @Parameterized.Parameter(0)
-  public String type;
-  @Parameterized.Parameter(1)
   public String protocol;
 
   private MemcacheClient<String> client;
@@ -107,14 +72,12 @@ public class IntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    asciiEmbeddedServer = new EmbeddedServer(false);
-    binaryEmbeddedServer = new EmbeddedServer(true);
+    server = new MemcachedServer();
   }
 
   @AfterClass
   public static void tearDownClass() throws Exception {
-    binaryEmbeddedServer.stop();
-    asciiEmbeddedServer.stop();
+    server.stop();
   }
 
   @Before
@@ -129,14 +92,10 @@ public class IntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
-    HostAndPort integrationServer = getServerAddress();
-
-    int embeddedPort = ascii ? asciiEmbeddedServer.getPort() : binaryEmbeddedServer.getPort();
-    String address = isEmbedded() ? "127.0.0.1" : integrationServer.getHostText();
-    int port = isEmbedded() ? embeddedPort : integrationServer.getPort();
+    HostAndPort integrationServer = HostAndPort.fromParts(server.getHost(), server.getPort());
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-            .withAddress(address, port)
+            .withAddress(server.getHost(), server.getPort())
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -153,7 +112,8 @@ public class IntegrationTest {
       client = binaryClient;
     }
     client.awaitConnected(10, TimeUnit.SECONDS);
-    System.out.printf("Using client: %s protocol: %s and port: %d\n", client, protocol, port);
+    System.out.printf("Using client: %s protocol: %s and port: %d\n",
+        client, protocol, server.getPort());
     cleanup();
   }
 
@@ -237,7 +197,6 @@ public class IntegrationTest {
   @Test
   public void testAppendCasIncorrect() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("CAS is broken on embedded server");
 
     binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
@@ -247,7 +206,6 @@ public class IntegrationTest {
   @Test
   public void testPrependCasIncorrect() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("CAS is broken on embedded server");
 
     binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
@@ -276,7 +234,6 @@ public class IntegrationTest {
   @Test
   public void testSetDeleteGet() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
@@ -310,7 +267,6 @@ public class IntegrationTest {
   @Test
   public void testGetKeyNotExist() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
 
     assertGetKeyNotFound(client.get(KEY1));
   }
@@ -401,7 +357,6 @@ public class IntegrationTest {
   @Test
   public void testMultiGetKeyMissing() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("returns \"\" instead of NOT_FOUND on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
@@ -419,14 +374,13 @@ public class IntegrationTest {
   @Test
   public void testIncr() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
 
     assertEquals(new Long(3), binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
     assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
   }
 
   private boolean isEmbedded() {
-    return type.equals("embedded");
+    return false;
   }
 
   private boolean isAscii() {
@@ -440,7 +394,6 @@ public class IntegrationTest {
   @Test
   public void testDecr() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
 
     assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
     assertEquals(new Long(1), binaryClient.decr(KEY1, 2, 5, TTL).toCompletableFuture().get());
@@ -449,7 +402,6 @@ public class IntegrationTest {
   @Test
   public void testDecrBelowZero() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
 
     assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
     // should not go below 0
@@ -459,7 +411,6 @@ public class IntegrationTest {
   @Test
   public void testIncrDefaults() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("INCR/DECR gives NPE on embedded server");
 
     // Ascii client behaves differently for this use case
     assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
@@ -501,7 +452,6 @@ public class IntegrationTest {
   @Test
   public void testCas() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("CAS is broken on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
@@ -524,7 +474,6 @@ public class IntegrationTest {
   @Test
   public void testCasNotMatchingSet() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("CAS is broken on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
@@ -533,7 +482,6 @@ public class IntegrationTest {
 
   @Test
   public void testTouchNotFound() throws Throwable {
-    assumeNotEmbedded("touch is broken on embedded server");
 
     MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
     assertEquals(MemcacheStatus.KEY_NOT_FOUND, result);
@@ -541,7 +489,6 @@ public class IntegrationTest {
 
   @Test
   public void testTouchFound() throws Throwable {
-    assumeNotEmbedded("touch is broken on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
@@ -551,7 +498,6 @@ public class IntegrationTest {
   @Test
   public void testTouchAndGetFound() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("touch is broken on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     assertEquals(VALUE1, binaryClient.getAndTouch(KEY1, TTL).toCompletableFuture().get());
@@ -560,7 +506,6 @@ public class IntegrationTest {
   @Test
   public void testTouchAndGetNotFound() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("touch is broken on embedded server");
 
     assertNull(binaryClient.getAndTouch(KEY1, TTL).toCompletableFuture().get());
   }
@@ -568,7 +513,6 @@ public class IntegrationTest {
   @Test
   public void testCasTouchAndGetFound() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("touch is broken on embedded server");
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
     long cas = client.casGet(KEY1).toCompletableFuture().get().getCas();
@@ -580,7 +524,6 @@ public class IntegrationTest {
   @Test
   public void testCasTouchAndGetNotFound() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("touch is broken on embedded server");
 
     GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).toCompletableFuture().get();
     assertNull(result);
@@ -589,7 +532,6 @@ public class IntegrationTest {
   @Test
   public void testNoop() throws Throwable {
     assumeBinary();
-    assumeNotEmbedded("touch is broken on embedded server");
 
     binaryClient.noop().toCompletableFuture().get();
   }
@@ -631,10 +573,6 @@ public class IntegrationTest {
       sb.append('.');
     }
     return sb.toString();
-  }
-
-  private void assumeNotEmbedded(String msg) {
-    assumeFalse(msg, isEmbedded());
   }
 
   private void assumeAscii() {

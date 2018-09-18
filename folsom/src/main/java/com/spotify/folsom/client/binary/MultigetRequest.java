@@ -138,7 +138,6 @@ public class MultigetRequest
 
   @Override
   public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {
-    // TODO: remove this null
     return new MultigetRequest(keys, ttl);
   }
 }
