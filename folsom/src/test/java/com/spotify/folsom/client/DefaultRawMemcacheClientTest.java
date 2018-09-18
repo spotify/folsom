@@ -217,8 +217,6 @@ public class DefaultRawMemcacheClientTest {
       // Send request once
       rawClient.send(request).toCompletableFuture().get();
 
-      binaryServer.flush();
-
       // Pretend that the above request failed and retry it by sending it again
       rawClient.send(request).toCompletableFuture().get();
     } finally {
@@ -248,8 +246,6 @@ public class DefaultRawMemcacheClientTest {
 
       // Send request once
       rawClient.send(request).toCompletableFuture().get();
-
-      asciiServer.flush();
 
       // Pretend that the above request failed and retry it by sending it again
       rawClient.send(request).toCompletableFuture().get();

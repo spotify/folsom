@@ -66,7 +66,7 @@ public class SrvKetamaIntegrationTest {
     client = builder.connectAscii();
 
     KetamaIntegrationTest.allClientsConnected(client);
-    servers.flush();
+    client.flushAll(0).toCompletableFuture().get();
   }
 
   public static List<LookupResult> toResult(List<Integer> ports) {
