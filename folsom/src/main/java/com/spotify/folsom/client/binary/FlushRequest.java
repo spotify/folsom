@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2018 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,50 +14,42 @@
  * the License.
  */
 
+
 package com.spotify.folsom.client.binary;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class NoopRequest extends BinaryRequest<Void> {
+public class FlushRequest extends BinaryRequest<MemcacheStatus>
+    implements com.spotify.folsom.client.FlushRequest {
 
-  // Keys have to be valid, so pick the key "X" even though we will never actually use it.
-  private static final byte[] DUMMY_KEY = "X".getBytes(Charsets.US_ASCII);
+  public static final byte[] NO_KEY = new byte[0];
+  private final int delay;
 
-  public NoopRequest() {
-    super(DUMMY_KEY);
+  public FlushRequest(final int delay) {
+    super(NO_KEY);
+    this.delay = delay;
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    dst.put(MAGIC_NUMBER);
-    dst.put(OpCode.NOOP);
-    dst.putShort((short) 0); // byte 2-3
-    dst.put((byte) 0); // byte 4
-    dst.put((byte) 0);
-    dst.put((byte) 0);
-    dst.put((byte) 0);
-    dst.putInt(0); // byte 8-11
-    dst.putInt(opaque); // byte 12-15, Opaque
-    dst.putLong((long) 0); // byte 16-23, CAS
+    final int expiration = Utils.ttlToExpiration(delay);
+    final int extrasLength = 4;
+
+    writeHeader(dst, OpCode.FLUSH, extrasLength, 0, 0);
+    dst.putInt(expiration);
+
     return toBuffer(alloc, dst);
   }
 
   @Override
   public void handle(final BinaryResponse replies) throws IOException {
     ResponsePacket reply = handleSingleReply(replies);
-
-    if (reply.status == MemcacheStatus.OK) {
-      succeed(null);
-    } else {
-      throw new IOException("Unexpected response: " + reply.status);
-    }
+    succeed(reply.status);
   }
-
 }

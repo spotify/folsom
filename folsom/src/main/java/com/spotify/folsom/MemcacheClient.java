@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Spotify AB
+ * Copyright (c) 2015-2018 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -116,6 +116,14 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return A future representing completion of the request
    */
   CompletionStage<MemcacheStatus> touch(String key, int ttl);
+
+  /**
+   * Flushes all entries in the torage
+   *
+   * @param delay The flush delay in seconds.
+   * @return A future representing completion of the request
+   */
+  CompletionStage<MemcacheStatus> flushAll(int delay);
 
   /**
    * Shut down the client.

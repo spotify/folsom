@@ -22,6 +22,7 @@ public class AsciiResponse {
   public static final AsciiResponse NOT_FOUND = new AsciiResponse(Type.NOT_FOUND);
   public static final AsciiResponse NOT_STORED = new AsciiResponse(Type.NOT_STORED);
   public static final AsciiResponse TOUCHED = new AsciiResponse(Type.TOUCHED);
+  public static final AsciiResponse OK = new AsciiResponse(Type.OK);
 
   public final Type type;
 
@@ -30,6 +31,6 @@ public class AsciiResponse {
   }
 
   public enum Type {
-    VALUE, NUMERIC_VALUE, STORED, EXISTS, DELETED, NOT_FOUND, NOT_STORED, TOUCHED
+    VALUE, NUMERIC_VALUE, STORED, EXISTS, DELETED, NOT_FOUND, NOT_STORED, TOUCHED, OK
   }
 }

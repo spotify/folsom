@@ -73,10 +73,6 @@ public class EmbeddedServer {
     return port;
   }
 
-  public void flush() {
-    daemon.getCache().flush_all();
-  }
-
   public Cache getCache() {
     return daemon.getCache();
   }
