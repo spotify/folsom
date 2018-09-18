@@ -43,7 +43,7 @@ public class SrvKetamaIntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    servers = new KetamaIntegrationTest.Servers(3, false);
+    servers = new KetamaIntegrationTest.Servers(3);
   }
 
   @AfterClass
@@ -57,7 +57,7 @@ public class SrvKetamaIntegrationTest {
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
-            .withSrvResolver(s -> toResult(servers.getPorts()))
+            .withSrvResolver(s -> toResult(servers.getServers()))
             .withSRVShutdownDelay(1000)
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -69,9 +69,9 @@ public class SrvKetamaIntegrationTest {
     client.flushAll(0).toCompletableFuture().get();
   }
 
-  public static List<LookupResult> toResult(List<Integer> ports) {
-    return ports.stream()
-        .map(port -> LookupResult.create("127.0.0.2", port, 100, 100, 100))
+  public static List<LookupResult> toResult(List<MemcachedServer> servers) {
+    return servers.stream()
+        .map(server -> LookupResult.create(server.getHost(), server.getPort(), 100, 100, 100))
         .collect(Collectors.toList());
   }
 
@@ -140,7 +140,7 @@ public class SrvKetamaIntegrationTest {
     // About 1/3 should be misses.
     // Due to random ports in the embedded server, this is actually somewhat non-deterministic.
     // This is why we use a large number of keys.
-    double missWithPerfectDistribution = numKeys / servers.getPorts().size();
+    double missWithPerfectDistribution = numKeys / servers.getServers().size();
     double diff = Math.abs(misses - missWithPerfectDistribution);
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);

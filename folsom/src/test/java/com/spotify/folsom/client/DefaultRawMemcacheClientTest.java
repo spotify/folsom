@@ -17,12 +17,12 @@ package com.spotify.folsom.client;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
+import com.spotify.folsom.MemcachedServer;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import com.spotify.folsom.EmbeddedServer;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
@@ -61,27 +61,16 @@ import static org.junit.Assert.fail;
 
 public class DefaultRawMemcacheClientTest {
 
-  private EmbeddedServer asciiServer;
-  private EmbeddedServer binaryServer;
+  private MemcachedServer server;
 
   @Before
-  public void setUpBinaryServer() throws Exception {
-    binaryServer = new EmbeddedServer(true);
-  }
-
-  @Before
-  public void setUpAsciiServer() throws Exception {
-    asciiServer = new EmbeddedServer(false);
+  public void setUp() throws Exception {
+    server = new MemcachedServer();
   }
 
   @After
-  public void tearDownAsciiServer() throws Exception {
-    asciiServer.stop();
-  }
-
-  @After
-  public void tearDownBinaryServer() throws Exception {
-    binaryServer.stop();
+  public void tearDown() throws Exception {
+    server.stop();
   }
 
   @Test
@@ -89,7 +78,7 @@ public class DefaultRawMemcacheClientTest {
     final String exceptionString = "Crash the client";
 
     RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts("127.0.0.11", asciiServer.getPort()),
+        HostAndPort.fromParts(server.getHost(), server.getPort()),
         5000,
         false,
         null,
@@ -168,7 +157,7 @@ public class DefaultRawMemcacheClientTest {
       }).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals("Unexpected line: CLIENT_ERROR", e.getCause().getMessage());
+      assertEquals("Unexpected line: ERROR", e.getCause().getMessage());
     }
   }
 
@@ -204,7 +193,7 @@ public class DefaultRawMemcacheClientTest {
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
-    final HostAndPort address = HostAndPort.fromParts("127.0.0.10", binaryServer.getPort());
+    final HostAndPort address = HostAndPort.fromParts(server.getHost(), server.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();
@@ -212,7 +201,7 @@ public class DefaultRawMemcacheClientTest {
     try {
       byte[] key = "foo".getBytes(Charsets.UTF_8);
       final com.spotify.folsom.client.binary.GetRequest request =
-          new com.spotify.folsom.client.binary.GetRequest(key, OpCode.GET, 123);
+          new com.spotify.folsom.client.binary.GetRequest(key, OpCode.GET, -1);
 
       // Send request once
       rawClient.send(request).toCompletableFuture().get();
@@ -235,7 +224,7 @@ public class DefaultRawMemcacheClientTest {
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
-    final HostAndPort address = HostAndPort.fromParts("127.0.0.9", asciiServer.getPort());
+    final HostAndPort address = HostAndPort.fromParts(server.getHost(), server.getPort());
     final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
         new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();

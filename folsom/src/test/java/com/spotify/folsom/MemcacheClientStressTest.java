@@ -50,12 +50,13 @@ public class MemcacheClientStressTest {
   private static final byte[] VALUE = "myvalue".getBytes();
 
   public static final int N = 1000;
-  private final EmbeddedServer daemon = new EmbeddedServer(false);
+  private MemcachedServer server;
   private ExecutorService workerExecutor;
   private MemcacheClient<byte[]> client;
 
   @Before
   public void setUp() throws Exception {
+    server = new MemcachedServer();
     assertEquals(0, Utils.getGlobalConnectionCount());
 
     final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -64,7 +65,7 @@ public class MemcacheClientStressTest {
 
 
     client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress("127.0.0.1", daemon.getPort())
+        .withAddress(server.getHost(), server.getPort())
         .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
   }
@@ -95,7 +96,7 @@ public class MemcacheClientStressTest {
 
       client.shutdown();
       client = MemcacheClientBuilder.newByteArrayClient()
-          .withAddress("127.0.0.1", daemon.getPort())
+          .withAddress(server.getHost(), server.getPort())
           .connectBinary();
       CompletableFutures.allAsList(futures).get();
 
@@ -140,7 +141,7 @@ public class MemcacheClientStressTest {
   @After
   public void tearDown() throws InterruptedException, TimeoutException {
     client.shutdown();
-    daemon.stop();
+    server.stop();
     workerExecutor.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(0, Utils.getGlobalConnectionCount());

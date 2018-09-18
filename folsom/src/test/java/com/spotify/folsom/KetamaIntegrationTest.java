@@ -37,8 +37,6 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
@@ -62,8 +60,8 @@ public class KetamaIntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    asciiServers = new Servers(3, false);
-    binaryServers = new Servers(3, true);
+    asciiServers = new Servers(3);
+    binaryServers = new Servers(3);
   }
 
   @AfterClass
@@ -107,8 +105,8 @@ public class KetamaIntegrationTest {
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withRequestTimeoutMillis(10 * 1000);
-    for (Integer port : servers.ports) {
-      builder.withAddress("127.0.0.2", port);
+    for (MemcachedServer server : servers.servers) {
+      builder.withAddress(server.getHost(), server.getPort());
     }
 
     if (ascii) {
@@ -234,9 +232,7 @@ public class KetamaIntegrationTest {
       }
       assertEquals(expectedValues, client.get(keys).toCompletableFuture().get());
     }
-    for (EmbeddedServer daemon : servers.daemons) {
-      assertTrue(daemon.getCache().getCurrentItems() > 10);
-    }
+    // TODO: count number of keys per server
   }
 
   @Test
@@ -249,40 +245,32 @@ public class KetamaIntegrationTest {
     }
     client.flushAll(0).toCompletableFuture().get();
     for (int i = 0; i < 100; i++) {
-      // TODO: change this to null-only if moving away from embedded service
-      final String actual = client.get("key-" + i).toCompletableFuture().get(1, TimeUnit.SECONDS);
-      if (!(actual == null || actual.equals(""))) {
-        fail("Expected missing key");
-      }
+      assertEquals(null, client.get("key-" + i).toCompletableFuture().get(1, TimeUnit.SECONDS));
     }
   }
 
   public static class Servers {
-    private final List<EmbeddedServer> daemons;
-    private final List<Integer> ports;
+    private final List<MemcachedServer> servers;
 
-    public Servers(int instances, boolean binary) {
-      daemons = Lists.newArrayList();
-      ports = Lists.newArrayList();
+    public Servers(int instances) {
+      servers = Lists.newArrayList();
       for (int i = 0; i < instances; i++) {
-        EmbeddedServer daemon = new EmbeddedServer(binary);
-        daemons.add(daemon);
-        ports.add(daemon.getPort());
+        servers.add(new MemcachedServer());
       }
     }
 
     public void stop() {
-      for (EmbeddedServer daemon : daemons) {
-        daemon.stop();
+      for (MemcachedServer server : servers) {
+        server.stop();
       }
     }
 
-    public List<Integer> getPorts() {
-      return ports;
+    public MemcachedServer getInstance(int i) {
+      return servers.get(i);
     }
 
-    public EmbeddedServer getInstance(int i) {
-      return daemons.get(i);
+    List<MemcachedServer> getServers() {
+      return servers;
     }
   }
 }

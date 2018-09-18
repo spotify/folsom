@@ -40,11 +40,11 @@ import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
-  private EmbeddedServer server;
+  private MemcachedServer server;
 
   @Before
   public void setUp() throws Exception {
-    server = new EmbeddedServer(false);
+    server = new MemcachedServer();
   }
 
   @After
@@ -56,7 +56,7 @@ public class MemcacheClientBuilderTest {
   public void testValidLatin1() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.ISO_8859_1)
-            .withAddress("127.0.0.6", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
@@ -71,7 +71,7 @@ public class MemcacheClientBuilderTest {
   public void testValidUTF8() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_8)
-            .withAddress("127.0.0.7", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
@@ -86,7 +86,7 @@ public class MemcacheClientBuilderTest {
   public void testInvalidUTF16() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_16)
-            .withAddress("127.0.0.3", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
@@ -100,7 +100,7 @@ public class MemcacheClientBuilderTest {
   @Test(expected = MemcacheOverloadedException.class)
   public void testOverloaded() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.5", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .withMaxOutstandingRequests(100)
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
@@ -127,7 +127,7 @@ public class MemcacheClientBuilderTest {
   @Test
   public void testMaxSetLength() throws Throwable {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.4", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .withMaxSetLength(1)
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
@@ -146,7 +146,7 @@ public class MemcacheClientBuilderTest {
   @Test
   public void testShouldExecuteInEventLoopGroup() throws Exception {
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.1", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .withReplyExecutor(null)
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
@@ -173,7 +173,7 @@ public class MemcacheClientBuilderTest {
     EventLoopGroup elg = new NioEventLoopGroup(0, factory);
 
     AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.2", server.getPort())
+            .withAddress(server.getHost(), server.getPort())
             .withReplyExecutor(null)
             .withEventLoopGroup(elg)
             .connectAscii();

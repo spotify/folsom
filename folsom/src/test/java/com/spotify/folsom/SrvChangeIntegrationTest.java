@@ -49,7 +49,7 @@ public class SrvChangeIntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    servers = new KetamaIntegrationTest.Servers(3, false);
+    servers = new KetamaIntegrationTest.Servers(3);
   }
 
   @AfterClass
@@ -61,7 +61,7 @@ public class SrvChangeIntegrationTest {
   public void setUp() throws Exception {
     assertEquals(0, Utils.getGlobalConnectionCount());
 
-    fullResults = toResult(servers.getPorts());
+    fullResults = toResult(servers.getServers());
     oneMissing = ImmutableList.copyOf(
         fullResults.subList(0, fullResults.size() - 1));
 
