@@ -16,6 +16,8 @@
 
 package com.spotify.folsom.ketama;
 
+import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.FlushRequest;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -32,6 +34,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
@@ -68,9 +71,21 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       if (multiRequest.getKeys().size() > 1) {
         return (CompletionStage<T>) sendSplitRequest(multiRequest);
       }
+    } else if (request instanceof FlushRequest) {
+      return (CompletionStage<T>) sendToAll(request);
     }
-
     return getClient(request.getKey()).send(request);
+  }
+
+  private <T> CompletionStage<MemcacheStatus> sendToAll(final Request<T> request) {
+    List<CompletionStage<MemcacheStatus>> futures = clients.stream()
+            .map(client -> (CompletionStage<MemcacheStatus>) client.send(request))
+            .collect(Collectors.toList());
+    return CompletableFutures.allAsList(futures).thenApply(ts ->
+        ts.stream()
+            .filter(status -> status != MemcacheStatus.OK)
+            .findFirst().orElse(MemcacheStatus.OK)
+    );
   }
 
   private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {

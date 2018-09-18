@@ -30,7 +30,7 @@ public final class OpCode {
   public static final byte INCREMENT = 0x05;
   public static final byte DECREMENT = 0x06;
   public static final int QUIT = 7;
-  public static final int FLUSH = 0x08;
+  public static final byte FLUSH = 0x08;
   public static final byte GETQ = 0x09;
   public static final byte NOOP = 0x0a;
 

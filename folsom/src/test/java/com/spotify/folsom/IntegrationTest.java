@@ -316,6 +316,28 @@ public class IntegrationTest {
   }
 
   @Test
+  public void testBinaryFlush() throws Throwable {
+    assumeBinary();
+    client.set(KEY1, "value1", 10000);
+    client.set(KEY2, "value2", 10000);
+    assertEquals("value1", client.get(KEY1).toCompletableFuture().get(1, TimeUnit.SECONDS));
+    client.flushAll(0).toCompletableFuture().get();
+    assertGetKeyNotFound(client.get(KEY1));
+    assertGetKeyNotFound(client.get(KEY2));
+  }
+
+  @Test
+  public void testAsciiFlush() throws Throwable {
+    assumeAscii();
+    client.set(KEY1, "value1", 10000);
+    client.set(KEY2, "value2", 10000);
+    assertEquals("value1", client.get(KEY1).toCompletableFuture().get(1, TimeUnit.SECONDS));
+    client.flushAll(0).toCompletableFuture().get();
+    assertGetKeyNotFound(client.get(KEY1));
+    assertGetKeyNotFound(client.get(KEY2));
+  }
+
+  @Test
   public void testPartitionMultiget() throws Exception {
     final List<String> keys = Lists.newArrayList();
     for (int i = 0; i < 500; i++) {

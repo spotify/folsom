@@ -199,6 +199,11 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     return future;
   }
 
+  @Override
+  public CompletionStage<MemcacheStatus> flushAll(final int delay) {
+    return rawMemcacheClient.send(new FlushRequest(delay));
+  }
+
   private CompletionStage<List<GetResult<V>>> multiget(List<byte[]> keys, boolean withCas) {
     final int size = keys.size();
     if (size == 0) {
