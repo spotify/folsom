@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2018 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
-import com.spotify.folsom.client.binary.BinaryRequest;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
@@ -88,12 +87,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final int maxSetLength;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
-
-  /**
-   * Used to set the opaque field for binary requests, to be able to detect messages out of order.
-   * A regular int is used, because this is only accessed from the single writer thread
-   */
-  private int requestSequenceId = 0;
 
   public static CompletionStage<RawMemcacheClient> connect(
           final HostAndPort address,
@@ -302,9 +295,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                       final ChannelPromise promise)
         throws Exception {
       Request<?> request = (Request<?>) msg;
-      if (request instanceof BinaryRequest) {
-        ((BinaryRequest) request).setOpaque(++requestSequenceId);
-      }
       outstanding.add(request);
 
       super.write(ctx, msg, promise);
