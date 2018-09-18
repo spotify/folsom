@@ -179,13 +179,15 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
 
-    try {
-      CompletableFuture<Boolean> isInELG = client.set("key", "value", 100).toCompletableFuture()
-              .thenApply(r ->
-                      Thread.currentThread().getName().startsWith("provided_elg")
-              );
 
-      assertTrue(isInELG.get());
+    try {
+      CompletableFuture<String> threadNameELG = client.set("key", "value", 100)
+          .toCompletableFuture()
+          .thenApply(r -> Thread.currentThread().getName());
+
+      String threadName = threadNameELG.get();
+      assertTrue(threadName + " must have the expected prefix",
+          threadName.startsWith("provided_elg"));
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
