@@ -98,6 +98,10 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           } catch (NumberFormatException e) {
             throw new IOException("Unexpected line: " + line, e);
           }
+        } else if (tokenLength == 2) {
+          expect(firstChar, "OK");
+          out.add(AsciiResponse.OK);
+          return;
         } else if (tokenLength == 3) {
           expect(firstChar, "END");
           out.add(valueResponse);

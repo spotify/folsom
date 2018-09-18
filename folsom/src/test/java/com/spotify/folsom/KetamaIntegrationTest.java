@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
@@ -117,7 +118,7 @@ public class KetamaIntegrationTest {
     }
     allClientsConnected(client);
     System.out.println("Using client: " + client + ", protocol: " + protocol);
-    servers.flush();
+    client.flushAll(0).toCompletableFuture().get();
   }
 
   @After
@@ -238,6 +239,24 @@ public class KetamaIntegrationTest {
     }
   }
 
+  @Test
+  public void testFlush() throws Throwable {
+    for (int i = 0; i < 100; i++) {
+      client.set("key-" + i, "value-" + i, 0).toCompletableFuture().get();
+    }
+    for (int i = 0; i < 100; i++) {
+      assertEquals("value-" + i, client.get("key-" + i).toCompletableFuture().get());
+    }
+    client.flushAll(0).toCompletableFuture().get();
+    for (int i = 0; i < 100; i++) {
+      // TODO: change this to null-only if moving away from embedded service
+      final String actual = client.get("key-" + i).toCompletableFuture().get(1, TimeUnit.SECONDS);
+      if (!(actual == null || actual.equals(""))) {
+        fail("Expected missing key");
+      }
+    }
+  }
+
   public static class Servers {
     private final List<EmbeddedServer> daemons;
     private final List<Integer> ports;
@@ -260,12 +279,6 @@ public class KetamaIntegrationTest {
 
     public List<Integer> getPorts() {
       return ports;
-    }
-
-    public void flush() {
-      for (EmbeddedServer daemon : daemons) {
-        daemon.flush();
-      }
     }
 
     public EmbeddedServer getInstance(int i) {

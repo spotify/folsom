@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2018 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package com.spotify.folsom.client.binary;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.spotify.folsom.client.Request.encodeKey;
+import static com.spotify.folsom.client.Request.encodeKeys;
+
 import com.google.common.collect.Lists;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.BinaryMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
@@ -31,15 +32,13 @@ import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.TransformerUtil;
 import com.spotify.folsom.client.Utils;
-
+import com.spotify.futures.CompletableFutures;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.spotify.folsom.client.Request.encodeKey;
-import static com.spotify.folsom.client.Request.encodeKeys;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * The default implementation of {@link com.spotify.folsom.BinaryMemcacheClient}
@@ -238,6 +237,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
     return future;
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> flushAll(final int delay) {
+    return rawMemcacheClient.send(new FlushRequest(delay));
   }
 
   /*

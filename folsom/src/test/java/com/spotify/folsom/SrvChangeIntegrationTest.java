@@ -84,7 +84,7 @@ public class SrvChangeIntegrationTest {
 
 
     KetamaIntegrationTest.allClientsConnected(client);
-    servers.flush();
+    client.flushAll(0).toCompletableFuture().get();
   }
 
   @After
