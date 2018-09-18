@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2018 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,24 +20,18 @@ import com.spotify.folsom.client.Request;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class BinaryRequest<V> extends Request<V> {
 
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
 
-  protected int opaque;
-  protected boolean opaqueSet;
+  protected final int opaque;
 
   protected BinaryRequest(final byte[] key) {
     super(key);
-  }
-
-  protected int getOpaque() {
-    if (!opaqueSet) {
-      throw new IllegalStateException("opaque must be set before write");
-    }
-    return opaque;
+    opaque = (ThreadLocalRandom.current().nextInt() << 8) & 0xFFFFFF00;
   }
 
   public void writeHeader(final ByteBuffer dst, final byte opCode,
@@ -53,7 +47,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
     dst.put((byte) 0);
     dst.put((byte) 0);
     dst.putInt(extraLength + keyLength + valueLength); // byte 8-11
-    dst.putInt(getOpaque()); // byte 12-15, Opaque
+    dst.putInt(opaque); // byte 12-15, Opaque
     dst.putLong(cas); // byte 16-23, CAS
   }
 
@@ -65,7 +59,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
     }
 
     final ResponsePacket reply = replies.get(0);
-    if (reply.opaque != getOpaque()) {
+    if (reply.opaque != opaque) {
       throw new IOException("messages out of order for " + getClass().getSimpleName());
     }
     return reply;
@@ -77,9 +71,4 @@ public abstract class BinaryRequest<V> extends Request<V> {
   }
 
   protected abstract void handle(BinaryResponse response) throws IOException;
-
-  public void setOpaque(int opaque) {
-    this.opaqueSet = true;
-    this.opaque = (opaque << 8) & 0xFFFFFF00;
-  }
 }

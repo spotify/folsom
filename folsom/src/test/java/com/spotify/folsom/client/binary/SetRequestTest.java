@@ -59,7 +59,6 @@ public class SetRequestTest extends RequestTestTemplate {
       ttl,
       cas
     );
-    req.setOpaque(OPAQUE);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
@@ -67,7 +66,7 @@ public class SetRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     final int keyLen = KEY.length();
-    assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.getOpaque(), cas);
+    assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.opaque, cas);
     assertZeros(b, 4);
     if (ttl == 0) {
       assertEquals(0, b.readInt());

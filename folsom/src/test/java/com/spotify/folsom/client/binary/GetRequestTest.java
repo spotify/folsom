@@ -34,13 +34,12 @@ public class GetRequestTest extends RequestTestTemplate {
   @Test
   public void testBufferNoCas() throws Exception {
     GetRequest get = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 0);
-    get.setOpaque(OPAQUE);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, get, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.GET, KEY.length(), 0, KEY.length(), get.getOpaque(), 0);
+    assertHeader(b, OpCode.GET, KEY.length(), 0, KEY.length(), get.opaque, 0);
     assertString(KEY, b);
     assertEOM(b);
   }
@@ -48,14 +47,13 @@ public class GetRequestTest extends RequestTestTemplate {
   @Test
   public void testBufferTtl() throws Exception {
     GetRequest get = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 123);
-    get.setOpaque(OPAQUE);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();
     memcacheEncoder.encode(ctx, get, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.getOpaque(), 0);
+    assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.opaque, 0);
     assertExpiration(b.readInt());
     assertString(KEY, b);
     assertEOM(b);
