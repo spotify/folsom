@@ -185,7 +185,8 @@ public class MemcacheClientBuilderTest {
    *
    * Attempts to defeat the inherent raciness by trying until successful.
    */
-  private void assertExecutesOnThread(AsciiMemcacheClient<String> client, String expectedThreadNamePrefix)
+  private void assertExecutesOnThread(AsciiMemcacheClient<String> client,
+      String expectedThreadNamePrefix)
       throws InterruptedException, ExecutionException, TimeoutException {
 
     final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
