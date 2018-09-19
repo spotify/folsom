@@ -27,16 +27,10 @@ public class AuthenticatingClient {
       final boolean binary,
       final Authenticator authenticator) {
 
-    if(!binary && authenticator != null && !(authenticator instanceof NoopAuthenticator)) {
-      throw new IllegalArgumentException("Authentication can only be used for binary clients.");
-    }
+    authenticator.validate(binary);
 
     CompletionStage<RawMemcacheClient> client = connector.connect();
 
-    if(authenticator != null) {
-      return authenticator.authenticate(client);
-    } else {
-      return client;
-    }
+    return authenticator.authenticate(client);
   }
 }

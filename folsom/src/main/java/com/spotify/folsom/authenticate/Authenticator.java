@@ -21,4 +21,6 @@ import java.util.concurrent.CompletionStage;
 
 public interface Authenticator {
   CompletionStage<RawMemcacheClient> authenticate(CompletionStage<RawMemcacheClient> client);
+
+  void validate(boolean binary);
 }

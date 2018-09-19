@@ -26,4 +26,8 @@ public class NoopAuthenticator implements Authenticator {
       CompletionStage<RawMemcacheClient> client) {
     return client;
   }
+
+  @Override
+  public void validate(final boolean binary) {
+  }
 }

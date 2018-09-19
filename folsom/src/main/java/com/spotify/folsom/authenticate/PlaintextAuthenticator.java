@@ -43,4 +43,11 @@ public class PlaintextAuthenticator implements Authenticator {
                 .thenApply(ignored -> client)
         );
   }
+
+  @Override
+  public void validate(final boolean binary) {
+    if (!binary) {
+      throw new IllegalArgumentException("Authentication can only be used for binary clients.");
+    }
+  }
 }
