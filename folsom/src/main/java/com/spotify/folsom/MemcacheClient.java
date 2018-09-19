@@ -118,7 +118,7 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<MemcacheStatus> touch(String key, int ttl);
 
   /**
-   * Flushes all entries in the torage
+   * Flushes all entries in the storage
    *
    * @param delay The flush delay in seconds.
    * @return A future representing completion of the request
