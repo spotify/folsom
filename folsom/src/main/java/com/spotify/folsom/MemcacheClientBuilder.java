@@ -306,6 +306,11 @@ public class MemcacheClientBuilder<V> {
    * async mode with one thread per processor.
    *
    * If null is specified, replies will be executed on EventLoopGroup directly.
+   *
+   * <b>Note:</b> Calling non-async methods on the {@link java.util.concurrent.CompletionStage}s
+   * returned by {@link MemcacheClient} that have already completed will cause the supplied
+   * function to be executed directly on the calling thread.
+   *
    * @param executor the executor to use.
    * @return itself
    */
