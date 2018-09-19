@@ -18,7 +18,6 @@ package com.spotify.folsom;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,15 +152,7 @@ public class MemcacheClientBuilderTest {
     client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
-      CompletableFuture<String> threadNameELG = client.set("key", "value", 100)
-              .toCompletableFuture()
-              .thenApply(r ->
-                Thread.currentThread().getName()
-              );
-
-      String threadName = threadNameELG.get();
-      assertTrue(threadName + " must have the expected prefix",
-              threadName.startsWith("defaultRawMemcacheClient"));
+      assertExecutesOnThread(client, "defaultRawMemcacheClient");
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
@@ -179,19 +171,42 @@ public class MemcacheClientBuilderTest {
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
 
-
     try {
-      CompletableFuture<String> threadNameELG = client.set("key", "value", 100)
-          .toCompletableFuture()
-          .thenApply(r -> Thread.currentThread().getName());
-
-      String threadName = threadNameELG.get();
-      assertTrue(threadName + " must have the expected prefix",
-          threadName.startsWith("provided_elg"));
+      assertExecutesOnThread(client, "provided_elg");
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
     }
   }
 
+
+  /**
+   * Observe a CF callback executing on an expected thread pool.
+   *
+   * Attempts to defeat the inherent raciness by trying until successful.
+   */
+  private void assertExecutesOnThread(AsciiMemcacheClient<String> client, String expectedThreadNamePrefix)
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+
+    while (true) {
+      if (System.nanoTime() > deadlineNanos) {
+        throw new TimeoutException("Failed to see callback running on ELG thread");
+      }
+
+      final Thread thread = client.set("key", "value", 100)
+          .thenApply(r -> Thread.currentThread())
+          .toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      if (thread.getName().startsWith(expectedThreadNamePrefix)) {
+        // Function ran on the expected thread, success!
+        return;
+      }
+
+      assertTrue("Callback ran on unexpected thread: " + thread, thread == Thread.currentThread());
+
+      // We lost the race, the future was already completed when thenApply was called. Try again.
+    }
+  }
 }
