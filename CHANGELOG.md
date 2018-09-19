@@ -1,3 +1,7 @@
+### 1.2.0
+* Added MemcachedClient.flushAll() method
+* Add support for SASL authentication for binary protocol
+
 ### 1.1.1
 * Fixed bug with setting too large values
 

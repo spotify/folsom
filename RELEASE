@@ -28,6 +28,7 @@ Optional:
     </profile>
   </profiles>
 
-$ mvn release:clean release:prepare
-$ mvn release:perform
+$ mvn versions:set -DnewVersion=$NEW_VERSION
+$ mvn -B release:clean release:prepare
+$ mvn -B release:perform
 
