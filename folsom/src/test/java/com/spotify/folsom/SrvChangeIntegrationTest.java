@@ -47,6 +47,7 @@ public class SrvChangeIntegrationTest {
   private List<LookupResult> oneMissing;
   private SrvKetamaClient srvKetamaClient;
 
+  private int connections;
   @BeforeClass
   public static void setUpClass() throws Exception {
     servers = new KetamaIntegrationTest.Servers(3);
@@ -59,7 +60,7 @@ public class SrvChangeIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    connections = Utils.getGlobalConnectionCount();
 
     fullResults = toResult(servers.getServers());
     oneMissing = ImmutableList.copyOf(
@@ -84,7 +85,7 @@ public class SrvChangeIntegrationTest {
 
 
     KetamaIntegrationTest.allClientsConnected(client);
-    client.flushAll(0).toCompletableFuture().get();
+    servers.flush();
   }
 
   @After
@@ -92,7 +93,7 @@ public class SrvChangeIntegrationTest {
     client.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
 
-    waitUntilSuccess(1000, () -> assertEquals(0, Utils.getGlobalConnectionCount()));
+    waitUntilSuccess(1000, () -> assertEquals(connections, Utils.getGlobalConnectionCount()));
   }
 
   @Test

@@ -15,19 +15,38 @@
  */
 package com.spotify.folsom;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.testcontainers.containers.GenericContainer;
 
 public class MemcachedServer {
 
-  private GenericContainer container;
+  private final GenericContainer container;
+  private final MemcacheClient<String> client;
 
   public MemcachedServer() {
     container = new GenericContainer("memcached:1.5.10-alpine");
     container.addExposedPort(11211);
     container.start();
+
+    client = MemcacheClientBuilder.newStringClient()
+        .withAddress(getHost(), getPort())
+        .connectAscii();
+    try {
+      client.awaitConnected(10, TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void stop() {
+    client.shutdown();
+    try {
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
     container.stop();
   }
 
@@ -37,5 +56,13 @@ public class MemcachedServer {
 
   public String getHost() {
     return container.getContainerIpAddress();
+  }
+
+  public void flush() {
+    try {
+      client.flushAll(0).toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

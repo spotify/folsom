@@ -54,10 +54,11 @@ public class MemcacheClientStressTest {
   private ExecutorService workerExecutor;
   private MemcacheClient<byte[]> client;
 
+  private int connections;
   @Before
   public void setUp() throws Exception {
     server = new MemcachedServer();
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    connections = Utils.getGlobalConnectionCount();
 
     final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
     lc.getLogger(MemcachedCommandHandler.class).setLevel(Level.ERROR);
@@ -144,7 +145,7 @@ public class MemcacheClientStressTest {
     server.stop();
     workerExecutor.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    assertEquals(connections, Utils.getGlobalConnectionCount());
   }
 
 

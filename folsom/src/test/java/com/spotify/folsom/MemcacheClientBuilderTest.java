@@ -26,8 +26,9 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.util.concurrent.TimeoutException;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
@@ -40,16 +41,21 @@ import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
-  private MemcachedServer server;
+  private static MemcachedServer server;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     server = new MemcachedServer();
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     server.stop();
+  }
+
+  @Before
+  public void setUpInstance() throws Exception {
+    server.flush();
   }
 
   @Test

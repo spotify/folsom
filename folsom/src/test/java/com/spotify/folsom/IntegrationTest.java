@@ -51,8 +51,6 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public class IntegrationTest {
 
-  private static final HostAndPort DEFAULT_SERVER_ADDRESS
-          = HostAndPort.fromParts("127.0.0.1", 11211);
   private static MemcachedServer server;
 
   @Parameterized.Parameters(name = "{0}")
@@ -69,6 +67,7 @@ public class IntegrationTest {
   private MemcacheClient<String> client;
   private AsciiMemcacheClient<String> asciiClient;
   private BinaryMemcacheClient<String> binaryClient;
+  private int connectionCount;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -82,7 +81,7 @@ public class IntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    connectionCount = Utils.getGlobalConnectionCount();
 
     boolean ascii;
     if (protocol.equals("ascii")) {
@@ -117,10 +116,8 @@ public class IntegrationTest {
     cleanup();
   }
 
-  private void cleanup() throws ExecutionException, InterruptedException {
-    for (String key : ALL_KEYS) {
-      client.delete(key).toCompletableFuture().get();
-    }
+  private void cleanup() {
+    server.flush();
   }
 
   @After
@@ -129,7 +126,7 @@ public class IntegrationTest {
     client.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
 
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    assertEquals(connectionCount, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";

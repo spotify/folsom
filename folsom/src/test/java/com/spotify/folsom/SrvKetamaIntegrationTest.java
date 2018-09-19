@@ -16,44 +16,33 @@
 
 package com.spotify.folsom;
 
-import com.spotify.futures.CompletableFutures;
-import com.google.common.collect.Lists;
-import java.util.concurrent.CompletionStage;
-import com.spotify.dns.LookupResult;
-import com.spotify.folsom.client.NoopMetrics;
-import com.spotify.folsom.client.Utils;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.Lists;
+import com.spotify.dns.LookupResult;
+import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 public class SrvKetamaIntegrationTest {
 
-  private static KetamaIntegrationTest.Servers servers;
+  private KetamaIntegrationTest.Servers servers;
 
   private MemcacheClient<String> client;
-
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    servers = new KetamaIntegrationTest.Servers(3);
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-    servers.stop();
-  }
+  private int connections;
 
   @Before
   public void setUp() throws Exception {
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    connections = Utils.getGlobalConnectionCount();
+    servers = new KetamaIntegrationTest.Servers(3);
 
     MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
@@ -66,7 +55,7 @@ public class SrvKetamaIntegrationTest {
     client = builder.connectAscii();
 
     KetamaIntegrationTest.allClientsConnected(client);
-    client.flushAll(0).toCompletableFuture().get();
+    servers.flush();
   }
 
   public static List<LookupResult> toResult(List<MemcachedServer> servers) {
@@ -79,8 +68,8 @@ public class SrvKetamaIntegrationTest {
   public void tearDown() throws Exception {
     client.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
-
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    servers.stop();
+    assertEquals(connections, Utils.getGlobalConnectionCount());
   }
 
   @Test

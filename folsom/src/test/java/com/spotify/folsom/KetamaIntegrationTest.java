@@ -41,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
 
+
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
@@ -52,22 +53,19 @@ public class KetamaIntegrationTest {
   @Parameterized.Parameter(0)
   public String protocol;
 
-  private static Servers asciiServers;
-  private static Servers binaryServers;
-  private Servers servers;
+  private static Servers servers;
 
   private MemcacheClient<String> client;
+  private int connections;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    asciiServers = new Servers(3);
-    binaryServers = new Servers(3);
+    servers = new Servers(3);
   }
 
   @AfterClass
   public static void tearDownClass() throws Exception {
-    asciiServers.stop();
-    binaryServers.stop();
+    servers.stop();
   }
 
   public static void allClientsConnected(final MemcacheClient<?> client)
@@ -87,15 +85,13 @@ public class KetamaIntegrationTest {
 
   @Before
   public void setUp() throws Exception {
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    connections = Utils.getGlobalConnectionCount();
 
     boolean ascii;
     if (protocol.equals("ascii")) {
       ascii = true;
-      servers = asciiServers;
     } else if (protocol.equals("binary")) {
       ascii = false;
-      servers = binaryServers;
     } else {
       throw new IllegalArgumentException(protocol);
     }
@@ -116,14 +112,14 @@ public class KetamaIntegrationTest {
     }
     allClientsConnected(client);
     System.out.println("Using client: " + client + ", protocol: " + protocol);
-    client.flushAll(0).toCompletableFuture().get();
+    servers.flush();
   }
 
   @After
   public void tearDown() throws Exception {
     client.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    assertEquals(connections, Utils.getGlobalConnectionCount());
   }
 
   protected static final String KEY1 = "folsomtest:key1";
@@ -271,6 +267,10 @@ public class KetamaIntegrationTest {
 
     List<MemcachedServer> getServers() {
       return servers;
+    }
+
+    void flush() {
+      servers.forEach(MemcachedServer::flush);
     }
   }
 }
