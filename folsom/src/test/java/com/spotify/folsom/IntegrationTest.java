@@ -379,10 +379,6 @@ public class IntegrationTest {
     assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
   }
 
-  private boolean isEmbedded() {
-    return false;
-  }
-
   private boolean isAscii() {
     return protocol.equals("ascii");
   }

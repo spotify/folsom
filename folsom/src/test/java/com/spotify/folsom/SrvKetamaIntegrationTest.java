@@ -90,11 +90,6 @@ public class SrvKetamaIntegrationTest {
     for (int i = 0; i < numKeys; i++) {
       CompletionStage<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);
       futures.add(future);
-
-      // Do this to avoid making the embedded memcached sad
-      if (i % 10 == 0) {
-        future.toCompletableFuture().get();
-      }
     }
     CompletableFutures.allAsList(futures).get();
     futures.clear();
@@ -102,11 +97,6 @@ public class SrvKetamaIntegrationTest {
     for (int i = 0; i < numKeys; i++) {
       CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
-
-      // Do this to avoid making the embedded memcached sad
-      if (i % 10 == 0) {
-        future.toCompletableFuture().get();
-      }
     }
     for (int i = 0; i < numKeys; i++) {
       assertEquals("value-" + i, futures.get(i).toCompletableFuture().get());
@@ -125,12 +115,6 @@ public class SrvKetamaIntegrationTest {
     for (int i = 0; i < numKeys; i++) {
       CompletionStage<String> future = client.get("key-" + i);
       futures.add(future);
-
-      // Do this to avoid making the embedded memcached sad
-      if (i % 10 == 0) {
-        future.toCompletableFuture().get();
-      }
-
     }
     int misses = 0;
     for (int i = 0; i < numKeys; i++) {
@@ -138,7 +122,7 @@ public class SrvKetamaIntegrationTest {
     }
 
     // About 1/3 should be misses.
-    // Due to random ports in the embedded server, this is actually somewhat non-deterministic.
+    // Due to random ports in the server, this is actually somewhat non-deterministic.
     // This is why we use a large number of keys.
     double missWithPerfectDistribution = numKeys / servers.getServers().size();
     double diff = Math.abs(misses - missWithPerfectDistribution);
