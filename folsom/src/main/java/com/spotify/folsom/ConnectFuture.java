@@ -49,6 +49,10 @@ public class ConnectFuture
   }
 
   private void check(ObservableClient client) {
+    final Throwable failure = client.getConnectionFailure();
+    if (failure != null) {
+      completeExceptionally(failure);
+    }
     if (awaitedState == client.isConnected()) {
       if (complete(null)) {
         client.unregisterForConnectionChanges(this);

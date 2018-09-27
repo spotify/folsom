@@ -20,6 +20,7 @@ import static com.spotify.hamcrest.future.CompletableFutureMatchers.stageWillCom
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.MemcacheClientBuilder;
 import com.spotify.folsom.MemcachedServer;
@@ -58,9 +59,9 @@ public class DefaultAuthenticatedMemcacheClientTest {
     Authenticator authenticator = new PlaintextAuthenticator(USERNAME, PASSWORD);
     MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
         .withAddress(server.getHost(), server.getPort())
-        .connectAuthenticated(authenticator);
+        .connectBinary(authenticator);
 
-    client.awaitConnected(2, TimeUnit.SECONDS);
+    client.awaitConnected(20, TimeUnit.SECONDS);
 
     assertThat(client.set("some_key", "some_val", 1).toCompletableFuture(),
         stageWillCompleteWithValueThat(is(OK)));
@@ -71,24 +72,30 @@ public class DefaultAuthenticatedMemcacheClientTest {
     Authenticator authenticator = new PlaintextAuthenticator(USERNAME, "wrong_password");
     MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
         .withAddress(server.getHost(), server.getPort())
-        .connectAuthenticated(authenticator);
+        .connectBinary(authenticator);
 
-    client.awaitConnected(2, TimeUnit.SECONDS);
-
-    thrown.expectMessage("Unexpected response: UNAUTHORIZED");
-    client.get("someKey").toCompletableFuture().get();
+    thrown.expect(MemcacheAuthenticationException.class);
+    client.awaitConnected(20, TimeUnit.SECONDS);
   }
 
   @Test
-  public void unAuthorizedClientFails() throws InterruptedException, ExecutionException, TimeoutException {
+  public void unAuthorizedBinaryClientFails() throws InterruptedException, ExecutionException, TimeoutException {
     MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
         .withAddress(server.getHost(), server.getPort())
         .connectBinary();
 
-    client.awaitConnected(2, TimeUnit.SECONDS);
+    thrown.expect(MemcacheAuthenticationException.class);
+    client.awaitConnected(20, TimeUnit.SECONDS);
+  }
 
-    thrown.expectMessage("Unexpected response: UNAUTHORIZED");
-    client.get("someKey").toCompletableFuture().get();
+  @Test
+  public void unAuthorizedAsciiClientFails() throws InterruptedException, ExecutionException, TimeoutException {
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
+        .withAddress(server.getHost(), server.getPort())
+        .connectAscii();
+
+    thrown.expect(MemcacheAuthenticationException.class);
+    client.awaitConnected(20, TimeUnit.SECONDS);
   }
 
   private Transcoder<String> createProtobufTranscoder() {

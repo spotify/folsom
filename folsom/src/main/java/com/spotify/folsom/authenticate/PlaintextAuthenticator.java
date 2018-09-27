@@ -16,6 +16,8 @@
 
 package com.spotify.folsom.authenticate;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
+import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.binary.PlaintextAuthenticateRequest;
 import java.util.concurrent.CompletionStage;
@@ -36,12 +38,20 @@ public class PlaintextAuthenticator implements Authenticator {
     PlaintextAuthenticateRequest
         authenticateRequest = new PlaintextAuthenticateRequest(username, password);
 
-    return clientFuture
-        .thenCompose(client ->
-            client
-                .send(authenticateRequest)
-                .thenApply(ignored -> client)
-        );
+    return clientFuture.thenCompose(
+        client -> client.connectFuture().thenCompose(ignored ->
+            client.send(authenticateRequest)
+                .thenApply(status -> {
+                  if (status == MemcacheStatus.OK) {
+                    return client;
+                  } else if (status == MemcacheStatus.UNAUTHORIZED) {
+                    throw new MemcacheAuthenticationException("Authentication failed");
+                  } else {
+                    throw new MemcacheAuthenticationException("Unexpected status: " + status.name());
+                  }
+                })
+        )
+    );
   }
 
   @Override

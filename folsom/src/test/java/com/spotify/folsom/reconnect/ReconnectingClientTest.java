@@ -177,6 +177,11 @@ public class ReconnectingClientTest {
     }
 
     @Override
+    public Throwable getConnectionFailure() {
+      return null;
+    }
+
+    @Override
     public int numTotalConnections() {
       return 0;
     }

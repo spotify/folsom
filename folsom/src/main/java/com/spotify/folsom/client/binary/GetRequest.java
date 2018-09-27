@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Utils;
@@ -73,6 +74,8 @@ public class GetRequest
       succeed(GetResult.success(reply.value, reply.cas));
     } else if (reply.status == MemcacheStatus.KEY_NOT_FOUND) {
       succeed(null);
+    } else if (reply.status == MemcacheStatus.UNAUTHORIZED) {
+      fail(new MemcacheAuthenticationException("Authentication failed"));
     } else {
       throw new IOException("Unexpected response: " + reply.status);
     }

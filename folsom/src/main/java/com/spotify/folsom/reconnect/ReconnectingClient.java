@@ -15,10 +15,13 @@
  */
 package com.spotify.folsom.reconnect;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.authenticate.AuthenticatingClient;
 import com.spotify.folsom.authenticate.Authenticator;
-import com.spotify.folsom.authenticate.NoopAuthenticator;
+import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
+import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
 import com.spotify.folsom.guava.HostAndPort;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.folsom.AbstractRawMemcacheClient;
@@ -57,6 +60,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   private volatile RawMemcacheClient client = NotConnectedClient.INSTANCE;
   private volatile int reconnectCount = 0;
   private volatile boolean stayConnected = true;
+  private volatile Throwable connectionFailure;
 
   public ReconnectingClient(final BackoffFunction backoffFunction,
                             final ScheduledExecutorService scheduledExecutorService,
@@ -90,7 +94,15 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final Class<? extends Channel> channelClass) {
     this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, charset, metrics,
-        maxSetLength, eventLoopGroup, channelClass), binary, new NoopAuthenticator(), address);
+        maxSetLength, eventLoopGroup, channelClass), binary, getValidator(binary), address);
+  }
+
+  private static Authenticator getValidator(final boolean binary) {
+    if (binary) {
+      return new BinaryAuthenticationValidator();
+    } else {
+      return new AsciiAuthenticationValidator();
+    }
   }
 
   private ReconnectingClient(final BackoffFunction backoffFunction,
@@ -125,11 +137,17 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   public void shutdown() {
     stayConnected = false;
     client.shutdown();
+    notifyConnectionChange();
   }
 
   @Override
   public boolean isConnected() {
     return client.isConnected();
+  }
+
+  @Override
+  public Throwable getConnectionFailure() {
+    return connectionFailure;
   }
 
   @Override
@@ -147,6 +165,13 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       final CompletionStage<RawMemcacheClient> future = connector.connect();
       future.whenComplete((newClient, t) -> {
         if (t != null) {
+          if (t instanceof CompletionException) {
+            if (t.getCause() instanceof MemcacheAuthenticationException) {
+              connectionFailure = t.getCause();
+              shutdown();
+              return;
+            }
+          }
           ReconnectingClient.this.onFailure();
         } else {
           log.info("Successfully connected to {}", address);

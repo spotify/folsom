@@ -59,4 +59,9 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
     }
     return NotConnectedClient.INSTANCE;
   }
+
+  @Override
+  public Throwable getConnectionFailure() {
+    return null;
+  }
 }

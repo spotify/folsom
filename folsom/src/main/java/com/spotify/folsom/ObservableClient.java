@@ -60,19 +60,30 @@ public interface ObservableClient {
 
   default void awaitConnected(final long waitTime, final TimeUnit unit)
       throws TimeoutException, InterruptedException {
-    try {
-      connectFuture().toCompletableFuture().get(waitTime, unit);
-    } catch (final ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    awaitFuture(connectFuture(), waitTime, unit);
   }
 
   default void awaitDisconnected(final long waitTime, final TimeUnit unit)
       throws TimeoutException, InterruptedException {
+    awaitFuture(disconnectFuture(), waitTime, unit);
+  }
+
+  default void awaitFuture(final CompletionStage<Void> future, final long waitTime, final TimeUnit unit)
+      throws InterruptedException, TimeoutException {
     try {
-      disconnectFuture().toCompletableFuture().get(waitTime, unit);
+      future.toCompletableFuture().get(waitTime, unit);
     } catch (final ExecutionException e) {
+      if (e.getCause() instanceof MemcacheAuthenticationException) {
+        throw (MemcacheAuthenticationException) e.getCause();
+      }
       throw new RuntimeException(e);
     }
   }
+
+  /**
+   * Returns the unrecoverable connection failure, if any.
+   *
+   * @return null, if there's no connection failure
+   */
+  Throwable getConnectionFailure();
 }

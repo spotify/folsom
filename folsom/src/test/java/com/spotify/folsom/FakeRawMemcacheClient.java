@@ -120,6 +120,11 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public Throwable getConnectionFailure() {
+    return null;
+  }
+
+  @Override
   public int numTotalConnections() {
     return 1;
   }

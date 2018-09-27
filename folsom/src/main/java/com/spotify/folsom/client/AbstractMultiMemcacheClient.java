@@ -83,4 +83,15 @@ public abstract class AbstractMultiMemcacheClient
   public void connectionChanged(ObservableClient client) {
     notifyConnectionChange();
   }
+
+  @Override
+  public Throwable getConnectionFailure() {
+    for (final RawMemcacheClient client : clients) {
+      final Throwable connectionFailure = client.getConnectionFailure();
+      if (connectionFailure != null) {
+        return connectionFailure;
+      }
+    }
+    return null;
+  }
 }
