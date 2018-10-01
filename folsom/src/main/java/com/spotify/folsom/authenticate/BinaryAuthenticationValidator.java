@@ -16,21 +16,17 @@
 
 package com.spotify.folsom.authenticate;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.OpCode;
-import com.spotify.folsom.client.binary.GetRequest;
+import com.spotify.folsom.client.binary.NoopRequest;
 import java.util.concurrent.CompletionStage;
 
 public class BinaryAuthenticationValidator implements Authenticator {
-
-  private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.UTF_8);
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(
       CompletionStage<RawMemcacheClient> clientFuture) {
 
-    final GetRequest request = new GetRequest(EXAMPLE_KEY, OpCode.GET, 0);
+    final NoopRequest request = new NoopRequest();
 
     return clientFuture.thenCompose(
         client -> client.connectFuture().thenCompose(ignored ->

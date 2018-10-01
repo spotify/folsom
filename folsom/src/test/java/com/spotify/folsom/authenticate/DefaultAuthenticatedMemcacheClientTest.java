@@ -16,6 +16,7 @@
 package com.spotify.folsom.authenticate;
 
 import static com.spotify.folsom.MemcacheStatus.OK;
+import static com.spotify.folsom.transcoder.StringTranscoder.UTF8_INSTANCE;
 import static com.spotify.hamcrest.future.CompletableFutureMatchers.stageWillCompleteWithValueThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -24,9 +25,6 @@ import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.MemcacheClientBuilder;
 import com.spotify.folsom.MemcachedServer;
-import com.spotify.folsom.Transcoder;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.AfterClass;
@@ -57,7 +55,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
   @Test
   public void testAuthenticateAndSet() throws InterruptedException, TimeoutException {
     Authenticator authenticator = new PlaintextAuthenticator(USERNAME, PASSWORD);
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
         .connectBinary(authenticator);
 
@@ -68,9 +66,9 @@ public class DefaultAuthenticatedMemcacheClientTest {
   }
 
   @Test
-  public void testFailedAuthentication() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testFailedAuthentication() throws InterruptedException, TimeoutException {
     Authenticator authenticator = new PlaintextAuthenticator(USERNAME, "wrong_password");
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
         .connectBinary(authenticator);
 
@@ -79,8 +77,8 @@ public class DefaultAuthenticatedMemcacheClientTest {
   }
 
   @Test
-  public void unAuthorizedBinaryClientFails() throws InterruptedException, ExecutionException, TimeoutException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
+  public void unAuthorizedBinaryClientFails() throws InterruptedException, TimeoutException {
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
         .connectBinary();
 
@@ -89,27 +87,13 @@ public class DefaultAuthenticatedMemcacheClientTest {
   }
 
   @Test
-  public void unAuthorizedAsciiClientFails() throws InterruptedException, ExecutionException, TimeoutException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(createProtobufTranscoder())
+  public void unAuthorizedAsciiClientFails() throws InterruptedException, TimeoutException {
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
         .connectAscii();
 
     thrown.expect(MemcacheAuthenticationException.class);
     client.awaitConnected(20, TimeUnit.SECONDS);
-  }
-
-  private Transcoder<String> createProtobufTranscoder() {
-    return new Transcoder<String>() {
-      @Override
-      public String decode(final byte[] bytes) {
-        return new String(bytes, StandardCharsets.UTF_8);
-      }
-
-      @Override
-      public byte[] encode(final String entity) {
-        return entity.getBytes(StandardCharsets.UTF_8);
-      }
-    };
   }
 
 }

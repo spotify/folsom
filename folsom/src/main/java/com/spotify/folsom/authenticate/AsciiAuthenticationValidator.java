@@ -24,7 +24,7 @@ import java.util.concurrent.CompletionStage;
 
 public class AsciiAuthenticationValidator implements Authenticator {
 
-  private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.UTF_8);
+  private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.US_ASCII);
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(
