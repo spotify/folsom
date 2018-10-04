@@ -16,18 +16,16 @@
 
 package com.spotify.folsom.client.binary;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.spotify.folsom.GetResult;
-import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GetRequest
         extends BinaryRequest<GetResult<byte[]>>
@@ -74,8 +72,6 @@ public class GetRequest
       succeed(GetResult.success(reply.value, reply.cas));
     } else if (reply.status == MemcacheStatus.KEY_NOT_FOUND) {
       succeed(null);
-    } else if (reply.status == MemcacheStatus.UNAUTHORIZED) {
-      fail(new MemcacheAuthenticationException("Authentication failed"));
     } else {
       throw new IOException("Unexpected response: " + reply.status);
     }
