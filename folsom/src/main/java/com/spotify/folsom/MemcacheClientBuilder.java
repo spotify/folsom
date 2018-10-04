@@ -16,6 +16,7 @@
 
 package com.spotify.folsom;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
@@ -26,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
 import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
+import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.guava.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
@@ -121,6 +123,7 @@ public class MemcacheClientBuilder<V> {
   private int maxKeyLength = MAX_KEY_LEN;
   private EventLoopGroup eventLoopGroup;
   private Class<? extends Channel> channelClass;
+  private Authenticator authenticator;
 
   /**
    * Create a client builder for byte array values.
@@ -409,9 +412,9 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
-  public BinaryMemcacheClient<V> connectBinary(final Authenticator authenticator) {
-    return new DefaultBinaryMemcacheClient<>(
-        connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
+  public MemcacheClientBuilder<V> withUsernamePassword(final String username, final String password) {
+    this.authenticator = new PlaintextAuthenticator(username, password);
+    return this;
   }
 
   /**
@@ -419,7 +422,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
-    final Authenticator authenticator = new BinaryAuthenticationValidator();
+    final Authenticator authenticator = firstNonNull(this.authenticator, new BinaryAuthenticationValidator());
     return new DefaultBinaryMemcacheClient<>(
         connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
   }
@@ -429,7 +432,7 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
-    final Authenticator authenticator = new AsciiAuthenticationValidator();
+    final Authenticator authenticator = firstNonNull(this.authenticator, new AsciiAuthenticationValidator());
     return new DefaultAsciiMemcacheClient<>(
         connectRaw(false, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
   }

@@ -54,10 +54,10 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void testAuthenticateAndSet() throws InterruptedException, TimeoutException {
-    Authenticator authenticator = new PlaintextAuthenticator(USERNAME, PASSWORD);
     MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
-        .connectBinary(authenticator);
+        .withUsernamePassword(USERNAME, PASSWORD)
+        .connectBinary();
 
     client.awaitConnected(20, TimeUnit.SECONDS);
 
@@ -67,10 +67,10 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void testFailedAuthentication() throws InterruptedException, TimeoutException {
-    Authenticator authenticator = new PlaintextAuthenticator(USERNAME, "wrong_password");
     MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
-        .connectBinary(authenticator);
+        .withUsernamePassword(USERNAME, "wrong_password")
+        .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
     client.awaitConnected(20, TimeUnit.SECONDS);

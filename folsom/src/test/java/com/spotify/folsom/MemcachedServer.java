@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom;
 
-import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,10 +42,9 @@ public class MemcachedServer {
     final MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
         .withAddress(getHost(), getPort());
     if (username != null && password != null) {
-      client = builder.connectBinary(new PlaintextAuthenticator(username, password));
-    } else {
-      client = builder.connectBinary();
+      builder.withUsernamePassword(username, password);
     }
+    client = builder.connectBinary();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
