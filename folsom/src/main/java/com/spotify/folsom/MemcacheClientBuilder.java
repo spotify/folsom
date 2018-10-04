@@ -412,6 +412,12 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
+  /**
+   * Authenticate with memcached using plaintest SASL. This only works for binary connections, not ascii.
+   * @param username
+   * @param password
+   * @return itself
+   */
   public MemcacheClientBuilder<V> withUsernamePassword(final String username, final String password) {
     this.authenticator = new PlaintextAuthenticator(username, password);
     return this;
