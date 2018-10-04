@@ -47,7 +47,7 @@ public class PlaintextAuthenticator implements Authenticator {
                   } else if (status == MemcacheStatus.UNAUTHORIZED) {
                     throw new MemcacheAuthenticationException("Authentication failed");
                   } else {
-                    throw new MemcacheAuthenticationException("Unexpected status: " + status.name());
+                    throw new RuntimeException("Unexpected status: " + status.name());
                   }
                 })
         )

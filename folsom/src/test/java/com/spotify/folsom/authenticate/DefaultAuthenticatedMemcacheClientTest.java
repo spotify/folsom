@@ -92,8 +92,8 @@ public class DefaultAuthenticatedMemcacheClientTest {
         .withAddress(server.getHost(), server.getPort())
         .connectAscii();
 
-    thrown.expect(MemcacheAuthenticationException.class);
-    client.awaitConnected(20, TimeUnit.SECONDS);
+    thrown.expect(TimeoutException.class);
+    client.awaitConnected(1, TimeUnit.SECONDS);
   }
 
 }

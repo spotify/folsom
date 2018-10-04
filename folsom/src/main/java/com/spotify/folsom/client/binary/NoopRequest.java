@@ -57,7 +57,7 @@ public class NoopRequest extends BinaryRequest<Void> {
     if (reply.status == MemcacheStatus.OK) {
       succeed(null);
     } else if (reply.status == MemcacheStatus.UNAUTHORIZED) {
-      fail(new MemcacheAuthenticationException("Authentication failed"));
+      fail(new MemcacheAuthenticationException("Authentication required"));
     } else {
       throw new IOException("Unexpected response: " + reply.status);
     }

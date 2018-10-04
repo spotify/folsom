@@ -16,12 +16,17 @@
 
 package com.spotify.folsom.authenticate;
 
+import static com.spotify.folsom.client.Utils.unwrap;
+
 import com.google.common.base.Charsets;
-import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * If SASL is enabled than ascii protocol won't be allowed at all, so we simply expect a connection closed.
+ */
 public class AsciiAuthenticationValidator implements Authenticator {
 
   private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.US_ASCII);
@@ -39,7 +44,7 @@ public class AsciiAuthenticationValidator implements Authenticator {
               if (throwable == null) {
                 return client;
               } else {
-                throw new MemcacheAuthenticationException("Authentication failed");
+                throw new CompletionException(unwrap(throwable));
               }
             }))
     );
