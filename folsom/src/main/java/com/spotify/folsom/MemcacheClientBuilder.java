@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
 import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
+import com.spotify.folsom.authenticate.NoAuthenticationValidation;
 import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.guava.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -65,7 +66,6 @@ public class MemcacheClientBuilder<V> {
   private static final int DEFAULT_MAX_OUTSTANDING = 1000;
   private static final String DEFAULT_HOSTNAME = "127.0.0.1";
   private static final int DEFAULT_PORT = 11211;
-
 
   /**
    * Lazily instantiated singleton default executor.
@@ -422,6 +422,18 @@ public class MemcacheClientBuilder<V> {
     this.authenticator = new PlaintextAuthenticator(username, password);
     return this;
   }
+
+  /**
+   * Disable authentication validation - only useful for tests against
+   * jmemcached which does not support binary NOOP
+   *
+   * @return itself
+   */
+  MemcacheClientBuilder<V> withoutAuthenticationValidation() {
+    this.authenticator = new NoAuthenticationValidation();
+    return this;
+  }
+
 
   /**
    * Create a client that uses the binary memcache protocol.
