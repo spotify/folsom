@@ -19,7 +19,6 @@ package com.spotify.folsom;
 import com.google.common.collect.Lists;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
-import com.spotify.folsom.transcoder.StringTranscoder;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class LoadTestRunner {
 
   public static void main(final String[] args) throws Throwable {
     final BinaryMemcacheClient<String> client =
-            new MemcacheClientBuilder<>(StringTranscoder.UTF8_INSTANCE)
+            MemcacheClientBuilder.newStringClient()
                     .withAddress("127.0.0.1")
                     .withMaxOutstandingRequests(100000)
                     .connectBinary();
