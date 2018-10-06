@@ -41,19 +41,31 @@ public class DefaultAuthenticatedMemcacheClientTest {
   private static final String PASSWORD = "a_nice_password";
 
   private static MemcachedServer server;
+  private static MemcachedServer noauthserver;
 
   @BeforeClass
   public static void setUpClass() {
     server = new MemcachedServer(USERNAME, PASSWORD);
+    noauthserver = new MemcachedServer();
   }
 
   @AfterClass
   public static void tearDownClass() {
     server.stop();
+    noauthserver.stop();
   }
 
   @Test
   public void testAuthenticateAndSet() throws InterruptedException, TimeoutException {
+    testAuthenticationSuccess(server);
+  }
+
+  @Test
+  public void testAuthenticateNoSASLServer() throws InterruptedException, TimeoutException {
+    testAuthenticationSuccess(noauthserver);
+  }
+
+  private void testAuthenticationSuccess(final MemcachedServer server) throws TimeoutException, InterruptedException {
     MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
         .withAddress(server.getHost(), server.getPort())
         .withUsernamePassword(USERNAME, PASSWORD)

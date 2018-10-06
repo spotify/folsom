@@ -18,6 +18,7 @@ package com.spotify.folsom.client.binary;
 
 import static com.spotify.folsom.MemcacheStatus.OK;
 import static com.spotify.folsom.MemcacheStatus.UNAUTHORIZED;
+import static com.spotify.folsom.MemcacheStatus.UNKNOWN_COMMAND;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
@@ -69,11 +70,14 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     }
 
     MemcacheStatus status = reply.status;
-    if (status != OK && status != UNAUTHORIZED) {
+    if (status == UNKNOWN_COMMAND) {
+      // Unknown command implies no authorization needed.
+      succeed(OK);
+    } else if (status == OK || status == UNAUTHORIZED) {
+      succeed(status);
+    } else {
       fail(new IOException(
           String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString())));
     }
-
-    succeed(status);
   }
 }
