@@ -16,7 +16,6 @@
 package com.spotify.folsom.authenticate;
 
 import static com.spotify.folsom.MemcacheStatus.OK;
-import static com.spotify.folsom.transcoder.StringTranscoder.UTF8_INSTANCE;
 import static com.spotify.hamcrest.future.CompletableFutureMatchers.stageWillCompleteWithValueThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -67,7 +66,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
   }
 
   private void testAuthenticationSuccess(final MemcachedServer server) throws TimeoutException, InterruptedException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .withUsernamePassword(USERNAME, PASSWORD)
         .connectBinary();
@@ -80,7 +79,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void testFailedAuthentication() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .withUsernamePassword(USERNAME, "wrong_password")
         .connectBinary();
@@ -91,7 +90,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void unAuthorizedBinaryClientFails() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .connectBinary();
 
@@ -101,7 +100,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void unAuthorizedAsciiClientFails() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .connectAscii();
 
@@ -113,7 +112,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
   public void testSASLWithAsciiFails() {
     thrown.expect(IllegalArgumentException.class);
 
-    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .withUsernamePassword(USERNAME, PASSWORD)
         .connectAscii();
