@@ -21,6 +21,7 @@ import static com.spotify.hamcrest.future.CompletableFutureMatchers.stageWillCom
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+import com.spotify.folsom.BinaryMemcacheClient;
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.MemcacheClientBuilder;
@@ -118,4 +119,28 @@ public class DefaultAuthenticatedMemcacheClientTest {
         .connectAscii();
   }
 
+  @Test
+  public void testKetamaFailure() throws TimeoutException, InterruptedException {
+    BinaryMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+        .withAddress(server.getHost(), server.getPort())
+        .withAddress(noauthserver.getHost(), noauthserver.getPort())
+        .connectBinary();
+
+    thrown.expect(MemcacheAuthenticationException.class);
+    client.awaitConnected(20, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testKetamaSuccess() throws TimeoutException, InterruptedException {
+    BinaryMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+        .withAddress(server.getHost(), server.getPort())
+        .withAddress(noauthserver.getHost(), noauthserver.getPort())
+        .withUsernamePassword(USERNAME, PASSWORD)
+        .connectBinary();
+
+    client.awaitConnected(20, TimeUnit.SECONDS);
+
+    assertThat(client.set("some_key", "some_val", 1).toCompletableFuture(),
+        stageWillCompleteWithValueThat(is(OK)));
+  }
 }
