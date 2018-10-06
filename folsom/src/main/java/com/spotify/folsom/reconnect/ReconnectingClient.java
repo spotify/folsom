@@ -18,8 +18,6 @@ package com.spotify.folsom.reconnect;
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.authenticate.AuthenticatingClient;
 import com.spotify.folsom.authenticate.Authenticator;
-import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
-import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
 import com.spotify.folsom.guava.HostAndPort;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -77,42 +75,16 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                             final Class<? extends Channel> channelClass) {
     this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
         address, outstandingRequestLimit, binary, executor, timeoutMillis, charset,
-        metrics, maxSetLength, eventLoopGroup, channelClass), binary, authenticator, address);
-  }
-
-  public ReconnectingClient(final BackoffFunction backoffFunction,
-                            final ScheduledExecutorService scheduledExecutorService,
-                            final HostAndPort address,
-                            final int outstandingRequestLimit,
-                            final boolean binary,
-                            final Executor executor,
-                            final long timeoutMillis,
-                            final Charset charset,
-                            final Metrics metrics,
-                            final int maxSetLength,
-                            final EventLoopGroup eventLoopGroup,
-                            final Class<? extends Channel> channelClass) {
-    this(backoffFunction, scheduledExecutorService, () -> DefaultRawMemcacheClient.connect(
-        address, outstandingRequestLimit, binary, executor, timeoutMillis, charset, metrics,
-        maxSetLength, eventLoopGroup, channelClass), binary, getValidator(binary), address);
-  }
-
-  private static Authenticator getValidator(final boolean binary) {
-    if (binary) {
-      return new BinaryAuthenticationValidator();
-    } else {
-      return new AsciiAuthenticationValidator();
-    }
+        metrics, maxSetLength, eventLoopGroup, channelClass), authenticator, address);
   }
 
   private ReconnectingClient(final BackoffFunction backoffFunction,
                              final ScheduledExecutorService scheduledExecutorService,
                              final Connector connector,
-                             final boolean binary,
                              final Authenticator authenticator,
                              final HostAndPort address) {
     this(backoffFunction, scheduledExecutorService,
-        () -> AuthenticatingClient.authenticate(connector, binary, authenticator), address);
+        () -> AuthenticatingClient.authenticate(connector, authenticator), address);
   }
 
   ReconnectingClient(final BackoffFunction backoffFunction,

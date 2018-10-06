@@ -22,6 +22,12 @@ import java.util.concurrent.CompletionStage;
 
 public class BinaryAuthenticationValidator implements Authenticator {
 
+  public static final BinaryAuthenticationValidator INSTANCE
+      = new BinaryAuthenticationValidator();
+
+  private BinaryAuthenticationValidator() {
+  }
+
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(
       CompletionStage<RawMemcacheClient> clientFuture) {

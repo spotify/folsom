@@ -24,10 +24,7 @@ public class AuthenticatingClient {
 
   public static CompletionStage<RawMemcacheClient> authenticate(
       Connector connector,
-      final boolean binary,
       final Authenticator authenticator) {
-
-    authenticator.validate(binary);
 
     CompletionStage<RawMemcacheClient> client = connector.connect();
 

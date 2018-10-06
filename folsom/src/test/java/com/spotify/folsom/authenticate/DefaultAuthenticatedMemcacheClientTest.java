@@ -108,4 +108,14 @@ public class DefaultAuthenticatedMemcacheClientTest {
     client.awaitConnected(1, TimeUnit.SECONDS);
   }
 
+  @Test
+  public void testSASLWithAsciiFails() {
+    thrown.expect(IllegalArgumentException.class);
+
+    MemcacheClient<String> client = new MemcacheClientBuilder<>(UTF8_INSTANCE)
+        .withAddress(server.getHost(), server.getPort())
+        .withUsernamePassword(USERNAME, PASSWORD)
+        .connectAscii();
+  }
+
 }

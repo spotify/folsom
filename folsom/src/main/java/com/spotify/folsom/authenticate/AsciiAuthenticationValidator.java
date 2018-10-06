@@ -29,7 +29,13 @@ import java.util.concurrent.CompletionStage;
  */
 public class AsciiAuthenticationValidator implements Authenticator {
 
+  public static final AsciiAuthenticationValidator INSTANCE
+      = new AsciiAuthenticationValidator();
+
   private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.US_ASCII);
+
+  private AsciiAuthenticationValidator() {
+  }
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(

@@ -21,6 +21,12 @@ import java.util.concurrent.CompletionStage;
 
 public class NoAuthenticationValidation implements Authenticator {
 
+  public static final NoAuthenticationValidation INSTANCE
+      = new NoAuthenticationValidation();
+
+  private NoAuthenticationValidation() {
+  }
+
   public CompletionStage<RawMemcacheClient> authenticate(
       CompletionStage<RawMemcacheClient> clientFuture) {
 
