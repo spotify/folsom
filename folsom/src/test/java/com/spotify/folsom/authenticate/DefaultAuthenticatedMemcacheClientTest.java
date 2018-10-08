@@ -119,14 +119,14 @@ public class DefaultAuthenticatedMemcacheClientTest {
   }
 
   @Test
-  public void testKetamaFailure() throws TimeoutException, InterruptedException {
+  public void testKetamaFailure() throws InterruptedException, TimeoutException {
     BinaryMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
         .withAddress(server.getHost(), server.getPort())
         .withAddress(noauthserver.getHost(), noauthserver.getPort())
         .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
-    client.awaitConnected(20, TimeUnit.SECONDS);
+    client.awaitFullyConnected(10, TimeUnit.SECONDS);
   }
 
   @Test

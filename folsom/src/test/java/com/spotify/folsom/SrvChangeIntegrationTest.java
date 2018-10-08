@@ -83,8 +83,7 @@ public class SrvChangeIntegrationTest {
     DefaultAsciiMemcacheClient client2 = (DefaultAsciiMemcacheClient) this.client;
     srvKetamaClient = (SrvKetamaClient) client2.getRawMemcacheClient();
 
-
-    KetamaIntegrationTest.allClientsConnected(client);
+    client.awaitFullyConnected(10, TimeUnit.SECONDS);
     servers.flush();
   }
 

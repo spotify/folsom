@@ -54,7 +54,7 @@ public class SrvKetamaIntegrationTest {
             .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 
-    KetamaIntegrationTest.allClientsConnected(client);
+    client.awaitFullyConnected(10, TimeUnit.SECONDS);
     servers.flush();
   }
 
