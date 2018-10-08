@@ -230,7 +230,7 @@ public class MisbehavingServerTest {
           String s;
           while (true) {
             s = reader.readLine();
-            if (s.equals("get a")) {
+            if (s.equals("get folsom_authentication_validation")) {
               // Handle authentication phase first
               socket.getOutputStream().write("END\r\n".getBytes(Charsets.UTF_8));
               socket.getOutputStream().flush();
