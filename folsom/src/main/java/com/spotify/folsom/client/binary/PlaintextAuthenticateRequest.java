@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.spotify.folsom.MemcacheStatus.OK;
 import static com.spotify.folsom.MemcacheStatus.UNAUTHORIZED;
 import static com.spotify.folsom.MemcacheStatus.UNKNOWN_COMMAND;
@@ -39,8 +40,8 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     // Key is auth type
     super(KEY);
 
-    this.username = username;
-    this.password = password;
+    this.username = checkNotNull(username);
+    this.password = checkNotNull(password);
   }
 
   @Override

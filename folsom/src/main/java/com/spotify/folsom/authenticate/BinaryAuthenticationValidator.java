@@ -22,8 +22,12 @@ import java.util.concurrent.CompletionStage;
 
 public class BinaryAuthenticationValidator implements Authenticator {
 
-  public static final BinaryAuthenticationValidator INSTANCE
+  private static final BinaryAuthenticationValidator INSTANCE
       = new BinaryAuthenticationValidator();
+
+  public static BinaryAuthenticationValidator getInstance() {
+    return INSTANCE;
+  }
 
   private BinaryAuthenticationValidator() {
   }

@@ -21,8 +21,12 @@ import java.util.concurrent.CompletionStage;
 
 public class NoAuthenticationValidation implements Authenticator {
 
-  public static final NoAuthenticationValidation INSTANCE
+  private static final NoAuthenticationValidation INSTANCE
       = new NoAuthenticationValidation();
+
+  public static NoAuthenticationValidation getInstance() {
+    return INSTANCE;
+  }
 
   private NoAuthenticationValidation() {
   }

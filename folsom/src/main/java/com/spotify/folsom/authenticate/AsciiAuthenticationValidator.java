@@ -25,14 +25,18 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
- * If SASL is enabled than ascii protocol won't be allowed at all, so we simply expect a connection closed.
+ * If SASL is enabled then ascii protocol won't be allowed at all, so we simply expect a connection closed.
  */
 public class AsciiAuthenticationValidator implements Authenticator {
 
-  public static final AsciiAuthenticationValidator INSTANCE
+  private static final AsciiAuthenticationValidator INSTANCE
       = new AsciiAuthenticationValidator();
 
-  private static final byte[] EXAMPLE_KEY = "a".getBytes(Charsets.US_ASCII);
+  public static AsciiAuthenticationValidator getInstance() {
+    return INSTANCE;
+  }
+
+  private static final byte[] EXAMPLE_KEY = "folsom_authentication_validation".getBytes(Charsets.US_ASCII);
 
   private AsciiAuthenticationValidator() {
   }

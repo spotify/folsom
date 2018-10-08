@@ -16,6 +16,8 @@
 
 package com.spotify.folsom.authenticate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
@@ -27,15 +29,15 @@ public class PlaintextAuthenticator implements Authenticator {
   private final String username;
   private final String password;
 
-  public PlaintextAuthenticator(String username, String password) {
-    this.username = username;
-    this.password = password;
+  public PlaintextAuthenticator(final String username, final String password) {
+    this.username = checkNotNull(username);
+    this.password = checkNotNull(password);
   }
 
   public CompletionStage<RawMemcacheClient> authenticate(
-      CompletionStage<RawMemcacheClient> clientFuture) {
+      final CompletionStage<RawMemcacheClient> clientFuture) {
 
-    PlaintextAuthenticateRequest
+    final PlaintextAuthenticateRequest
         authenticateRequest = new PlaintextAuthenticateRequest(username, password);
 
     return clientFuture.thenCompose(
