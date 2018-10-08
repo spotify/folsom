@@ -44,7 +44,7 @@ public class BinaryAuthenticationValidator implements Authenticator {
   @Override
   public void validate(final boolean binary) {
     if (!binary) {
-      throw new RuntimeException("Programmer error: wrong validator used");
+      throw new IllegalStateException("Programmer error: wrong validator used");
     }
   }
 }
