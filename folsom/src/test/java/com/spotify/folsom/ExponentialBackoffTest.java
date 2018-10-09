@@ -15,9 +15,9 @@
  */
 package com.spotify.folsom;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 public class ExponentialBackoffTest {
 
@@ -36,6 +36,5 @@ public class ExponentialBackoffTest {
     assertEquals(minTime * factor, exponentialBackoff.getBackoffTimeMillis(2), EPSILON);
     assertEquals(minTime * factor * factor, exponentialBackoff.getBackoffTimeMillis(3), EPSILON);
     assertEquals(maxTime, exponentialBackoff.getBackoffTimeMillis(10), EPSILON);
-
   }
 }

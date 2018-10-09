@@ -21,7 +21,6 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -31,11 +30,8 @@ public class IncrRequest extends BinaryRequest<Long> {
   private final long initial;
   private final int ttl;
 
-  public IncrRequest(final byte[] key,
-                     final byte opcode,
-                     final long by,
-                     final long initial,
-                     final int ttl) {
+  public IncrRequest(
+      final byte[] key, final byte opcode, final long by, final long initial, final int ttl) {
     super(key);
     this.opcode = opcode;
     this.by = by;

@@ -17,22 +17,22 @@ package com.spotify.folsom.retry;
 
 import static com.spotify.folsom.client.Utils.unwrap;
 
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletionStage;
 
 /**
- * A simple wrapping client that retries once (but only for MemcacheClosedException's).
- * This helps avoid some transient problems when a node suddenly stops. It's mostly useful
- * in combination with a client that internally routes to multiple nodes such as
- * the Ketama client or RoundRobin client. It won't prevent all MemcacheClosedException's from
- * propagating, it will just reduce the frequency in some cases.
+ * A simple wrapping client that retries once (but only for MemcacheClosedException's). This helps
+ * avoid some transient problems when a node suddenly stops. It's mostly useful in combination with
+ * a client that internally routes to multiple nodes such as the Ketama client or RoundRobin client.
+ * It won't prevent all MemcacheClosedException's from propagating, it will just reduce the
+ * frequency in some cases.
  *
- * The retrying is intentionally strict about when to retry and how many times to retries in order
- * to minimize risk of causing more problems then it would solve.
+ * <p>The retrying is intentionally strict about when to retry and how many times to retries in
+ * order to minimize risk of causing more problems then it would solve.
  */
 public class RetryingClient implements RawMemcacheClient {
 
@@ -45,14 +45,16 @@ public class RetryingClient implements RawMemcacheClient {
   @Override
   public <T> CompletionStage<T> send(final Request<T> request) {
     final CompletionStage<T> future = delegate.send(request);
-    return CompletableFutures.exceptionallyCompose(future, e -> {
-      e = unwrap(e);
-      if (e instanceof MemcacheClosedException && delegate.isConnected()) {
-        return delegate.send(request);
-      } else {
-        return CompletableFutures.exceptionallyCompletedFuture(e);
-      }
-    });
+    return CompletableFutures.exceptionallyCompose(
+        future,
+        e -> {
+          e = unwrap(e);
+          if (e instanceof MemcacheClosedException && delegate.isConnected()) {
+            return delegate.send(request);
+          } else {
+            return CompletableFutures.exceptionallyCompletedFuture(e);
+          }
+        });
   }
 
   @Override
@@ -94,5 +96,4 @@ public class RetryingClient implements RawMemcacheClient {
   public String toString() {
     return "Retrying(" + delegate + ")";
   }
-
 }

@@ -16,30 +16,30 @@
 
 package com.spotify.folsom;
 
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.Request;
+import java.util.concurrent.CompletionStage;
 
-/**
- * A raw memcache client, mostly useful internally
- */
+/** A raw memcache client, mostly useful internally */
 public interface RawMemcacheClient extends ObservableClient {
 
   <T> CompletionStage<T> send(Request<T> request);
 
   /**
-   * Shut down the client. Use {@link #registerForConnectionChanges(ConnectionChangeListener)} to
-   * to get notified when it has (possibly) finished shutting down
+   * Shut down the client. Use {@link #registerForConnectionChanges(ConnectionChangeListener)} to to
+   * get notified when it has (possibly) finished shutting down
    */
   void shutdown();
 
   /**
    * How many actual socket connections do we have, including currently disconnected clients.
+   *
    * @return the number of total connections
    */
   int numTotalConnections();
 
   /**
    * How many active socket connections do we have (i.e. not disconnected)
+   *
    * @return the number of active connections
    */
   int numActiveConnections();

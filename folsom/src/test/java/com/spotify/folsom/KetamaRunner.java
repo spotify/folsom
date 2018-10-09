@@ -17,19 +17,18 @@
 package com.spotify.folsom;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.concurrent.CompletionStage;
-
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 public class KetamaRunner {
 
   public static void main(final String[] args) throws Throwable {
     final BinaryMemcacheClient<String> client =
-            MemcacheClientBuilder.newStringClient()
-                    .withAddress("127.0.0.1", 11211)
-                    .withAddress("127.0.0.1", 11213)
-                    .connectBinary();
+        MemcacheClientBuilder.newStringClient()
+            .withAddress("127.0.0.1", 11211)
+            .withAddress("127.0.0.1", 11213)
+            .connectBinary();
 
     for (int i = 0; i < 10; i++) {
       final String key = "key" + i;
@@ -48,9 +47,8 @@ public class KetamaRunner {
     checkStatus(future, ImmutableSet.of(MemcacheStatus.KEY_NOT_FOUND, MemcacheStatus.OK));
   }
 
-  private static void checkStatus(final CompletionStage<?> future,
-                                  final Set<MemcacheStatus> expected)
-      throws Throwable {
+  private static void checkStatus(
+      final CompletionStage<?> future, final Set<MemcacheStatus> expected) throws Throwable {
     try {
       final Object v = future.toCompletableFuture().get();
       if (v == null && expected.contains(MemcacheStatus.KEY_NOT_FOUND)) {

@@ -15,12 +15,11 @@
  */
 package com.spotify.folsom.client;
 
-import java.util.function.Function;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TransformerUtil<T> {
@@ -36,7 +35,6 @@ public class TransformerUtil<T> {
     this.listResultDecoder = new ListResultDecoder<>(resultDecoder);
   }
 
-
   public CompletionStage<T> unwrap(CompletionStage<GetResult<T>> future) {
     return future.thenApply(getResultToValue);
   }
@@ -50,7 +48,7 @@ public class TransformerUtil<T> {
   }
 
   public CompletionStage<List<GetResult<T>>> decodeList(
-          CompletionStage<List<GetResult<byte[]>>> future) {
+      CompletionStage<List<GetResult<byte[]>>> future) {
     return future.thenApply(listResultDecoder);
   }
 
@@ -94,7 +92,7 @@ public class TransformerUtil<T> {
   }
 
   private static class ListResultDecoder<T>
-          implements Function<List<GetResult<byte[]>>, List<GetResult<T>>> {
+      implements Function<List<GetResult<byte[]>>, List<GetResult<T>>> {
     private final ResultDecoder<T> resultDecoder;
 
     public ListResultDecoder(ResultDecoder<T> resultDecoder) {

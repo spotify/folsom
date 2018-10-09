@@ -16,19 +16,18 @@
 
 package com.spotify.folsom.roundrobin;
 
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A client that tries to distribute requests equally to all delegate clients.
- * This would typically only make sense if all the delegates are pointing to the same
- * host/port which might be a reasonable thing to do if the IO operations is a bottleneck.
+ * A client that tries to distribute requests equally to all delegate clients. This would typically
+ * only make sense if all the delegates are pointing to the same host/port which might be a
+ * reasonable thing to do if the IO operations is a bottleneck.
  */
 public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
   private final AtomicInteger counter = new AtomicInteger(0);

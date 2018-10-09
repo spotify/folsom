@@ -17,17 +17,14 @@
 package com.spotify.folsom.transcoder;
 
 import com.spotify.folsom.Transcoder;
-import org.apache.commons.lang.SerializationUtils;
-
 import java.io.Serializable;
-
+import org.apache.commons.lang.SerializationUtils;
 
 public final class SerializableObjectTranscoder implements Transcoder<Serializable> {
 
   public static final SerializableObjectTranscoder INSTANCE = new SerializableObjectTranscoder();
 
-  private SerializableObjectTranscoder() {
-  }
+  private SerializableObjectTranscoder() {}
 
   @Override
   public byte[] encode(final Serializable t) {
@@ -38,5 +35,4 @@ public final class SerializableObjectTranscoder implements Transcoder<Serializab
   public Serializable decode(final byte[] b) {
     return (Serializable) SerializationUtils.deserialize(b);
   }
-
 }

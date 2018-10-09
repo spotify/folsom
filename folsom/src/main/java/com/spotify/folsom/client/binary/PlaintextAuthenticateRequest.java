@@ -77,8 +77,9 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     } else if (status == OK || status == UNAUTHORIZED) {
       succeed(status);
     } else {
-      fail(new IOException(
-          String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString())));
+      fail(
+          new IOException(
+              String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString())));
     }
   }
 }

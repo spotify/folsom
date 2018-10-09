@@ -27,8 +27,8 @@ public interface AsciiMemcacheClient<V> extends MemcacheClient<V> {
   /**
    * Increment a counter for the provided key
    *
-   * @param key     The key, must not be null
-   * @param by      The value to increment the counter by
+   * @param key The key, must not be null
+   * @param by The value to increment the counter by
    * @return A future representing completion of the request, with the new value of the counter
    */
   CompletionStage<Long> incr(String key, long by);
@@ -36,8 +36,8 @@ public interface AsciiMemcacheClient<V> extends MemcacheClient<V> {
   /**
    * Decrement a counter for the provided key
    *
-   * @param key     The key, must not be null
-   * @param by      The value to decrement the counter by
+   * @param key The key, must not be null
+   * @param by The value to decrement the counter by
    * @return A future representing completion of the request, with the new value of the counter
    */
   CompletionStage<Long> decr(String key, long by);

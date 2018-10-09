@@ -35,8 +35,7 @@ public class MisbehavingServerTest {
   private Server server;
 
   @Before
-  public void setup() throws Exception {
-  }
+  public void setup() throws Exception {}
 
   @After
   public void tearDown() throws Exception {
@@ -120,13 +119,9 @@ public class MisbehavingServerTest {
 
   @Test
   public void testTooManyAsciiValues() throws Throwable {
-    testAsciiGet("" +
-            "VALUE key 123 0\r\n" +
-            "\r\n" +
-            "VALUE key 123 0\r\n" +
-            "\r\n" +
-            "END\r\n",
-            "Too many responses, expected 1 but got 2");
+    testAsciiGet(
+        "" + "VALUE key 123 0\r\n" + "\r\n" + "VALUE key 123 0\r\n" + "\r\n" + "END\r\n",
+        "Too many responses, expected 1 but got 2");
   }
 
   @Test
@@ -191,7 +186,8 @@ public class MisbehavingServerTest {
 
   private MemcacheClient<String> setupAscii(String response) throws Exception {
     server = new Server(response);
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress("127.0.0.8", server.port)
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
@@ -212,44 +208,46 @@ public class MisbehavingServerTest {
       final byte[] response = responseString.getBytes(Charsets.UTF_8);
       serverSocket = new ServerSocket(0);
       port = serverSocket.getLocalPort();
-      thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            socket = serverSocket.accept();
-            handleConnection(socket);
-          } catch (Throwable e) {
-            failure = e;
-            failure.printStackTrace();
-          }
-        }
+      thread =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    socket = serverSocket.accept();
+                    handleConnection(socket);
+                  } catch (Throwable e) {
+                    failure = e;
+                    failure.printStackTrace();
+                  }
+                }
 
-        private void handleConnection(Socket socket) throws Exception {
-          BufferedReader reader =
-              new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
-          String s;
-          while (true) {
-            s = reader.readLine();
-            if (s.equals("get folsom_authentication_validation")) {
-              // Handle authentication phase first
-              socket.getOutputStream().write("END\r\n".getBytes(Charsets.UTF_8));
-              socket.getOutputStream().flush();
-            } else {
-              break;
-            }
-          }
-          if (s.startsWith("get ") || s.startsWith("touch ")) {
-            // Don't need to read any more lines
-          } else if (s.startsWith("set ")) {
-            // Read the value too
-            reader.readLine();
-          } else {
-            throw new RuntimeException("Unhandled command: " + s);
-          }
-          socket.getOutputStream().write(response);
-          socket.getOutputStream().flush();
-        }
-      });
+                private void handleConnection(Socket socket) throws Exception {
+                  BufferedReader reader =
+                      new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
+                  String s;
+                  while (true) {
+                    s = reader.readLine();
+                    if (s.equals("get folsom_authentication_validation")) {
+                      // Handle authentication phase first
+                      socket.getOutputStream().write("END\r\n".getBytes(Charsets.UTF_8));
+                      socket.getOutputStream().flush();
+                    } else {
+                      break;
+                    }
+                  }
+                  if (s.startsWith("get ") || s.startsWith("touch ")) {
+                    // Don't need to read any more lines
+                  } else if (s.startsWith("set ")) {
+                    // Read the value too
+                    reader.readLine();
+                  } else {
+                    throw new RuntimeException("Unhandled command: " + s);
+                  }
+                  socket.getOutputStream().write(response);
+                  socket.getOutputStream().flush();
+                }
+              });
       thread.setName("misbehaving-server-thread-" + port);
       thread.start();
     }

@@ -18,36 +18,34 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 public class LoadTestRunner {
 
   public static void main(final String[] args) throws Throwable {
     final BinaryMemcacheClient<String> client =
-            MemcacheClientBuilder.newStringClient()
-                    .withAddress("127.0.0.1")
-                    .withMaxOutstandingRequests(100000)
-                    .connectBinary();
+        MemcacheClientBuilder.newStringClient()
+            .withAddress("127.0.0.1")
+            .withMaxOutstandingRequests(100000)
+            .connectBinary();
 
     final String[] keys = new String[10];
     for (int i = 0; i < 10; i++) {
       keys[i] = "key" + i;
     }
 
-
-
     final List<CompletionStage<Boolean>> futures = Lists.newArrayList();
     for (int r = 0; r < 100; r++) {
       for (final String keyProto : keys) {
         final String key = keyProto + ":" + r;
 
-        futures.add(client
-            .set(key, "value" + key, 100000)
-            .thenCompose(input -> client.get(key))
-            .thenCompose(value -> client.delete(key).thenApply(input -> value))
-            .thenApply(input -> input.equals("value" + key)));
+        futures.add(
+            client
+                .set(key, "value" + key, 100000)
+                .thenCompose(input -> client.get(key))
+                .thenCompose(value -> client.delete(key).thenApply(input -> value))
+                .thenApply(input -> input.equals("value" + key)));
       }
     }
 
@@ -60,7 +58,6 @@ public class LoadTestRunner {
       }
     }
     System.out.println(failed + " failed of " + asserts.size());
-
 
     client.shutdown();
   }

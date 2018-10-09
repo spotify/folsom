@@ -16,33 +16,29 @@
 
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
-
 import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
-
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-
-import static org.junit.Assert.assertEquals;
 
 public class MemcacheClientStressTest {
 
@@ -55,6 +51,7 @@ public class MemcacheClientStressTest {
   private MemcacheClient<byte[]> client;
 
   private int connections;
+
   @Before
   public void setUp() throws Exception {
     server = new MemcachedServer();
@@ -64,10 +61,10 @@ public class MemcacheClientStressTest {
     lc.getLogger(MemcachedCommandHandler.class).setLevel(Level.ERROR);
     workerExecutor = Executors.newFixedThreadPool(100);
 
-
-    client = MemcacheClientBuilder.newByteArrayClient()
-        .withAddress(server.getHost(), server.getPort())
-        .connectAscii();
+    client =
+        MemcacheClientBuilder.newByteArrayClient()
+            .withAddress(server.getHost(), server.getPort())
+            .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
@@ -96,9 +93,10 @@ public class MemcacheClientStressTest {
       }
 
       client.shutdown();
-      client = MemcacheClientBuilder.newByteArrayClient()
-          .withAddress(server.getHost(), server.getPort())
-          .connectBinary();
+      client =
+          MemcacheClientBuilder.newByteArrayClient()
+              .withAddress(server.getHost(), server.getPort())
+              .connectBinary();
       CompletableFutures.allAsList(futures).get();
 
       System.out.println("success: " + successes.get());
@@ -114,28 +112,30 @@ public class MemcacheClientStressTest {
     }
   }
 
-  private void addRequest(final MemcacheClient<byte[]> client,
-                          final List<CompletionStage<byte[]>> futures,
-                          final AtomicInteger successes,
-                          final ConcurrentMap<String, AtomicInteger> failures) {
+  private void addRequest(
+      final MemcacheClient<byte[]> client,
+      final List<CompletionStage<byte[]>> futures,
+      final AtomicInteger successes,
+      final ConcurrentMap<String, AtomicInteger> failures) {
     final CompletionStage<byte[]> future = client.get(KEY);
-    future.whenComplete((result, t) -> {
-      if (t == null) {
-        successes.incrementAndGet();
-      } else {
-        final AtomicInteger newCounter = new AtomicInteger();
-        String message = t.getMessage();
-        if (message == null) {
-          message = "";
-        }
-        final AtomicInteger old = failures.putIfAbsent(message, newCounter);
-        if (old == null) {
-          newCounter.incrementAndGet();
-        } else {
-          old.incrementAndGet();
-        }
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          if (t == null) {
+            successes.incrementAndGet();
+          } else {
+            final AtomicInteger newCounter = new AtomicInteger();
+            String message = t.getMessage();
+            if (message == null) {
+              message = "";
+            }
+            final AtomicInteger old = failures.putIfAbsent(message, newCounter);
+            if (old == null) {
+              newCounter.incrementAndGet();
+            } else {
+              old.incrementAndGet();
+            }
+          }
+        });
     futures.add(future);
   }
 
@@ -147,6 +147,4 @@ public class MemcacheClientStressTest {
     client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(connections, Utils.getGlobalConnectionCount());
   }
-
-
 }

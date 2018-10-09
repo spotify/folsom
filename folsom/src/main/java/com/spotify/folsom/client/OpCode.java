@@ -16,11 +16,9 @@
 
 package com.spotify.folsom.client;
 
-
 public final class OpCode {
 
-  private OpCode() {
-  }
+  private OpCode() {}
 
   public static final byte GET = 0x00;
   public static final byte SET = 0x01;

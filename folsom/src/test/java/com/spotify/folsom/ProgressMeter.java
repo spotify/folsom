@@ -13,10 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-/**
- * Copyright (C) 2014 Spotify AB
- */
-
+/** Copyright (C) 2014 Spotify AB */
 package com.spotify.folsom;
 
 import java.lang.management.ManagementFactory;
@@ -60,16 +57,18 @@ public class ProgressMeter {
 
   public ProgressMeter(final String unit) {
     this.unit = unit;
-    worker = new Thread(() -> {
-      while (run) {
-        try {
-          Thread.sleep(interval);
-        } catch (InterruptedException e) {
-          continue;
-        }
-        progress();
-      }
-    });
+    worker =
+        new Thread(
+            () -> {
+              while (run) {
+                try {
+                  Thread.sleep(interval);
+                } catch (InterruptedException e) {
+                  continue;
+                }
+                progress();
+              }
+            });
     worker.start();
   }
 
@@ -108,15 +107,8 @@ public class ProgressMeter {
     double processCPU = 100.0 * operatingSystemMXBean.getProcessCpuLoad();
     System.out.printf(
         "%,10d (%,10d) %s/s. %,10.9f ms average latency. "
-        + "%,10d %s total. process=%3.0f%%, total=%3.0f%%\n",
-        operations,
-        averagedOperations,
-        unit,
-        averageLatency,
-        count,
-        unit,
-        processCPU,
-        totalCPU);
+            + "%,10d %s total. process=%3.0f%%, total=%3.0f%%\n",
+        operations, averagedOperations, unit, averageLatency, count, unit, processCPU, totalCPU);
     System.out.flush();
 
     lastRows = count;

@@ -20,16 +20,15 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
 
-public class SetRequest
-        extends AsciiRequest<MemcacheStatus>
-        implements com.spotify.folsom.client.SetRequest {
+public class SetRequest extends AsciiRequest<MemcacheStatus>
+    implements com.spotify.folsom.client.SetRequest {
 
   private static final EnumMap<Operation, byte[]> CMD;
+
   static {
     CMD = new EnumMap<>(Operation.class);
     CMD.put(Operation.SET, "set ".getBytes(Charsets.US_ASCII));
@@ -47,9 +46,12 @@ public class SetRequest
   private final int ttl;
   private final long cas;
 
-  private SetRequest(final Operation operation,
-                     final byte[] key,
-                     final byte[] value, final int ttl, final long cas) {
+  private SetRequest(
+      final Operation operation,
+      final byte[] key,
+      final byte[] value,
+      final int ttl,
+      final long cas) {
     super(key);
     this.operation = operation;
     this.value = value;
@@ -57,15 +59,13 @@ public class SetRequest
     this.cas = cas;
   }
 
-  public static SetRequest casSet(final byte[] key, final byte[] value,
-                                  final int ttl, final long cas) {
+  public static SetRequest casSet(
+      final byte[] key, final byte[] value, final int ttl, final long cas) {
     return new SetRequest(Operation.CAS, key, value, ttl, cas);
   }
 
-  public static SetRequest create(final Operation operation,
-                                  final byte[] key,
-                                  final byte[] value,
-                                  final int ttl) {
+  public static SetRequest create(
+      final Operation operation, final byte[] key, final byte[] value, final int ttl) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }
@@ -97,8 +97,8 @@ public class SetRequest
     }
   }
 
-  private static ByteBuf toBufferWithValueAndNewLine(final ByteBufAllocator alloc, ByteBuffer dst,
-                                                     byte[] value) {
+  private static ByteBuf toBufferWithValueAndNewLine(
+      final ByteBufAllocator alloc, ByteBuffer dst, byte[] value) {
     ByteBuf buffer = toBuffer(alloc, dst, value.length + NEWLINE_BYTES.length);
     buffer.writeBytes(value);
     buffer.writeBytes(NEWLINE_BYTES);
@@ -130,7 +130,12 @@ public class SetRequest
   }
 
   public enum Operation {
-    SET, ADD, REPLACE, APPEND, PREPEND, CAS
+    SET,
+    ADD,
+    REPLACE,
+    APPEND,
+    PREPEND,
+    CAS
   }
 
   @Override

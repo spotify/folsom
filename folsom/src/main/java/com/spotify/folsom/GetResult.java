@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-
 import com.google.common.base.Preconditions;
 
 public class GetResult<V> {
@@ -42,7 +41,6 @@ public class GetResult<V> {
     return cas;
   }
 
-  // CHECKSTYLE:OFF
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -62,5 +60,4 @@ public class GetResult<V> {
     result = 31 * result + (int) (cas ^ (cas >>> 32));
     return result;
   }
-  // CHECKSTYLE:ON
 }

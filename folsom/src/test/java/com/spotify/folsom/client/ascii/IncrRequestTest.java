@@ -16,14 +16,12 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.base.Charsets;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import org.junit.Test;
 
 public class IncrRequestTest extends RequestTestTemplate {
 

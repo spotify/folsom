@@ -15,49 +15,45 @@
  */
 package com.spotify.folsom.client;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.spotify.folsom.MemcachedServer;
-import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
-import com.google.common.util.concurrent.MoreExecutors;
-
-import com.spotify.folsom.GetResult;
-import com.spotify.folsom.MemcacheClosedException;
-import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.ascii.AsciiRequest;
-import com.spotify.folsom.client.ascii.AsciiResponse;
-import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
-import com.spotify.folsom.client.ascii.GetRequest;
-import com.spotify.folsom.transcoder.StringTranscoder;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-
 import static com.spotify.folsom.client.Utils.unwrap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.spotify.folsom.GetResult;
+import com.spotify.folsom.MemcacheClosedException;
+import com.spotify.folsom.MemcachedServer;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.ascii.AsciiRequest;
+import com.spotify.folsom.client.ascii.AsciiResponse;
+import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
+import com.spotify.folsom.client.ascii.GetRequest;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.transcoder.StringTranscoder;
+import com.spotify.futures.CompletableFutures;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class DefaultRawMemcacheClientTest {
 
@@ -77,23 +73,28 @@ public class DefaultRawMemcacheClientTest {
   public void testInvalidRequest() throws Exception {
     final String exceptionString = "Crash the client";
 
-    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        HostAndPort.fromParts(server.getHost(), server.getPort()),
-        5000,
-        false,
-        null,
-        3000,
-        Charsets.UTF_8,
-        new NoopMetrics(), 1024 * 1024,
-        null,
-        null
-    ).toCompletableFuture().get();
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                HostAndPort.fromParts(server.getHost(), server.getPort()),
+                5000,
+                false,
+                null,
+                3000,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     DefaultAsciiMemcacheClient<String> asciiClient =
-            new DefaultAsciiMemcacheClient<>(
-                    rawClient, new NoopMetrics(),
-                    new StringTranscoder(Charsets.UTF_8), Charsets.UTF_8,
-                MemcacheEncoder.MAX_KEY_LEN);
+        new DefaultAsciiMemcacheClient<>(
+            rawClient,
+            new NoopMetrics(),
+            new StringTranscoder(Charsets.UTF_8),
+            Charsets.UTF_8,
+            MemcacheEncoder.MAX_KEY_LEN);
 
     try {
       List<CompletionStage<?>> futures = Lists.newArrayList();
@@ -142,19 +143,23 @@ public class DefaultRawMemcacheClientTest {
   private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient)
       throws InterruptedException {
     try {
-      rawClient.send(new AsciiRequest<String>("key".getBytes(Charsets.UTF_8)) {
-        @Override
-        protected void handle(AsciiResponse response) throws IOException {
-          throw new IOException(exceptionString);
-        }
+      rawClient
+          .send(
+              new AsciiRequest<String>("key".getBytes(Charsets.UTF_8)) {
+                @Override
+                protected void handle(AsciiResponse response) throws IOException {
+                  throw new IOException(exceptionString);
+                }
 
-        @Override
-        public ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer dst) {
-          dst.put("invalid command".getBytes());
-          dst.put(NEWLINE_BYTES);
-          return toBuffer(alloc, dst);
-        }
-      }).toCompletableFuture().get();
+                @Override
+                public ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer dst) {
+                  dst.put("invalid command".getBytes());
+                  dst.put(NEWLINE_BYTES);
+                  return toBuffer(alloc, dst);
+                }
+              })
+          .toCompletableFuture()
+          .get();
       fail();
     } catch (ExecutionException e) {
       assertEquals("Unexpected line: ERROR", e.getCause().getMessage());
@@ -167,13 +172,23 @@ public class DefaultRawMemcacheClientTest {
     server.bind(null);
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
-    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000,
-            Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
-        .toCompletableFuture().get();
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                5000,
+                false,
+                null,
+                1000,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
-    final CompletionStage<?> future = rawClient.send(
-        new GetRequest("foo".getBytes(Charsets.UTF_8), false));
+    final CompletionStage<?> future =
+        rawClient.send(new GetRequest("foo".getBytes(Charsets.UTF_8), false));
     try {
       future.toCompletableFuture().get();
       fail();
@@ -188,15 +203,27 @@ public class DefaultRawMemcacheClientTest {
   public void testBinaryRequestRetry() throws Exception {
     final int outstandingRequestLimit = 5000;
     final boolean binary = true;
-    final Executor executor = MoreExecutors.getExitingExecutorService(
-        (ThreadPoolExecutor) Executors.newCachedThreadPool());
+    final Executor executor =
+        MoreExecutors.getExitingExecutorService(
+            (ThreadPoolExecutor) Executors.newCachedThreadPool());
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
     final HostAndPort address = HostAndPort.fromParts(server.getHost(), server.getPort());
-    final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
-        new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();
+    final RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                outstandingRequestLimit,
+                binary,
+                executor,
+                timeoutMillis,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                maxSetLength,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     try {
       byte[] key = "foo".getBytes(Charsets.UTF_8);
@@ -219,19 +246,30 @@ public class DefaultRawMemcacheClientTest {
     final boolean binary = false;
 
     final int outstandingRequestLimit = 5000;
-    final Executor executor = MoreExecutors.getExitingExecutorService(
-        (ThreadPoolExecutor) Executors.newCachedThreadPool());
+    final Executor executor =
+        MoreExecutors.getExitingExecutorService(
+            (ThreadPoolExecutor) Executors.newCachedThreadPool());
     final int timeoutMillis = 3000;
     final int maxSetLength = 1024 * 1024;
 
     final HostAndPort address = HostAndPort.fromParts(server.getHost(), server.getPort());
-    final RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, outstandingRequestLimit, binary, executor, timeoutMillis, Charsets.UTF_8,
-        new NoopMetrics(), maxSetLength, null, null).toCompletableFuture().get();
+    final RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                outstandingRequestLimit,
+                binary,
+                executor,
+                timeoutMillis,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                maxSetLength,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     try {
-      final GetRequest request =
-          new GetRequest("foo".getBytes(Charsets.UTF_8), false);
+      final GetRequest request = new GetRequest("foo".getBytes(Charsets.UTF_8), false);
 
       // Send request once
       rawClient.send(request).toCompletableFuture().get();
@@ -250,10 +288,20 @@ public class DefaultRawMemcacheClientTest {
     server.bind(null);
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
-    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 5000, false, null, 1000,
-            Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
-        .toCompletableFuture().get();
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                5000,
+                false,
+                null,
+                1000,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     rawClient.shutdown();
     rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
@@ -266,9 +314,20 @@ public class DefaultRawMemcacheClientTest {
     server.bind(null);
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
-    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
-        .toCompletableFuture().get();
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                1,
+                false,
+                null,
+                1000,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     rawClient.shutdown();
     rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
@@ -277,16 +336,20 @@ public class DefaultRawMemcacheClientTest {
     // Try to fill up the outstanding request limit
     for (int i = 0; i < 100; i++) {
       try {
-        rawClient.send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
-            .toCompletableFuture().get();
+        rawClient
+            .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+            .toCompletableFuture()
+            .get();
       } catch (ExecutionException e) {
         // Ignore any errors here
       }
     }
 
     try {
-      rawClient.send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
-          .toCompletableFuture().get();
+      rawClient
+          .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+          .toCompletableFuture()
+          .get();
     } catch (ExecutionException e) {
       throw e.getCause();
     }
@@ -298,17 +361,30 @@ public class DefaultRawMemcacheClientTest {
     server.bind(null);
 
     final HostAndPort address = HostAndPort.fromParts("127.0.0.1", server.getLocalPort());
-    RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-        address, 1, false, null, 1000, Charsets.UTF_8, new NoopMetrics(), 1024 * 1024, null, null)
-        .toCompletableFuture().get();
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                address,
+                1,
+                false,
+                null,
+                1000,
+                Charsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
 
     rawClient.shutdown();
     rawClient.awaitDisconnected(10, TimeUnit.SECONDS);
     assertFalse(rawClient.isConnected());
 
     try {
-      rawClient.send(
-          new GetRequest("key".getBytes(Charsets.UTF_8), false)).toCompletableFuture().get();
+      rawClient
+          .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+          .toCompletableFuture()
+          .get();
     } catch (ExecutionException e) {
       throw e.getCause();
     }
@@ -324,18 +400,20 @@ public class DefaultRawMemcacheClientTest {
 
       final int port = server.start(0);
 
-      RawMemcacheClient rawClient = DefaultRawMemcacheClient.connect(
-          HostAndPort.fromParts("127.0.0.12", port),
-          5000,
-          false,
-          null,
-          3000,
-          charset,
-          metrics,
-          1024 * 1024,
-          null,
-          null
-      ).toCompletableFuture().get();
+      RawMemcacheClient rawClient =
+          DefaultRawMemcacheClient.connect(
+                  HostAndPort.fromParts("127.0.0.12", port),
+                  5000,
+                  false,
+                  null,
+                  3000,
+                  charset,
+                  metrics,
+                  1024 * 1024,
+                  null,
+                  null)
+              .toCompletableFuture()
+              .get();
 
       try {
         assertNotNull(metrics.getGauge());

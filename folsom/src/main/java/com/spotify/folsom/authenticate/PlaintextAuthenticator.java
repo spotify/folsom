@@ -37,23 +37,29 @@ public class PlaintextAuthenticator implements Authenticator {
   public CompletionStage<RawMemcacheClient> authenticate(
       final CompletionStage<RawMemcacheClient> clientFuture) {
 
-    final PlaintextAuthenticateRequest
-        authenticateRequest = new PlaintextAuthenticateRequest(username, password);
+    final PlaintextAuthenticateRequest authenticateRequest =
+        new PlaintextAuthenticateRequest(username, password);
 
     return clientFuture.thenCompose(
-        client -> client.connectFuture().thenCompose(ignored ->
-            client.send(authenticateRequest)
-                .thenApply(status -> {
-                  if (status == MemcacheStatus.OK) {
-                    return client;
-                  } else if (status == MemcacheStatus.UNAUTHORIZED) {
-                    throw new MemcacheAuthenticationException("Authentication failed");
-                  } else {
-                    throw new RuntimeException("Unexpected status: " + status.name());
-                  }
-                })
-        )
-    );
+        client ->
+            client
+                .connectFuture()
+                .thenCompose(
+                    ignored ->
+                        client
+                            .send(authenticateRequest)
+                            .thenApply(
+                                status -> {
+                                  if (status == MemcacheStatus.OK) {
+                                    return client;
+                                  } else if (status == MemcacheStatus.UNAUTHORIZED) {
+                                    throw new MemcacheAuthenticationException(
+                                        "Authentication failed");
+                                  } else {
+                                    throw new RuntimeException(
+                                        "Unexpected status: " + status.name());
+                                  }
+                                })));
   }
 
   @Override

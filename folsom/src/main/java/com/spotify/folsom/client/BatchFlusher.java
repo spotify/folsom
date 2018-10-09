@@ -17,13 +17,12 @@ package com.spotify.folsom.client;
 
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoop;
-
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
  * A helper for doing opportunistic batching of netty channel flushes, allowing for a gathering
- * write to an underlying {@link java.nio.channels.GatheringByteChannel},
- * collapsing multiple writes into fewer syscalls.
+ * write to an underlying {@link java.nio.channels.GatheringByteChannel}, collapsing multiple writes
+ * into fewer syscalls.
  */
 class BatchFlusher {
 
@@ -33,37 +32,37 @@ class BatchFlusher {
   private final EventLoop eventLoop;
   private final int maxPending;
 
-  // CHECKSTYLE:OFF
   private final AtomicIntegerFieldUpdater<BatchFlusher> WOKEN =
       AtomicIntegerFieldUpdater.newUpdater(BatchFlusher.class, "woken");
-  @SuppressWarnings("UnusedDeclaration") private volatile int woken;
-  // CHECKSTYLE:ON
+
+  @SuppressWarnings("UnusedDeclaration")
+  private volatile int woken;
 
   private int pending;
 
-  /**
-   * Used to flush all outstanding writes in the outbound channel buffer.
-   */
-  private final Runnable flush = new Runnable() {
-    @Override
-    public void run() {
-      pending = 0;
-      channel.flush();
-    }
-  };
+  /** Used to flush all outstanding writes in the outbound channel buffer. */
+  private final Runnable flush =
+      new Runnable() {
+        @Override
+        public void run() {
+          pending = 0;
+          channel.flush();
+        }
+      };
 
   /**
-   * Used to wake up the event loop and schedule a flush to be performed after all outstanding
-   * write tasks are run. The outstanding write tasks must be allowed to run before performing the
-   * actual flush in order to ensure that their payloads have been written to the outbound buffer.
+   * Used to wake up the event loop and schedule a flush to be performed after all outstanding write
+   * tasks are run. The outstanding write tasks must be allowed to run before performing the actual
+   * flush in order to ensure that their payloads have been written to the outbound buffer.
    */
-  private final Runnable wakeup = new Runnable() {
-    @Override
-    public void run() {
-      woken = 0;
-      eventLoop.execute(flush);
-    }
-  };
+  private final Runnable wakeup =
+      new Runnable() {
+        @Override
+        public void run() {
+          woken = 0;
+          eventLoop.execute(flush);
+        }
+      };
 
   public BatchFlusher(final Channel channel) {
     this(channel, DEFAULT_MAX_PENDING);
@@ -75,9 +74,7 @@ class BatchFlusher {
     this.eventLoop = channel.eventLoop();
   }
 
-  /**
-   * Schedule an asynchronous opportunistically batching flush.
-   */
+  /** Schedule an asynchronous opportunistically batching flush. */
   public void flush() {
     if (eventLoop.inEventLoop()) {
       pending++;

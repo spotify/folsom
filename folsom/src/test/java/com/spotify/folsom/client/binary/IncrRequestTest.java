@@ -16,31 +16,22 @@
 
 package com.spotify.folsom.client.binary;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-
-import org.junit.Test;
-
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
-import static org.junit.Assert.assertEquals;
-
+import java.util.List;
+import org.junit.Test;
 
 public class IncrRequestTest extends RequestTestTemplate {
   private static final String KEY = "foo";
 
   @Test
   public void testBuffer() throws Exception {
-    IncrRequest req = new IncrRequest(
-      KEY.getBytes(Charsets.UTF_8),
-      OpCode.INCREMENT,
-      2,
-      3,
-      1000
-    );
+    IncrRequest req = new IncrRequest(KEY.getBytes(Charsets.UTF_8), OpCode.INCREMENT, 2, 3, 1000);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

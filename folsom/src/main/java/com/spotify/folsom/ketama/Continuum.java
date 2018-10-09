@@ -16,16 +16,14 @@
 
 package com.spotify.folsom.ketama;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.spotify.folsom.RawMemcacheClient;
-
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 
 public class Continuum {
 
@@ -38,7 +36,7 @@ public class Continuum {
   }
 
   private TreeMap<Integer, RawMemcacheClient> buildRing(
-    final Collection<AddressAndClient> clients) {
+      final Collection<AddressAndClient> clients) {
 
     final TreeMap<Integer, RawMemcacheClient> r = Maps.newTreeMap();
     for (final AddressAndClient client : clients) {

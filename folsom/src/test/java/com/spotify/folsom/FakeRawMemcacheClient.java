@@ -17,9 +17,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -28,10 +25,12 @@ import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
-
+import com.spotify.futures.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
@@ -64,8 +63,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
       if (value == null) {
         return CompletableFuture.completedFuture(null);
       }
-      return (CompletionStage<T>) CompletableFuture.completedFuture(
-          GetResult.success(value, 0L));
+      return (CompletionStage<T>) CompletableFuture.completedFuture(GetResult.success(value, 0L));
     }
 
     if (request instanceof MultiRequest) {

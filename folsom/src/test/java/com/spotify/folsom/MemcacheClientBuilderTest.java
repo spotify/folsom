@@ -15,29 +15,26 @@
  */
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class MemcacheClientBuilderTest {
 
@@ -60,7 +57,8 @@ public class MemcacheClientBuilderTest {
 
   @Test
   public void testValidLatin1() throws Exception {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.ISO_8859_1)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
@@ -75,7 +73,8 @@ public class MemcacheClientBuilderTest {
 
   @Test
   public void testValidUTF8() throws Exception {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_8)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
@@ -90,7 +89,8 @@ public class MemcacheClientBuilderTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidUTF16() throws Exception {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withKeyCharset(Charsets.UTF_16)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
@@ -105,7 +105,8 @@ public class MemcacheClientBuilderTest {
 
   @Test(expected = MemcacheOverloadedException.class)
   public void testOverloaded() throws Throwable {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withMaxOutstandingRequests(100)
             .connectAscii();
@@ -132,7 +133,8 @@ public class MemcacheClientBuilderTest {
 
   @Test
   public void testMaxSetLength() throws Throwable {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withMaxSetLength(1)
             .connectAscii();
@@ -151,7 +153,8 @@ public class MemcacheClientBuilderTest {
 
   @Test
   public void testShouldExecuteInEventLoopGroup() throws Exception {
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withReplyExecutor(null)
             .connectAscii();
@@ -170,7 +173,8 @@ public class MemcacheClientBuilderTest {
     ThreadFactory factory = new DefaultThreadFactory("provided_elg", true);
     EventLoopGroup elg = new NioEventLoopGroup(0, factory);
 
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withReplyExecutor(null)
             .withEventLoopGroup(elg)
@@ -185,14 +189,13 @@ public class MemcacheClientBuilderTest {
     }
   }
 
-
   /**
    * Observe a CF callback executing on an expected thread pool.
    *
-   * Attempts to defeat the inherent raciness by trying until successful.
+   * <p>Attempts to defeat the inherent raciness by trying until successful.
    */
-  private void assertExecutesOnThread(AsciiMemcacheClient<String> client,
-      String expectedThreadNamePrefix)
+  private void assertExecutesOnThread(
+      AsciiMemcacheClient<String> client, String expectedThreadNamePrefix)
       throws InterruptedException, ExecutionException, TimeoutException {
 
     final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
@@ -202,9 +205,12 @@ public class MemcacheClientBuilderTest {
         throw new TimeoutException("Failed to see callback running on ELG thread");
       }
 
-      final Thread thread = client.set("key", "value", 100)
-          .thenApply(r -> Thread.currentThread())
-          .toCompletableFuture().get(10, TimeUnit.SECONDS);
+      final Thread thread =
+          client
+              .set("key", "value", 100)
+              .thenApply(r -> Thread.currentThread())
+              .toCompletableFuture()
+              .get(10, TimeUnit.SECONDS);
 
       if (thread.getName().startsWith(expectedThreadNamePrefix)) {
         // Function ran on the expected thread, success!

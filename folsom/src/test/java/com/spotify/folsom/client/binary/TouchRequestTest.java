@@ -20,13 +20,9 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-
-import org.junit.Test;
-
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
-
+import java.util.List;
+import org.junit.Test;
 
 public class TouchRequestTest extends RequestTestTemplate {
   private static final String KEY = "foo";

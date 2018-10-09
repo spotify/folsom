@@ -18,15 +18,14 @@ package com.spotify.folsom;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public class ConnectFuture
-    extends CompletableFuture<Void>
-    implements ConnectionChangeListener {
+public class ConnectFuture extends CompletableFuture<Void> implements ConnectionChangeListener {
 
   private final boolean awaitConnected;
   private final boolean requireAll;
 
   /**
    * Create a future that completes once the client reaches the awaited state
+   *
    * @param client
    * @param awaitConnected
    * @param requireAll

@@ -54,11 +54,12 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   private final int maxKeyLength;
   private final Charset charset;
 
-  public DefaultBinaryMemcacheClient(final RawMemcacheClient rawMemcacheClient,
-                                     final Metrics metrics,
-                                     final Transcoder<V> valueTranscoder,
-                                     final Charset charset,
-                                     final int maxKeyLength) {
+  public DefaultBinaryMemcacheClient(
+      final RawMemcacheClient rawMemcacheClient,
+      final Metrics metrics,
+      final Transcoder<V> valueTranscoder,
+      final Charset charset,
+      final int maxKeyLength) {
     this.rawMemcacheClient = rawMemcacheClient;
     this.metrics = metrics;
     this.valueTranscoder = valueTranscoder;
@@ -80,7 +81,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> set(
-          final String key, final V value, final int ttl, final long cas) {
+      final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.SET, key, value, ttl, cas);
   }
 
@@ -100,10 +101,8 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     return setInternal(OpCode.REPLACE, key, value, ttl);
   }
 
-  private CompletionStage<MemcacheStatus> setInternal(final byte opcode,
-                                             final String key,
-                                             final V value,
-                                             final int ttl) {
+  private CompletionStage<MemcacheStatus> setInternal(
+      final byte opcode, final String key, final V value, final int ttl) {
     return casSetInternal(opcode, key, value, ttl, 0);
   }
 
@@ -112,7 +111,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> add(
-          final String key, final V value, final int ttl, final long cas) {
+      final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.ADD, key, value, ttl, cas);
   }
 
@@ -121,20 +120,17 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> replace(
-          final String key, final V value, final int ttl, final long cas) {
+      final String key, final V value, final int ttl, final long cas) {
     return casSetInternal(OpCode.REPLACE, key, value, ttl, cas);
   }
 
-  private CompletionStage<MemcacheStatus> casSetInternal(final byte opcode,
-                                                final String key,
-                                                final V value,
-                                                final int ttl,
-                                                final long cas) {
+  private CompletionStage<MemcacheStatus> casSetInternal(
+      final byte opcode, final String key, final V value, final int ttl, final long cas) {
     checkNotNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = new SetRequest(
-            opcode, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, cas);
+    SetRequest request =
+        new SetRequest(opcode, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, cas);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -175,8 +171,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   private CompletionStage<GetResult<V>> getInternal(final String key, final int ttl) {
     final byte opCode = ttl > -1 ? OpCode.GAT : OpCode.GET;
     GetRequest request = new GetRequest(encodeKey(key, charset, maxKeyLength), opCode, ttl);
-    final CompletionStage<GetResult<byte[]>> future =
-            rawMemcacheClient.send(request);
+    final CompletionStage<GetResult<byte[]>> future = rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);
     return transformerUtil.decode(future);
   }
@@ -194,9 +189,9 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     }
 
     final List<List<byte[]>> keyPartition =
-          Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
+        Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
     final List<CompletionStage<List<GetResult<byte[]>>>> futureList =
-          new ArrayList<>(keyPartition.size());
+        new ArrayList<>(keyPartition.size());
 
     for (final List<byte[]> part : keyPartition) {
       MultigetRequest request = MultigetRequest.create(part, ttl);
@@ -204,8 +199,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     }
 
     final CompletionStage<List<GetResult<byte[]>>> future =
-        CompletableFutures.allAsList(futureList)
-            .thenApply(Utils.flatten());
+        CompletableFutures.allAsList(futureList).thenApply(Utils.flatten());
 
     metrics.measureMultigetFuture(future);
     return transformerUtil.decodeList(future);
@@ -260,17 +254,15 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<Long> incr(
-          final String key, final long by, final long initial, final int ttl) {
+      final String key, final long by, final long initial, final int ttl) {
     return incrInternal(OpCode.INCREMENT, key, by, initial, ttl);
   }
 
-  private CompletionStage<Long> incrInternal(final byte opcode,
-                                              final String key,
-                                              final long by,
-                                              final long initial,
-                                              final int ttl) {
+  private CompletionStage<Long> incrInternal(
+      final byte opcode, final String key, final long by, final long initial, final int ttl) {
 
-    final CompletionStage<Long> future = rawMemcacheClient.send(
+    final CompletionStage<Long> future =
+        rawMemcacheClient.send(
             new IncrRequest(encodeKey(key, charset, maxKeyLength), opcode, by, initial, ttl));
     metrics.measureIncrDecrFuture(future);
     return future;
@@ -281,7 +273,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<Long> decr(
-          final String key, final long by, final long initial, final int ttl) {
+      final String key, final long by, final long initial, final int ttl) {
     return incrInternal(OpCode.DECREMENT, key, by, initial, ttl);
   }
 
@@ -308,7 +300,6 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   public CompletionStage<MemcacheStatus> prepend(final String key, final V value) {
     return casSetInternal(OpCode.PREPEND, key, value, 0, 0);
   }
-
 
   /*
    * @see com.spotify.folsom.BinaryMemcacheClient#prepend(java.lang.String, V, long)
@@ -345,8 +336,8 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   /*
-     * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
-     */
+   * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
+   */
   @Override
   public boolean isConnected() {
     return rawMemcacheClient.isConnected();
@@ -377,4 +368,3 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     return "BinaryMemcacheClient(" + rawMemcacheClient + ")";
   }
 }
-

@@ -15,25 +15,6 @@
  */
 package com.spotify.folsom.reconnect;
 
-import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
-import com.spotify.folsom.AbstractRawMemcacheClient;
-import com.spotify.folsom.BackoffFunction;
-import com.spotify.folsom.ConnectionChangeListener;
-import com.spotify.folsom.client.Request;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
@@ -44,6 +25,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.BackoffFunction;
+import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.client.Request;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+
 public class ReconnectingClientTest {
 
   private final ScheduledExecutorService scheduledExecutorService =
@@ -51,13 +48,15 @@ public class ReconnectingClientTest {
 
   @Before
   public void setUp() throws Exception {
-    when(scheduledExecutorService
-        .schedule(Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
-        .thenAnswer((Answer<Object>) invocationOnMock -> {
-          Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
-          runnable.run();
-          return null;
-        });
+    when(scheduledExecutorService.schedule(
+            Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
+        .thenAnswer(
+            (Answer<Object>)
+                invocationOnMock -> {
+                  Runnable runnable = (Runnable) invocationOnMock.getArguments()[0];
+                  runnable.run();
+                  return null;
+                });
   }
 
   @Test
@@ -70,14 +69,16 @@ public class ReconnectingClientTest {
 
     Connector connector = mock(Connector.class);
     when(connector.connect())
-            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
-            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
-            .thenReturn(CompletableFuture.completedFuture(delegate));
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+        .thenReturn(CompletableFuture.completedFuture(delegate));
 
-
-    ReconnectingClient client = new ReconnectingClient(
-            backoffFunction, scheduledExecutorService,
-            connector, HostAndPort.fromString("localhost:123"));
+    ReconnectingClient client =
+        new ReconnectingClient(
+            backoffFunction,
+            scheduledExecutorService,
+            connector,
+            HostAndPort.fromString("localhost:123"));
 
     verify(connector, times(3)).connect();
     verify(scheduledExecutorService, times(1))
@@ -90,7 +91,6 @@ public class ReconnectingClientTest {
     verifyNoMoreInteractions(connector, scheduledExecutorService, backoffFunction);
 
     assertTrue(client.isConnected());
-
   }
 
   @Test
@@ -104,15 +104,17 @@ public class ReconnectingClientTest {
 
     Connector connector = mock(Connector.class);
     when(connector.connect())
-            .thenReturn(CompletableFuture.completedFuture(delegate1))
-            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
-            .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
-            .thenReturn(CompletableFuture.completedFuture(delegate2));
+        .thenReturn(CompletableFuture.completedFuture(delegate1))
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+        .thenReturn(CompletableFutures.exceptionallyCompletedFuture(new RuntimeException()))
+        .thenReturn(CompletableFuture.completedFuture(delegate2));
 
-
-    ReconnectingClient client = new ReconnectingClient(
-            backoffFunction, scheduledExecutorService,
-            connector, HostAndPort.fromString("localhost:123"));
+    ReconnectingClient client =
+        new ReconnectingClient(
+            backoffFunction,
+            scheduledExecutorService,
+            connector,
+            HostAndPort.fromString("localhost:123"));
 
     verify(connector, times(4)).connect();
     verify(scheduledExecutorService, times(1))
@@ -123,7 +125,6 @@ public class ReconnectingClientTest {
     verify(backoffFunction, times(1)).getBackoffTimeMillis(1);
 
     verifyNoMoreInteractions(connector, scheduledExecutorService, backoffFunction);
-
 
     assertTrue(client.isConnected());
   }
@@ -137,12 +138,14 @@ public class ReconnectingClientTest {
     when(backoffFunction.getBackoffTimeMillis(1)).thenReturn(123L);
 
     Connector connector = mock(Connector.class);
-    when(connector.connect())
-            .thenReturn(CompletableFuture.completedFuture(delegate));
+    when(connector.connect()).thenReturn(CompletableFuture.completedFuture(delegate));
 
-    ReconnectingClient client = new ReconnectingClient(
-            backoffFunction, scheduledExecutorService,
-            connector, HostAndPort.fromString("localhost:123"));
+    ReconnectingClient client =
+        new ReconnectingClient(
+            backoffFunction,
+            scheduledExecutorService,
+            connector,
+            HostAndPort.fromString("localhost:123"));
 
     assertTrue(client.isConnected());
     client.shutdown();

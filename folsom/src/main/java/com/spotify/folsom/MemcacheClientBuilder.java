@@ -23,18 +23,18 @@ import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.spotify.folsom.authenticate.Authenticator;
-import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
-import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
-import com.spotify.folsom.authenticate.NoAuthenticationValidation;
-import com.spotify.folsom.authenticate.PlaintextAuthenticator;
-import com.spotify.folsom.guava.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.DnsSrvResolvers;
+import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
+import com.spotify.folsom.authenticate.Authenticator;
+import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
+import com.spotify.folsom.authenticate.NoAuthenticationValidation;
+import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
 import com.spotify.folsom.ketama.SrvKetamaClient;
@@ -46,7 +46,6 @@ import com.spotify.folsom.transcoder.SerializableObjectTranscoder;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -58,7 +57,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-
 public class MemcacheClientBuilder<V> {
 
   private static final int DEFAULT_MAX_SET_LENGTH = 1024 * 1024;
@@ -67,37 +65,31 @@ public class MemcacheClientBuilder<V> {
   private static final String DEFAULT_HOSTNAME = "127.0.0.1";
   private static final int DEFAULT_PORT = 11211;
 
-  /**
-   * Lazily instantiated singleton default executor.
-   */
+  /** Lazily instantiated singleton default executor. */
   private static class DefaultExecutor {
 
-    private static final Executor INSTANCE = new ForkJoinPool(
+    private static final Executor INSTANCE =
+        new ForkJoinPool(
             Runtime.getRuntime().availableProcessors(),
             ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-            new UncaughtExceptionHandler(), true);
+            new UncaughtExceptionHandler(),
+            true);
   }
 
-  /**
-   * Lazily instantiated singleton default srvResolver.
-   */
+  /** Lazily instantiated singleton default srvResolver. */
   private static class DefaultDnsResolver {
-    private static final DnsSrvResolver INSTANCE = DnsSrvResolvers.newBuilder()
-            .cachingLookups(true)
-            .retainingDataOnFailures(true)
-            .build();
+    private static final DnsSrvResolver INSTANCE =
+        DnsSrvResolvers.newBuilder().cachingLookups(true).retainingDataOnFailures(true).build();
   }
 
-  /**
-   * Lazily instantiated singleton default scheduled executor.
-   */
+  /** Lazily instantiated singleton default scheduled executor. */
   private static class DefaultScheduledExecutor {
     private static final ScheduledExecutorService INSTANCE =
-            Executors.newSingleThreadScheduledExecutor(
-                    new ThreadFactoryBuilder()
-                            .setDaemon(true)
-                            .setNameFormat("folsom-default-scheduled-executor")
-                            .build());
+        Executors.newSingleThreadScheduledExecutor(
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("folsom-default-scheduled-executor")
+                .build());
   }
 
   private final List<HostAndPort> addresses = new ArrayList<>();
@@ -105,8 +97,7 @@ public class MemcacheClientBuilder<V> {
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
 
-  private BackoffFunction backoffFunction =
-      new ExponentialBackoff(10L, 60 * 1000L, 2.5);
+  private BackoffFunction backoffFunction = new ExponentialBackoff(10L, 60 * 1000L, 2.5);
 
   private int connections = 1;
   private boolean retry = true;
@@ -127,6 +118,7 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Create a client builder for byte array values.
+   *
    * @return The builder
    */
   public static MemcacheClientBuilder<byte[]> newByteArrayClient() {
@@ -134,8 +126,7 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Create a client builder with a basic string transcoder using the UTF-8
-   * Charset.
+   * Create a client builder with a basic string transcoder using the UTF-8 Charset.
    *
    * @return The builder
    */
@@ -144,8 +135,7 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Create a client builder with a basic string transcoder using the supplied
-   * Charset.
+   * Create a client builder with a basic string transcoder using the supplied Charset.
    *
    * @param charset the Charset to encode and decode String objects with.
    * @return The builder
@@ -156,15 +146,16 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Create a client builder for serializable object values.
+   *
    * @return The builder
    */
   public static MemcacheClientBuilder<Serializable> newSerializableObjectClient() {
     return new MemcacheClientBuilder<>(SerializableObjectTranscoder.INSTANCE);
   }
 
-
   /**
    * Create a client builder with the provided value transcoder.
+   *
    * @param valueTranscoder the transcoder to use to encode/decode values.
    */
   public MemcacheClientBuilder(final Transcoder<V> valueTranscoder) {
@@ -172,27 +163,25 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Define the charset encoding for keys.
-   * Note that some charsets may not be compatible with the memcache protocol which requires
-   * that keys are a string of 8-bit characters with the exclusion of characters in the range
-   * [0x00, 0x20].
-   * This is a problem in charsets such as UTF-16 which uses two bytes and one of them
-   * could easily be invalid for memcache purposes.
+   * Define the charset encoding for keys. Note that some charsets may not be compatible with the
+   * memcache protocol which requires that keys are a string of 8-bit characters with the exclusion
+   * of characters in the range [0x00, 0x20]. This is a problem in charsets such as UTF-16 which
+   * uses two bytes and one of them could easily be invalid for memcache purposes.
    *
-   * UTF-8 and most single-byte charsets should be fine though.
+   * <p>UTF-8 and most single-byte charsets should be fine though.
    *
    * @param charset The charset encoding for keys. The default is UTF-8.
    * @return itself
-  */
+   */
   public MemcacheClientBuilder<V> withKeyCharset(final Charset charset) {
     this.charset = checkNotNull(charset);
     return this;
   }
 
   /**
-   * Define which memcache server to connect to.
-   * This may be called multiple times to connect to multiple hosts.
-   * If more than one address is given, Ketama will be used to distribute requests.
+   * Define which memcache server to connect to. This may be called multiple times to connect to
+   * multiple hosts. If more than one address is given, Ketama will be used to distribute requests.
+   *
    * @param hostname a server, using the default memcached port (11211).
    * @return itself
    */
@@ -201,9 +190,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Define which memcache server to connect to.
-   * This may be called multiple times to connect to multiple hosts.
-   * If more than one address is given, Ketama will be used to distribute requests.
+   * Define which memcache server to connect to. This may be called multiple times to connect to
+   * multiple hosts. If more than one address is given, Ketama will be used to distribute requests.
+   *
    * @param host The server hostname
    * @param port The port where memcached is running
    * @return itself
@@ -214,8 +203,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Use SRV to lookup nodes instead of a fixed set of addresses.
-   * This means that the set of nodes can change dynamically over time.
+   * Use SRV to lookup nodes instead of a fixed set of addresses. This means that the set of nodes
+   * can change dynamically over time.
+   *
    * @param srvRecord the SRV record to use.
    * @return itself
    */
@@ -225,9 +215,8 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * This is only used for the SRV based ketama client. This is the maximum
-   * time DNS should be queried for updates.
-   * It can be shorter, depending the ttl values in the DNS lookup result
+   * This is only used for the SRV based ketama client. This is the maximum time DNS should be
+   * queried for updates. It can be shorter, depending the ttl values in the DNS lookup result
    *
    * @param periodMillis time in milliseonds. The default is 60 seconds.
    * @return itself
@@ -238,9 +227,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * This is only used for the SRV based ketama client. When the SRV record has changed,
-   * the old client will be shutdown after this much time has passed, in order to complete
-   * pending requests.
+   * This is only used for the SRV based ketama client. When the SRV record has changed, the old
+   * client will be shutdown after this much time has passed, in order to complete pending requests.
+   *
    * @param shutdownDelay time in milliseconds. The default is 60 seconds.
    * @return itself
    */
@@ -251,8 +240,9 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Use a specific SRV resolver.
-   * @param srvResolver the resolver to use. Default is a caching resolver from
-   *                    {@link com.spotify.dns.DnsSrvResolvers}
+   *
+   * @param srvResolver the resolver to use. Default is a caching resolver from {@link
+   *     com.spotify.dns.DnsSrvResolvers}
    * @return itself
    */
   public MemcacheClientBuilder<V> withSrvResolver(final DnsSrvResolver srvResolver) {
@@ -262,6 +252,7 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Specify how to collect metrics.
+   *
    * @param metrics Default is NoopMetrics - which doesn't collect anything.
    * @return itself
    */
@@ -271,13 +262,13 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Specify the maximum number of requests in the queue per server connection.
-   * If this is set too low, requests will fail with
-   * {@link com.spotify.folsom.MemcacheOverloadedException}.
-   * If this is set too high, there is a risk of having high latency requests and delaying the
-   * time to notice that the system is malfunctioning.
-   * @param maxOutstandingRequests the maximum number of requests that can be in queue.
-   *                               Default is 1000.
+   * Specify the maximum number of requests in the queue per server connection. If this is set too
+   * low, requests will fail with {@link com.spotify.folsom.MemcacheOverloadedException}. If this is
+   * set too high, there is a risk of having high latency requests and delaying the time to notice
+   * that the system is malfunctioning.
+   *
+   * @param maxOutstandingRequests the maximum number of requests that can be in queue. Default is
+   *     1000.
    * @return itself
    */
   public MemcacheClientBuilder<V> withMaxOutstandingRequests(final int maxOutstandingRequests) {
@@ -287,6 +278,7 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Specify how long the client should wait between reconnects.
+   *
    * @param backoffFunction A custom backoff function. Default is exponential backoff.
    * @return itself.
    */
@@ -296,9 +288,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Specify if the client should retry once if the connection is closed.
-   * This typically only has an effect when one of the ketama nodes disconnect while the
-   * request is sent.
+   * Specify if the client should retry once if the connection is closed. This typically only has an
+   * effect when one of the ketama nodes disconnect while the request is sent.
+   *
    * @param retry Default is true
    * @return itself
    */
@@ -311,11 +303,11 @@ public class MemcacheClientBuilder<V> {
    * Specify an executor to execute all replies on. Default is a shared {@link ForkJoinPool} in
    * async mode with one thread per processor.
    *
-   * If null is specified, replies will be executed on EventLoopGroup directly.
+   * <p>If null is specified, replies will be executed on EventLoopGroup directly.
    *
-   * <b>Note:</b> Calling non-async methods on the {@link java.util.concurrent.CompletionStage}s
-   * returned by {@link MemcacheClient} that have already completed will cause the supplied
-   * function to be executed directly on the calling thread.
+   * <p><b>Note:</b> Calling non-async methods on the {@link java.util.concurrent.CompletionStage}s
+   * returned by {@link MemcacheClient} that have already completed will cause the supplied function
+   * to be executed directly on the calling thread.
    *
    * @param executor the executor to use.
    * @return itself
@@ -326,9 +318,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Use multiple connections to each memcache server.
-   * This is likely not a useful thing in practice,
-   * unless the IO connection really becomes a bottleneck.
+   * Use multiple connections to each memcache server. This is likely not a useful thing in
+   * practice, unless the IO connection really becomes a bottleneck.
+   *
    * @param connections Number of connections, must be 1 or greater. The default is 1
    * @return itself
    */
@@ -343,6 +335,7 @@ public class MemcacheClientBuilder<V> {
   /**
    * Enforce a timeout for requests to complete, closing the connection and reconnecting if the
    * timeout is exceeded.
+   *
    * @param timeoutMillis The timeout in milliseconds. The default is 3000 ms.
    * @return itself
    */
@@ -352,14 +345,14 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Set the maximum value size for set requests.
-   * If the limit is exceeded the set operation will fast-fail with a VALUE_TOO_LARGE status.
+   * Set the maximum value size for set requests. If the limit is exceeded the set operation will
+   * fast-fail with a VALUE_TOO_LARGE status.
    *
-   * If this limit is set higher than the actual limit in the memcache service,
-   * the memcache service may return a SERVER_ERROR
-   * which will close the connection to prevent any corrupted state.
+   * <p>If this limit is set higher than the actual limit in the memcache service, the memcache
+   * service may return a SERVER_ERROR which will close the connection to prevent any corrupted
+   * state.
    *
-   * The default value is 1 MiB
+   * <p>The default value is 1 MiB
    *
    * @param maxSetLength The maximum size in bytes
    * @return itself
@@ -372,7 +365,7 @@ public class MemcacheClientBuilder<V> {
   /**
    * Set an Netty {@link EventLoopGroup} for the client.
    *
-   * If not specified, an event loop group will be created, with default thread count.
+   * <p>If not specified, an event loop group will be created, with default thread count.
    *
    * @param eventLoopGroup an event loop group instance
    * @return itself
@@ -385,7 +378,8 @@ public class MemcacheClientBuilder<V> {
   /**
    * Set a Netty {@link Channel} class for the client.
    *
-   * If not specified, it'll use a Channel class, according to the EventLoopGroup in use.
+   * <p>If not specified, it'll use a Channel class, according to the EventLoopGroup in use.
+   *
    * @param channelClass a class of channel to use.
    * @return itself
    */
@@ -395,8 +389,9 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Set the maximum key length of the byte representation of the input string.
-   * The default value is 250, and the valid range is [0, 250]
+   * Set the maximum key length of the byte representation of the input string. The default value is
+   * 250, and the valid range is [0, 250]
+   *
    * @param maxKeyLength The maximum key length in bytes
    * @return itself
    */
@@ -413,19 +408,22 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Authenticate with memcached using plaintext SASL. This only works for binary connections, not ascii.
+   * Authenticate with memcached using plaintext SASL. This only works for binary connections, not
+   * ascii.
+   *
    * @param username
    * @param password
    * @return itself
    */
-  public MemcacheClientBuilder<V> withUsernamePassword(final String username, final String password) {
+  public MemcacheClientBuilder<V> withUsernamePassword(
+      final String username, final String password) {
     this.authenticator = Optional.of(new PlaintextAuthenticator(username, password));
     return this;
   }
 
   /**
-   * Disable authentication validation - only useful for tests against
-   * jmemcached which does not support binary NOOP
+   * Disable authentication validation - only useful for tests against jmemcached which does not
+   * support binary NOOP
    *
    * @return itself
    */
@@ -434,13 +432,14 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
-
   /**
    * Create a client that uses the binary memcache protocol.
+   *
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
-    final Authenticator authenticator = this.authenticator.orElse(BinaryAuthenticationValidator.getInstance());
+    final Authenticator authenticator =
+        this.authenticator.orElse(BinaryAuthenticationValidator.getInstance());
     authenticator.validate(true);
     return new DefaultBinaryMemcacheClient<>(
         connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
@@ -448,18 +447,21 @@ public class MemcacheClientBuilder<V> {
 
   /**
    * Create a client that uses the ascii memcache protocol.
+   *
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
-    final Authenticator authenticator = this.authenticator.orElse(AsciiAuthenticationValidator.getInstance());
+    final Authenticator authenticator =
+        this.authenticator.orElse(AsciiAuthenticationValidator.getInstance());
     authenticator.validate(false);
     return new DefaultAsciiMemcacheClient<>(
         connectRaw(false, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
   }
 
   /**
-   * Connect a raw memcached client without any protocol specific methods.
-   * This should rarely be needed.
+   * Connect a raw memcached client without any protocol specific methods. This should rarely be
+   * needed.
+   *
    * @param binary whether to use the binary protocol or not.
    * @return A raw memcached client.
    */
@@ -473,8 +475,7 @@ public class MemcacheClientBuilder<V> {
       client = createSRVClient(binary, authenticator);
     } else {
       if (addresses.isEmpty()) {
-        addresses = ImmutableList.of(
-                HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
+        addresses = ImmutableList.of(HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
       }
 
       final List<RawMemcacheClient> clients = createClients(addresses, binary, authenticator);
@@ -499,9 +500,8 @@ public class MemcacheClientBuilder<V> {
     return client;
   }
 
-  private List<RawMemcacheClient> createClients(final List<HostAndPort> addresses,
-                                                final boolean binary,
-                                                final Authenticator authenticator) {
+  private List<RawMemcacheClient> createClients(
+      final List<HostAndPort> addresses, final boolean binary, final Authenticator authenticator) {
 
     final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(addresses.size());
     for (final HostAndPort address : addresses) {
@@ -510,26 +510,30 @@ public class MemcacheClientBuilder<V> {
     return clients;
   }
 
-  private RawMemcacheClient createSRVClient(final boolean binary,
-                                            final Authenticator authenticator) {
+  private RawMemcacheClient createSRVClient(
+      final boolean binary, final Authenticator authenticator) {
     DnsSrvResolver resolver = srvResolver;
     if (resolver == null) {
       resolver = DefaultDnsResolver.INSTANCE;
     }
 
-    SrvKetamaClient client = new SrvKetamaClient(srvRecord, resolver,
+    SrvKetamaClient client =
+        new SrvKetamaClient(
+            srvRecord,
+            resolver,
             DefaultScheduledExecutor.INSTANCE,
-            dnsRefreshPeriod, TimeUnit.MILLISECONDS,
+            dnsRefreshPeriod,
+            TimeUnit.MILLISECONDS,
             input -> createClient(input, binary, authenticator),
-            shutdownDelay, TimeUnit.MILLISECONDS);
+            shutdownDelay,
+            TimeUnit.MILLISECONDS);
 
     client.start();
     return client;
   }
 
-  private RawMemcacheClient createClient(final HostAndPort address,
-                                         final boolean binary,
-                                         final Authenticator authenticator) {
+  private RawMemcacheClient createClient(
+      final HostAndPort address, final boolean binary, final Authenticator authenticator) {
     if (connections == 1) {
       return createReconnectingClient(address, binary, authenticator);
     }
@@ -540,9 +544,8 @@ public class MemcacheClientBuilder<V> {
     return new RoundRobinMemcacheClient(clients);
   }
 
-  private  RawMemcacheClient createReconnectingClient(final HostAndPort address,
-                                                      final boolean binary,
-                                                      final Authenticator authenticator) {
+  private RawMemcacheClient createReconnectingClient(
+      final HostAndPort address, final boolean binary, final Authenticator authenticator) {
     return new ReconnectingClient(
         backoffFunction,
         ReconnectingClient.singletonExecutor(),

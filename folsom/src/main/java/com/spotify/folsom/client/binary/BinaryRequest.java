@@ -17,7 +17,6 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.client.Request;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
@@ -34,9 +33,12 @@ public abstract class BinaryRequest<V> extends Request<V> {
     opaque = (ThreadLocalRandom.current().nextInt() << 8) & 0xFFFFFF00;
   }
 
-  public void writeHeader(final ByteBuffer dst, final byte opCode,
-                          final int extraLength, final int valueLength,
-                          final long cas) {
+  public void writeHeader(
+      final ByteBuffer dst,
+      final byte opCode,
+      final int extraLength,
+      final int valueLength,
+      final long cas) {
     int keyLength = key.length;
 
     dst.put(MAGIC_NUMBER);
@@ -54,8 +56,7 @@ public abstract class BinaryRequest<V> extends Request<V> {
   protected ResponsePacket handleSingleReply(BinaryResponse replies) throws IOException {
     if (replies.size() != 1) {
       throw new IOException(
-              "got " + replies.size() + " replies but expected 1 for " +
-              getClass().getSimpleName());
+          "got " + replies.size() + " replies but expected 1 for " + getClass().getSimpleName());
     }
 
     final ResponsePacket reply = replies.get(0);

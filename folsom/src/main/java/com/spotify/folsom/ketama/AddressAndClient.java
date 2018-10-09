@@ -16,9 +16,8 @@
 
 package com.spotify.folsom.ketama;
 
-import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.RawMemcacheClient;
-
+import com.spotify.folsom.guava.HostAndPort;
 
 public class AddressAndClient {
 

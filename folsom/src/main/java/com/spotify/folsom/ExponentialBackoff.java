@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom;
 
-
 public class ExponentialBackoff implements BackoffFunction {
 
   private final long minTime;

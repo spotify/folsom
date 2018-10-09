@@ -22,8 +22,7 @@ class SimpleSizeEstimator implements MessageSizeEstimator, MessageSizeEstimator.
 
   static final MessageSizeEstimator INSTANCE = new SimpleSizeEstimator();
 
-  private SimpleSizeEstimator() {
-  }
+  private SimpleSizeEstimator() {}
 
   @Override
   public Handle newHandle() {

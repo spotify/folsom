@@ -18,6 +18,7 @@ package com.spotify.folsom;
 public interface BackoffFunction {
   /**
    * Specify how long you should wait before attempting a reconnect.
+   *
    * @param reconnectAttempt The attempt number, starting with 0.
    * @return the time to wait in milliseconds.
    */

@@ -20,7 +20,6 @@ import com.spotify.folsom.MemcacheStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -31,12 +30,11 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
 
   private BinaryResponse replies = new BinaryResponse();
 
-  public BinaryMemcacheDecoder() {
-  }
+  public BinaryMemcacheDecoder() {}
 
   @Override
-  protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf,
-                        final List<Object> out) throws Exception {
+  protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf, final List<Object> out)
+      throws Exception {
     for (int i = 0; i < BATCH_SIZE; i++) {
       if (buf.readableBytes() < 24) {
         return;
@@ -93,5 +91,4 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
     buf.resetReaderIndex();
     return new IOException(message);
   }
-
 }

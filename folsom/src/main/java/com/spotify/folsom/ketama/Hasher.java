@@ -20,7 +20,6 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
-
 public final class Hasher {
 
   private static final HashFunction MURMUR = Hashing.murmur3_32();
@@ -29,6 +28,5 @@ public final class Hasher {
     return MURMUR.hashBytes(key);
   }
 
-  private Hasher() {
-  }
+  private Hasher() {}
 }

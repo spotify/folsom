@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
@@ -22,7 +21,6 @@ import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -30,8 +28,7 @@ public class TouchRequest extends BinaryRequest<MemcacheStatus> {
 
   private final int ttl;
 
-  public TouchRequest(final byte[] key,
-                      final int ttl) {
+  public TouchRequest(final byte[] key, final int ttl) {
     super(key);
     this.ttl = ttl;
   }

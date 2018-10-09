@@ -16,10 +16,18 @@
 
 package com.spotify.folsom;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,24 +36,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-
 @RunWith(Parameterized.class)
 public class KetamaIntegrationTest {
-
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
-    res.add(new Object[]{"ascii"});
-    res.add(new Object[]{"binary"});
+    res.add(new Object[] {"ascii"});
+    res.add(new Object[] {"binary"});
     return res;
   }
 
@@ -79,7 +77,8 @@ public class KetamaIntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
+    MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient()
             .withConnections(1)
             .withMaxOutstandingRequests(100)
             .withMetrics(NoopMetrics.INSTANCE)
@@ -185,8 +184,7 @@ public class KetamaIntegrationTest {
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
     assertEquals(
-        asList(VALUE1, VALUE2),
-        client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
+        asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test

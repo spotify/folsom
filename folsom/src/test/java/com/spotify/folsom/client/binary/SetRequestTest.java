@@ -16,17 +16,15 @@
 
 package com.spotify.folsom.client.binary;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
-import org.junit.Test;
-
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-
+import org.junit.Test;
 
 public class SetRequestTest extends RequestTestTemplate {
   private static final String KEY = "foo";
@@ -52,13 +50,9 @@ public class SetRequestTest extends RequestTestTemplate {
   }
 
   private void verifySetRequest(int ttl, long cas) throws Exception {
-    SetRequest req = new SetRequest(
-      OpCode.SET,
-      KEY.getBytes(Charsets.UTF_8),
-      TRANSCODER.encode(VALUE),
-      ttl,
-      cas
-    );
+    SetRequest req =
+        new SetRequest(
+            OpCode.SET, KEY.getBytes(Charsets.UTF_8), TRANSCODER.encode(VALUE), ttl, cas);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = Lists.newArrayList();

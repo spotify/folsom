@@ -18,13 +18,11 @@ package com.spotify.folsom.transcoder;
 
 import com.spotify.folsom.Transcoder;
 
-
 public final class ByteArrayTranscoder implements Transcoder<byte[]> {
 
   public static final ByteArrayTranscoder INSTANCE = new ByteArrayTranscoder();
 
-  private ByteArrayTranscoder() {
-  }
+  private ByteArrayTranscoder() {}
 
   @Override
   public byte[] encode(final byte[] t) {
@@ -35,5 +33,4 @@ public final class ByteArrayTranscoder implements Transcoder<byte[]> {
   public byte[] decode(final byte[] b) {
     return b;
   }
-
 }

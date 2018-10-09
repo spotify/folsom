@@ -21,15 +21,13 @@ import java.util.concurrent.CompletionStage;
 
 public class NoAuthenticationValidation implements Authenticator {
 
-  private static final NoAuthenticationValidation INSTANCE
-      = new NoAuthenticationValidation();
+  private static final NoAuthenticationValidation INSTANCE = new NoAuthenticationValidation();
 
   public static NoAuthenticationValidation getInstance() {
     return INSTANCE;
   }
 
-  private NoAuthenticationValidation() {
-  }
+  private NoAuthenticationValidation() {}
 
   public CompletionStage<RawMemcacheClient> authenticate(
       CompletionStage<RawMemcacheClient> clientFuture) {
@@ -38,6 +36,5 @@ public class NoAuthenticationValidation implements Authenticator {
   }
 
   @Override
-  public void validate(final boolean binary) {
-  }
+  public void validate(final boolean binary) {}
 }

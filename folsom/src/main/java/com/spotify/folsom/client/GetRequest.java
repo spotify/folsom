@@ -15,5 +15,4 @@
  */
 package com.spotify.folsom.client;
 
-public interface GetRequest {
-}
+public interface GetRequest {}

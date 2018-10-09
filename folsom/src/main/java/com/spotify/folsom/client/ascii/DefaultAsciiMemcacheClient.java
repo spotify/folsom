@@ -21,9 +21,6 @@ import static com.spotify.folsom.client.Request.encodeKey;
 import static com.spotify.folsom.client.Request.encodeKeys;
 
 import com.google.common.collect.Lists;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
@@ -34,10 +31,13 @@ import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.TransformerUtil;
 import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * The default implementation of {@link com.spotify.folsom.AsciiMemcacheClient}
@@ -53,11 +53,12 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   private final Charset charset;
   private final int maxKeyLength;
 
-  public DefaultAsciiMemcacheClient(final RawMemcacheClient rawMemcacheClient,
-                                    final Metrics metrics,
-                                    final Transcoder<V> valueTranscoder,
-                                    final Charset charset,
-                                    final int maxKeyLength) {
+  public DefaultAsciiMemcacheClient(
+      final RawMemcacheClient rawMemcacheClient,
+      final Metrics metrics,
+      final Transcoder<V> valueTranscoder,
+      final Charset charset,
+      final int maxKeyLength) {
     this.rawMemcacheClient = rawMemcacheClient;
     this.metrics = metrics;
     this.valueTranscoder = valueTranscoder;
@@ -71,11 +72,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     checkNotNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(
-        SetRequest.Operation.SET,
-        encodeKey(key, charset, maxKeyLength),
-        valueBytes,
-        ttl);
+    SetRequest request =
+        SetRequest.create(
+            SetRequest.Operation.SET, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     return future;
@@ -104,7 +103,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public CompletionStage<MemcacheStatus> add(String key, V value, int ttl) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(
+    SetRequest request =
+        SetRequest.create(
             SetRequest.Operation.ADD, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
@@ -115,7 +115,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(
+    SetRequest request =
+        SetRequest.create(
             SetRequest.Operation.REPLACE, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
@@ -126,7 +127,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public CompletionStage<MemcacheStatus> append(String key, V value) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(
+    SetRequest request =
+        SetRequest.create(
             SetRequest.Operation.APPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
@@ -137,7 +139,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public CompletionStage<MemcacheStatus> prepend(String key, V value) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
-    SetRequest request = SetRequest.create(
+    SetRequest request =
+        SetRequest.create(
             SetRequest.Operation.PREPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
@@ -173,7 +176,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   private CompletionStage<GetResult<V>> get(final String key, final boolean withCas) {
 
     final CompletionStage<GetResult<byte[]>> future =
-            rawMemcacheClient.send(new GetRequest(encodeKey(key, charset, maxKeyLength), withCas));
+        rawMemcacheClient.send(new GetRequest(encodeKey(key, charset, maxKeyLength), withCas));
 
     metrics.measureGetFuture(future);
     return transformerUtil.decode(future);
@@ -211,9 +214,9 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     }
 
     final List<List<byte[]>> keyPartition =
-            Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
+        Lists.partition(keys, MemcacheEncoder.MAX_MULTIGET_SIZE);
     final List<CompletionStage<List<GetResult<byte[]>>>> futureList =
-            new ArrayList<>(keyPartition.size());
+        new ArrayList<>(keyPartition.size());
 
     for (final List<byte[]> part : keyPartition) {
       MultigetRequest request = MultigetRequest.create(part, withCas);
@@ -247,8 +250,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   /*
-     * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
-     */
+   * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
+   */
   @Override
   public boolean isConnected() {
     return rawMemcacheClient.isConnected();

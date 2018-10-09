@@ -19,5 +19,6 @@ import java.util.List;
 
 public interface MultiRequest<T> {
   List<byte[]> getKeys();
+
   Request<List<T>> create(List<byte[]> keys);
 }

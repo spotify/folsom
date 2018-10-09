@@ -16,27 +16,24 @@
 
 package com.spotify.folsom.client.binary;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
-import org.junit.Test;
-
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import static org.junit.Assert.assertEquals;
-
+import java.util.List;
+import org.junit.Test;
 
 public class BinaryMemcacheDecoderTest {
 
   protected static final int ID = 17;
-  protected static final byte[] CAS = new byte[]{0, 0, 0, 0, 0, 0, 1, 2};
-  protected static final byte[] NO_CAS = new byte[]{0, 0, 0, 0, 0, 0, 0, 0};
+  protected static final byte[] CAS = new byte[] {0, 0, 0, 0, 0, 0, 1, 2};
+  protected static final byte[] NO_CAS = new byte[] {0, 0, 0, 0, 0, 0, 0, 0};
   private static final String KEY = "foo";
   private static final String VALUE = "bar";
 
@@ -62,7 +59,8 @@ public class BinaryMemcacheDecoderTest {
 
     List<Object> out = Lists.newArrayList();
     decoder.decode(null, cb, out);
-    @SuppressWarnings("unchecked") List<ResponsePacket> replies = (List<ResponsePacket>) out.get(0);
+    @SuppressWarnings("unchecked")
+    List<ResponsePacket> replies = (List<ResponsePacket>) out.get(0);
     request.handle(replies);
 
     GetResult<byte[]> getResult = request.get();

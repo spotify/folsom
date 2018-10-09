@@ -24,15 +24,13 @@ import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
-public class MultigetRequest
-        extends AsciiRequest<List<GetResult<byte[]>>>
-        implements MultiRequest<GetResult<byte[]>> {
+public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
+    implements MultiRequest<GetResult<byte[]>> {
 
   private static final byte[] GET = "get ".getBytes(Charsets.US_ASCII);
   private static final byte[] CAS_GET = "gets ".getBytes(Charsets.US_ASCII);

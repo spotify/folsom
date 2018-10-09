@@ -16,10 +16,11 @@
 
 package com.spotify.folsom.client;
 
-import com.google.common.collect.Queues;
-import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.futures.CompletableFutures;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.collect.Queues;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheOverloadedException;
@@ -28,7 +29,9 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
-
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.futures.CompletableFutures;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -44,9 +47,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DecoderException;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -59,16 +63,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.DecoderException;
-import io.netty.util.concurrent.DefaultThreadFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
@@ -89,16 +85,16 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
 
   public static CompletionStage<RawMemcacheClient> connect(
-          final HostAndPort address,
-          final int outstandingRequestLimit,
-          final boolean binary,
-          final Executor executor,
-          final long timeoutMillis,
-          final Charset charset,
-          final Metrics metrics,
-          final int maxSetLength,
-          final EventLoopGroup eventLoopGroup,
-          final Class<? extends Channel> channelClass) {
+      final HostAndPort address,
+      final int outstandingRequestLimit,
+      final boolean binary,
+      final Executor executor,
+      final long timeoutMillis,
+      final Charset charset,
+      final Metrics metrics,
+      final int maxSetLength,
+      final EventLoopGroup eventLoopGroup,
+      final Class<? extends Channel> channelClass) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -107,70 +103,79 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       decoder = new AsciiMemcacheDecoder(charset);
     }
 
-    final ChannelHandler initializer = new ChannelInitializer<Channel>() {
-      @Override
-      protected void initChannel(final Channel ch) throws Exception {
-        ch.pipeline().addLast(
-            new TcpTuningHandler(),
-            decoder,
+    final ChannelHandler initializer =
+        new ChannelInitializer<Channel>() {
+          @Override
+          protected void initChannel(final Channel ch) throws Exception {
+            ch.pipeline()
+                .addLast(
+                    new TcpTuningHandler(),
+                    decoder,
 
-            // Downstream
-            new MemcacheEncoder()
-        );
-      }
-    };
+                    // Downstream
+                    new MemcacheEncoder());
+          }
+        };
 
     final CompletableFuture<RawMemcacheClient> clientFuture = new CompletableFuture<>();
 
     EventLoopGroup effectiveELG = eventLoopGroup != null ? eventLoopGroup : defaultEventLoopGroup();
-    Class<? extends Channel> effectiveChannelClass = channelClass != null ? channelClass :
-            defaultChannelClass(effectiveELG);
+    Class<? extends Channel> effectiveChannelClass =
+        channelClass != null ? channelClass : defaultChannelClass(effectiveELG);
 
-    final Bootstrap bootstrap = new Bootstrap()
-        .group(effectiveELG)
-        .handler(initializer)
-        .channel(effectiveChannelClass)
-        .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, SimpleSizeEstimator.INSTANCE);
+    final Bootstrap bootstrap =
+        new Bootstrap()
+            .group(effectiveELG)
+            .handler(initializer)
+            .channel(effectiveChannelClass)
+            .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, SimpleSizeEstimator.INSTANCE);
 
-    final ChannelFuture connectFuture = bootstrap.connect(
-        new InetSocketAddress(address.getHostText(), address.getPort()));
+    final ChannelFuture connectFuture =
+        bootstrap.connect(new InetSocketAddress(address.getHostText(), address.getPort()));
 
-    connectFuture.addListener((ChannelFutureListener) future -> {
-      if (future.isSuccess()) {
-        // Create client
-        final RawMemcacheClient client = new DefaultRawMemcacheClient(
-            address,
-            future.channel(),
-            outstandingRequestLimit,
-            executor,
-            timeoutMillis,
-            metrics,
-            maxSetLength);
-        clientFuture.complete(client);
-      } else {
-        future.channel().close();
-        clientFuture.completeExceptionally(future.cause());
-      }
-    });
+    connectFuture.addListener(
+        (ChannelFutureListener)
+            future -> {
+              if (future.isSuccess()) {
+                // Create client
+                final RawMemcacheClient client =
+                    new DefaultRawMemcacheClient(
+                        address,
+                        future.channel(),
+                        outstandingRequestLimit,
+                        executor,
+                        timeoutMillis,
+                        metrics,
+                        maxSetLength);
+                clientFuture.complete(client);
+              } else {
+                future.channel().close();
+                clientFuture.completeExceptionally(future.cause());
+              }
+            });
 
     return onExecutor(clientFuture, executor);
   }
 
   private static EventLoopGroup defaultEventLoopGroup() {
     ThreadFactory factory = new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
-    return Epoll.isAvailable() ? new EpollEventLoopGroup(0, factory) :
-            new NioEventLoopGroup(0, factory);
+    return Epoll.isAvailable()
+        ? new EpollEventLoopGroup(0, factory)
+        : new NioEventLoopGroup(0, factory);
   }
 
   private static Class<? extends Channel> defaultChannelClass(EventLoopGroup elg) {
     return elg instanceof EpollEventLoopGroup ? EpollSocketChannel.class : NioSocketChannel.class;
   }
 
-  private DefaultRawMemcacheClient(final HostAndPort address,
-                                   final Channel channel,
-                                   final int outstandingRequestLimit,
-                                   final Executor executor, final long timeoutMillis,
-                                   final Metrics metrics, int maxSetLength) {
+  private DefaultRawMemcacheClient(
+      final HostAndPort address,
+      final Channel channel,
+      final int outstandingRequestLimit,
+      final Executor executor,
+      final long timeoutMillis,
+      final Metrics metrics,
+      int maxSetLength) {
     this.address = address;
     this.executor = executor;
     this.timeoutMillis = timeoutMillis;
@@ -193,8 +198,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        return (CompletionStage<T>) onExecutor(
-            CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
+        return (CompletionStage<T>)
+            onExecutor(CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
       }
     }
 
@@ -225,7 +230,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     if (executor == null) {
       return future;
     }
-    return future.whenCompleteAsync((result, t) -> { }, executor);
+    return future.whenCompleteAsync((result, t) -> {}, executor);
   }
 
   /**
@@ -270,34 +275,39 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return isConnected() ? 1 : 0;
   }
 
-  /**
-   * Handles a channel connected to the address specified in the constructor.
-   */
+  /** Handles a channel connected to the address specified in the constructor. */
   private class ConnectionHandler extends ChannelDuplexHandler {
 
     private final Queue<Request<?>> outstanding = Queues.newArrayDeque();
-    private final TimeoutChecker<Request<?>> timeoutChecker = TimeoutChecker.create(
-        MILLISECONDS, timeoutMillis);
+    private final TimeoutChecker<Request<?>> timeoutChecker =
+        TimeoutChecker.create(MILLISECONDS, timeoutMillis);
 
     private final Future<?> timeoutCheckTask;
 
     ConnectionHandler() {
       final long pollIntervalMillis = Math.min(timeoutMillis, SECONDS.toMillis(1));
-      timeoutCheckTask = channel.eventLoop().scheduleWithFixedDelay(() -> {
-        final Request<?> head = outstanding.peek();
-        if (head == null) {
-          return;
-        }
-        if (timeoutChecker.check(head)) {
-          log.error("Request timeout: {} {}", channel, head);
-          DefaultRawMemcacheClient.this.setDisconnected("Timeout");
-        }
-      }, pollIntervalMillis, pollIntervalMillis, MILLISECONDS);
+      timeoutCheckTask =
+          channel
+              .eventLoop()
+              .scheduleWithFixedDelay(
+                  () -> {
+                    final Request<?> head = outstanding.peek();
+                    if (head == null) {
+                      return;
+                    }
+                    if (timeoutChecker.check(head)) {
+                      log.error("Request timeout: {} {}", channel, head);
+                      DefaultRawMemcacheClient.this.setDisconnected("Timeout");
+                    }
+                  },
+                  pollIntervalMillis,
+                  pollIntervalMillis,
+                  MILLISECONDS);
     }
 
     @Override
-    public void write(final ChannelHandlerContext ctx, final Object msg,
-                      final ChannelPromise promise)
+    public void write(
+        final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise)
         throws Exception {
       Request<?> request = (Request<?>) msg;
       outstanding.add(request);

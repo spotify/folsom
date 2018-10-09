@@ -15,6 +15,9 @@
  */
 package com.spotify.folsom.client;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.google.common.base.Charsets;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.FakeRawMemcacheClient;
@@ -23,14 +26,10 @@ import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import com.yammer.metrics.core.Metered;
 import com.yammer.metrics.core.MetricsRegistry;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class YammerMetricsTest {
 
@@ -42,11 +41,13 @@ public class YammerMetricsTest {
   public void setUp() throws Exception {
     metrics = new YammerMetrics(new MetricsRegistry());
     fakeRawMemcacheClient = new FakeRawMemcacheClient(metrics);
-    client = new DefaultAsciiMemcacheClient<>(
-        fakeRawMemcacheClient,
-        metrics,
-        StringTranscoder.UTF8_INSTANCE,
-        Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+    client =
+        new DefaultAsciiMemcacheClient<>(
+            fakeRawMemcacheClient,
+            metrics,
+            StringTranscoder.UTF8_INSTANCE,
+            Charsets.UTF_8,
+            MemcacheEncoder.MAX_KEY_LEN);
     client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
@@ -75,9 +76,7 @@ public class YammerMetricsTest {
     assertEquals(0, metrics.getGetFailures().count());
     assertEquals(0, metrics.getGetSuccesses().count());
 
-    assertEquals(
-        MemcacheStatus.OK,
-        client.set("key", "value", 0).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK, client.set("key", "value", 0).toCompletableFuture().get());
     assertEquals("value", client.get("key").toCompletableFuture().get());
 
     awaitCount(1, metrics.getGets());

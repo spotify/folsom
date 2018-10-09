@@ -23,8 +23,7 @@ import java.util.concurrent.CompletionStage;
 public class AuthenticatingClient {
 
   public static CompletionStage<RawMemcacheClient> authenticate(
-      Connector connector,
-      final Authenticator authenticator) {
+      Connector connector, final Authenticator authenticator) {
 
     CompletionStage<RawMemcacheClient> client = connector.connect();
 

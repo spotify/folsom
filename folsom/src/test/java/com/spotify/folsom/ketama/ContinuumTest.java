@@ -16,22 +16,20 @@
 
 package com.spotify.folsom.ketama;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.folsom.RawMemcacheClient;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.MockitoAnnotations;
-
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.guava.HostAndPort;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.MockitoAnnotations;
 
 public class ContinuumTest {
 
@@ -80,15 +78,13 @@ public class ContinuumTest {
     List<AddressAndClient> clients = ImmutableList.of(AAC1);
     Continuum c = new Continuum(clients);
 
-    List<RawMemcacheClient> actual = Arrays.asList(
-            c.findClient(bytes(KEY1)),
-            c.findClient(bytes(KEY2)),
-            c.findClient(bytes(KEY3)));
+    List<RawMemcacheClient> actual =
+        Arrays.asList(
+            c.findClient(bytes(KEY1)), c.findClient(bytes(KEY2)), c.findClient(bytes(KEY3)));
 
     // all keys to the same client
     List<RawMemcacheClient> expected = Arrays.asList(CLIENT1, CLIENT1, CLIENT1);
     assertEquals(expected, actual);
-
   }
 
   @Test
@@ -96,7 +92,8 @@ public class ContinuumTest {
     List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
     Continuum c = new Continuum(clients);
 
-    List<RawMemcacheClient> actual = Arrays.asList(
+    List<RawMemcacheClient> actual =
+        Arrays.asList(
             c.findClient(bytes(KEY1)),
             c.findClient(bytes(KEY2)),
             c.findClient(bytes(KEY3)),
@@ -104,13 +101,8 @@ public class ContinuumTest {
             c.findClient(bytes(KEY5)),
             c.findClient(bytes(KEY6)));
 
-    List<RawMemcacheClient> expected = Arrays.asList(
-            CLIENT1,
-            CLIENT1,
-            CLIENT2,
-            CLIENT3,
-            CLIENT2,
-            CLIENT1);
+    List<RawMemcacheClient> expected =
+        Arrays.asList(CLIENT1, CLIENT1, CLIENT2, CLIENT3, CLIENT2, CLIENT1);
     assertEquals(expected, actual);
   }
 
@@ -119,7 +111,8 @@ public class ContinuumTest {
     List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3, AAC4, AAC5);
     Continuum c = new Continuum(clients);
 
-    List<RawMemcacheClient> actual = Arrays.asList(
+    List<RawMemcacheClient> actual =
+        Arrays.asList(
             c.findClient(bytes(KEY1)),
             c.findClient(bytes(KEY2)),
             c.findClient(bytes(KEY3)),
@@ -129,26 +122,18 @@ public class ContinuumTest {
             c.findClient(bytes(KEY7)),
             c.findClient(bytes(KEY8)),
             c.findClient(bytes(KEY9)),
-            c.findClient(bytes(KEY10))
-    );
+            c.findClient(bytes(KEY10)));
 
-
-    List<RawMemcacheClient> expected = Arrays.asList(
-            CLIENT1,
-            CLIENT5,
-            CLIENT2,
-            CLIENT4,
-            CLIENT2,
-            CLIENT1,
-            CLIENT5,
-            CLIENT1,
-            CLIENT1,
+    List<RawMemcacheClient> expected =
+        Arrays.asList(
+            CLIENT1, CLIENT5, CLIENT2, CLIENT4, CLIENT2, CLIENT1, CLIENT5, CLIENT1, CLIENT1,
             CLIENT4);
     assertEquals(expected, actual);
 
     when(CLIENT1.isConnected()).thenReturn(false);
 
-    actual = Arrays.asList(
+    actual =
+        Arrays.asList(
             c.findClient(bytes(KEY1)),
             c.findClient(bytes(KEY2)),
             c.findClient(bytes(KEY3)),
@@ -158,19 +143,13 @@ public class ContinuumTest {
             c.findClient(bytes(KEY7)),
             c.findClient(bytes(KEY8)),
             c.findClient(bytes(KEY9)),
-            c.findClient(bytes(KEY10))
-    );
+            c.findClient(bytes(KEY10)));
 
-
-    expected = Arrays.asList(
+    expected =
+        Arrays.asList(
             CLIENT4, // 1 -> 4
-            CLIENT5,
-            CLIENT2,
-            CLIENT4,
-            CLIENT2,
-            CLIENT5, // 1 -> 5
-            CLIENT5,
-            CLIENT2, // 1 -> 2
+            CLIENT5, CLIENT2, CLIENT4, CLIENT2, CLIENT5, // 1 -> 5
+            CLIENT5, CLIENT2, // 1 -> 2
             CLIENT5, // 1 -> 5
             CLIENT4);
     assertEquals(expected, actual);

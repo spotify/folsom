@@ -16,18 +16,16 @@
 
 package com.spotify.folsom.client;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-
-import java.util.List;
 
 public final class Utils {
 
-  private Utils() {
-  }
+  private Utils() {}
 
   public static int ttlToExpiration(final int ttl) {
     return (ttl == 0) ? 0 : (int) (System.currentTimeMillis() / 1000) + ttl;
@@ -37,9 +35,7 @@ public final class Utils {
     return input -> Lists.newArrayList(Iterables.concat(input));
   }
 
-  /**
-   * A counter of all currently connected clients. This can be useful to detect connection leaks
-   */
+  /** A counter of all currently connected clients. This can be useful to detect connection leaks */
   public static int getGlobalConnectionCount() {
     return DefaultRawMemcacheClient.getGlobalConnectionCount();
   }

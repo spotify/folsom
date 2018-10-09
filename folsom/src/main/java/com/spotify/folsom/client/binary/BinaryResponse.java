@@ -17,5 +17,4 @@ package com.spotify.folsom.client.binary;
 
 import java.util.ArrayList;
 
-public class BinaryResponse extends ArrayList<ResponsePacket> {
-}
+public class BinaryResponse extends ArrayList<ResponsePacket> {}

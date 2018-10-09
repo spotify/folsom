@@ -15,12 +15,11 @@
  */
 package com.spotify.folsom.client;
 
-import org.junit.Test;
-
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.TimeUnit;
+import org.junit.Test;
 
 public class TimeoutCheckerTest {
 

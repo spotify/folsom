@@ -18,9 +18,7 @@ package com.spotify.folsom.transcoder;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.Transcoder;
-
 import java.nio.charset.Charset;
-
 
 public class StringTranscoder implements Transcoder<String> {
 
@@ -41,5 +39,4 @@ public class StringTranscoder implements Transcoder<String> {
   public String decode(final byte[] b) {
     return new String(b, charset);
   }
-
 }
