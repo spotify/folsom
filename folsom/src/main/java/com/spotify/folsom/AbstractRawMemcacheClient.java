@@ -34,5 +34,4 @@ public abstract class AbstractRawMemcacheClient implements RawMemcacheClient {
   protected void notifyConnectionChange() {
     eventBus.post(this);
   }
-
 }

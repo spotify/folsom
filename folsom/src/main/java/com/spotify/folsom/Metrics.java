@@ -16,16 +16,20 @@
 
 package com.spotify.folsom;
 
-import java.util.concurrent.CompletionStage;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 public interface Metrics {
   void measureGetFuture(CompletionStage<GetResult<byte[]>> future);
+
   void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future);
+
   void measureDeleteFuture(CompletionStage<MemcacheStatus> future);
+
   void measureSetFuture(CompletionStage<MemcacheStatus> future);
+
   void measureIncrDecrFuture(CompletionStage<Long> future);
+
   void measureTouchFuture(CompletionStage<MemcacheStatus> future);
 
   /**
@@ -37,5 +41,4 @@ public interface Metrics {
   interface OutstandingRequestsGauge {
     int getOutstandingRequests();
   }
-
 }

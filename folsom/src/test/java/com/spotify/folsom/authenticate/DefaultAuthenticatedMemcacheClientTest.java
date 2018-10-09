@@ -34,8 +34,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class DefaultAuthenticatedMemcacheClientTest {
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static final String USERNAME = "theuser";
   private static final String PASSWORD = "a_nice_password";
@@ -65,24 +64,28 @@ public class DefaultAuthenticatedMemcacheClientTest {
     testAuthenticationSuccess(noauthserver);
   }
 
-  private void testAuthenticationSuccess(final MemcachedServer server) throws TimeoutException, InterruptedException {
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .withUsernamePassword(USERNAME, PASSWORD)
-        .connectBinary();
+  private void testAuthenticationSuccess(final MemcachedServer server)
+      throws TimeoutException, InterruptedException {
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .withUsernamePassword(USERNAME, PASSWORD)
+            .connectBinary();
 
     client.awaitConnected(20, TimeUnit.SECONDS);
 
-    assertThat(client.set("some_key", "some_val", 1).toCompletableFuture(),
+    assertThat(
+        client.set("some_key", "some_val", 1).toCompletableFuture(),
         stageWillCompleteWithValueThat(is(OK)));
   }
 
   @Test
   public void testFailedAuthentication() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .withUsernamePassword(USERNAME, "wrong_password")
-        .connectBinary();
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .withUsernamePassword(USERNAME, "wrong_password")
+            .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
     client.awaitConnected(20, TimeUnit.SECONDS);
@@ -90,9 +93,10 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void unAuthorizedBinaryClientFails() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .connectBinary();
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
     client.awaitConnected(20, TimeUnit.SECONDS);
@@ -100,9 +104,10 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void unAuthorizedAsciiClientFails() throws InterruptedException, TimeoutException {
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .connectAscii();
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .connectAscii();
 
     thrown.expect(TimeoutException.class);
     client.awaitConnected(1, TimeUnit.SECONDS);
@@ -112,18 +117,20 @@ public class DefaultAuthenticatedMemcacheClientTest {
   public void testSASLWithAsciiFails() {
     thrown.expect(IllegalArgumentException.class);
 
-    MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .withUsernamePassword(USERNAME, PASSWORD)
-        .connectAscii();
+    MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .withUsernamePassword(USERNAME, PASSWORD)
+            .connectAscii();
   }
 
   @Test
   public void testKetamaFailure() throws InterruptedException, TimeoutException {
-    BinaryMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .withAddress(noauthserver.getHost(), noauthserver.getPort())
-        .connectBinary();
+    BinaryMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .withAddress(noauthserver.getHost(), noauthserver.getPort())
+            .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
     client.awaitFullyConnected(10, TimeUnit.SECONDS);
@@ -131,15 +138,17 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @Test
   public void testKetamaSuccess() throws TimeoutException, InterruptedException {
-    BinaryMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
-        .withAddress(server.getHost(), server.getPort())
-        .withAddress(noauthserver.getHost(), noauthserver.getPort())
-        .withUsernamePassword(USERNAME, PASSWORD)
-        .connectBinary();
+    BinaryMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress(server.getHost(), server.getPort())
+            .withAddress(noauthserver.getHost(), noauthserver.getPort())
+            .withUsernamePassword(USERNAME, PASSWORD)
+            .connectBinary();
 
     client.awaitConnected(20, TimeUnit.SECONDS);
 
-    assertThat(client.set("some_key", "some_val", 1).toCompletableFuture(),
+    assertThat(
+        client.set("some_key", "some_val", 1).toCompletableFuture(),
         stageWillCompleteWithValueThat(is(OK)));
   }
 }

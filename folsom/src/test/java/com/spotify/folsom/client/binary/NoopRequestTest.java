@@ -19,13 +19,9 @@ package com.spotify.folsom.client.binary;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
-
-import org.junit.Test;
-
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
-
+import java.util.List;
+import org.junit.Test;
 
 public class NoopRequestTest extends RequestTestTemplate {
 

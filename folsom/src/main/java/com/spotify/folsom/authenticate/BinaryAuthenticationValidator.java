@@ -22,15 +22,13 @@ import java.util.concurrent.CompletionStage;
 
 public class BinaryAuthenticationValidator implements Authenticator {
 
-  private static final BinaryAuthenticationValidator INSTANCE
-      = new BinaryAuthenticationValidator();
+  private static final BinaryAuthenticationValidator INSTANCE = new BinaryAuthenticationValidator();
 
   public static BinaryAuthenticationValidator getInstance() {
     return INSTANCE;
   }
 
-  private BinaryAuthenticationValidator() {
-  }
+  private BinaryAuthenticationValidator() {}
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(
@@ -39,10 +37,10 @@ public class BinaryAuthenticationValidator implements Authenticator {
     final NoopRequest request = new NoopRequest();
 
     return clientFuture.thenCompose(
-        client -> client.connectFuture().thenCompose(ignored ->
-            client.send(request)
-            .thenApply(status -> client))
-    );
+        client ->
+            client
+                .connectFuture()
+                .thenCompose(ignored -> client.send(request).thenApply(status -> client)));
   }
 
   @Override

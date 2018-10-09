@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;

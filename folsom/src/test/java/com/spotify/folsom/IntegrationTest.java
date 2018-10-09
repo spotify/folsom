@@ -16,14 +16,27 @@
 
 package com.spotify.folsom;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.futures.CompletableFutures;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
@@ -34,20 +47,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeTrue;
-
 @RunWith(Parameterized.class)
 public class IntegrationTest {
 
@@ -56,8 +55,8 @@ public class IntegrationTest {
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = Lists.newArrayList();
-    res.add(new Object[]{"ascii"});
-    res.add(new Object[]{"binary"});
+    res.add(new Object[] {"ascii"});
+    res.add(new Object[] {"binary"});
     return res;
   }
 
@@ -93,7 +92,8 @@ public class IntegrationTest {
     }
     HostAndPort integrationServer = HostAndPort.fromParts(server.getHost(), server.getPort());
 
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
+    MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
@@ -111,8 +111,8 @@ public class IntegrationTest {
       client = binaryClient;
     }
     client.awaitConnected(10, TimeUnit.SECONDS);
-    System.out.printf("Using client: %s protocol: %s and port: %d\n",
-        client, protocol, server.getPort());
+    System.out.printf(
+        "Using client: %s protocol: %s and port: %d\n", client, protocol, server.getPort());
     cleanup();
   }
 
@@ -333,8 +333,7 @@ public class IntegrationTest {
     client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
 
     assertEquals(
-        asList(VALUE1, VALUE2),
-        client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
+        asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test
@@ -345,9 +344,8 @@ public class IntegrationTest {
     long cas1 = client.casGet(KEY1).toCompletableFuture().get().getCas();
     long cas2 = client.casGet(KEY2).toCompletableFuture().get().getCas();
 
-    List<GetResult<String>> expected = asList(
-            GetResult.success(VALUE1, cas1),
-            GetResult.success(VALUE2, cas2));
+    List<GetResult<String>> expected =
+        asList(GetResult.success(VALUE1, cas1), GetResult.success(VALUE2, cas2));
     assertEquals(expected, client.casGet(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
@@ -441,7 +439,6 @@ public class IntegrationTest {
     assertEquals(new Long(121), asciiClient.decr(KEY1, 2).toCompletableFuture().get());
   }
 
-
   @Test
   public void testCas() throws Throwable {
     assumeBinary();
@@ -454,7 +451,6 @@ public class IntegrationTest {
 
     client.set(KEY1, VALUE2, TTL, getResult1.getCas()).toCompletableFuture().get();
     final long newCas = client.casGet(KEY1).toCompletableFuture().get().getCas();
-
 
     assertNotEquals(0, newCas);
 
@@ -541,8 +537,7 @@ public class IntegrationTest {
     String value = createValue(2 * 1024 * 1024);
     assertEquals(MemcacheStatus.OK, client.set(KEY1, "", TTL).toCompletableFuture().get());
     assertEquals(
-        MemcacheStatus.VALUE_TOO_LARGE,
-        client.set(KEY1, value, TTL).toCompletableFuture().get());
+        MemcacheStatus.VALUE_TOO_LARGE, client.set(KEY1, value, TTL).toCompletableFuture().get());
     assertEquals("", client.get(KEY1).toCompletableFuture().get());
   }
 
@@ -554,8 +549,7 @@ public class IntegrationTest {
     String smallValue = createValue(1000);
     for (int i = 0; i < 1000; i++) {
       assertEquals(
-          MemcacheStatus.OK,
-          client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
+          MemcacheStatus.OK, client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
       assertEquals(smallValue, client.get(KEY1).toCompletableFuture().get());
     }
   }

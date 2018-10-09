@@ -30,15 +30,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class MultigetRequest
-        extends BinaryRequest<List<GetResult<byte[]>>>
-        implements MultiRequest<GetResult<byte[]>> {
+public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
+    implements MultiRequest<GetResult<byte[]>> {
 
   private final int ttl;
   private final List<byte[]> keys;
 
-  private MultigetRequest(final List<byte[]> keys,
-                          final int ttl) {
+  private MultigetRequest(final List<byte[]> keys, final int ttl) {
     super(keys.get(0));
     this.keys = keys;
     this.ttl = ttl;
@@ -134,7 +132,6 @@ public class MultigetRequest
   public List<byte[]> getKeys() {
     return keys;
   }
-
 
   @Override
   public Request<List<GetResult<byte[]>>> create(List<byte[]> keys) {

@@ -15,11 +15,13 @@
  */
 package com.spotify.folsom.ketama;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.spotify.folsom.guava.HostAndPort;
-
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
@@ -27,18 +29,13 @@ import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.junit.Test;
 
 public class KetamaMemcacheClientTest {
 
@@ -56,8 +53,8 @@ public class KetamaMemcacheClientTest {
     }
   }
 
-  private void test(final int numClients, final int keysFound, final int requestSize,
-                    boolean binary)
+  private void test(
+      final int numClients, final int keysFound, final int requestSize, boolean binary)
       throws InterruptedException, ExecutionException {
 
     final Random random = new Random(123717678612L);
@@ -65,8 +62,8 @@ public class KetamaMemcacheClientTest {
     final ArrayList<AddressAndClient> clients = Lists.newArrayList();
     for (int i = 0; i < numClients; i++) {
       final FakeRawMemcacheClient client = new FakeRawMemcacheClient();
-      final AddressAndClient aac = new AddressAndClient(
-          HostAndPort.fromString("host" + i + ":11211"), client);
+      final AddressAndClient aac =
+          new AddressAndClient(HostAndPort.fromString("host" + i + ":11211"), client);
       clients.add(aac);
 
       final MemcacheClient<String> memcacheClient = buildClient(client, binary);
@@ -104,11 +101,19 @@ public class KetamaMemcacheClientTest {
 
   private MemcacheClient<String> buildClient(final RawMemcacheClient client, boolean binary) {
     if (binary) {
-      return new DefaultBinaryMemcacheClient<>(client, new NoopMetrics(),
-              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+      return new DefaultBinaryMemcacheClient<>(
+          client,
+          new NoopMetrics(),
+          StringTranscoder.UTF8_INSTANCE,
+          Charsets.UTF_8,
+          MemcacheEncoder.MAX_KEY_LEN);
     } else {
-      return new DefaultAsciiMemcacheClient<>(client, new NoopMetrics(),
-              StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+      return new DefaultAsciiMemcacheClient<>(
+          client,
+          new NoopMetrics(),
+          StringTranscoder.UTF8_INSTANCE,
+          Charsets.UTF_8,
+          MemcacheEncoder.MAX_KEY_LEN);
     }
   }
 }

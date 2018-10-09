@@ -44,7 +44,8 @@ public class SrvKetamaIntegrationTest {
     connections = Utils.getGlobalConnectionCount();
     servers = new KetamaIntegrationTest.Servers(3);
 
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
+    MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient()
             .withSRVRecord("memcached.srv")
             .withSrvResolver(s -> toResult(servers.getServers()))
             .withSRVShutdownDelay(1000)
@@ -59,7 +60,8 @@ public class SrvKetamaIntegrationTest {
   }
 
   public static List<LookupResult> toResult(List<MemcachedServer> servers) {
-    return servers.stream()
+    return servers
+        .stream()
         .map(server -> LookupResult.create(server.getHost(), server.getPort(), 100, 100, 100))
         .collect(Collectors.toList());
   }
@@ -118,5 +120,4 @@ public class SrvKetamaIntegrationTest {
     double relativeDiff = diff / numKeys;
     assertTrue("Misses: " + misses, relativeDiff < 0.2);
   }
-
 }

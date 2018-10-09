@@ -15,9 +15,8 @@
  */
 package com.spotify.folsom;
 
-import java.util.concurrent.CompletionStage;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A memcache client using the binary protocol
@@ -27,8 +26,9 @@ import java.util.List;
 public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
 
   /**
-   * Add a key in memcache with the provided value, with the specified TTL. Key must not exist
-   * in memcache
+   * Add a key in memcache with the provided value, with the specified TTL. Key must not exist in
+   * memcache
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -38,8 +38,9 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
   CompletionStage<MemcacheStatus> add(String key, V value, int ttl, long cas);
 
   /**
-   * Replace a key in memcache with the provided value, with the specified TTL. Key must exist
-   * in memcache
+   * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
+   * memcache
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -50,10 +51,11 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
 
   /**
    * Get the value for the provided key and sets the expiration
+   *
    * @param ttl The TTL in seconds
    * @param key The key, must not be null
    * @return A future representing completion of the request, with the value, or null if the key
-   *         does not exist
+   *     does not exist
    */
   CompletionStage<V> getAndTouch(String key, int ttl);
 
@@ -61,9 +63,9 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * Get the values for the provided keys and sets the expiration
    *
    * @param keys Keys, must not be null, nor must any key in the list
-   * @param ttl  The TTL in seconds
+   * @param ttl The TTL in seconds
    * @return A future representing completion of the request, with the values. Any non existing
-   * values will be null. Order will be maintained from the input keys
+   *     values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<V>> getAndTouch(List<String> keys, int ttl);
 
@@ -73,17 +75,17 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @param key First key, must not be null
    * @param ttl The TTL in seconds
    * @return A future representing completion of the request, with the value, including the CAS
-   * value, or null if the value does not exists.
+   *     value, or null if the value does not exists.
    */
   CompletionStage<GetResult<V>> casGetAndTouch(String key, int ttl);
 
   /**
    * Increment a counter for the provided key
    *
-   * @param key     The key, must not be null
-   * @param by      The value to increment the counter by
+   * @param key The key, must not be null
+   * @param by The value to increment the counter by
    * @param initial The initial value if the key does not exist
-   * @param ttl     The TTL, in seconds
+   * @param ttl The TTL, in seconds
    * @return A future representing completion of the request, with the new value of the counter
    */
   CompletionStage<Long> incr(String key, long by, long initial, int ttl);
@@ -91,10 +93,10 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
   /**
    * Decrement a counter for the provided key
    *
-   * @param key     The key, must not be null
-   * @param by      The value to decrement the counter by
+   * @param key The key, must not be null
+   * @param by The value to decrement the counter by
    * @param initial The initial value if the key does not exist
-   * @param ttl     The TTL, in seconds
+   * @param ttl The TTL, in seconds
    * @return A future representing completion of the request, with the new value of the counter
    */
   CompletionStage<Long> decr(String key, long by, long initial, int ttl);

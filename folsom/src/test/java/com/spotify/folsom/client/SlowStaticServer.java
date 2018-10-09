@@ -16,9 +16,6 @@
 
 package com.spotify.folsom.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,6 +25,8 @@ import java.net.Socket;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SlowStaticServer implements Closeable {
 
@@ -77,15 +76,18 @@ public class SlowStaticServer implements Closeable {
           if (!line.startsWith("get ")) {
             throw new RuntimeException("Unimplemented command: " + line);
           }
-          executor.schedule(() -> {
-            try {
-              socket.getOutputStream().write(response);
-              socket.getOutputStream().flush();
-              log.debug("sent response");
-            } catch (IOException e) {
-              log.error("exception with socket", e);
-            }
-          }, delayMillis, TimeUnit.MILLISECONDS);
+          executor.schedule(
+              () -> {
+                try {
+                  socket.getOutputStream().write(response);
+                  socket.getOutputStream().flush();
+                  log.debug("sent response");
+                } catch (IOException e) {
+                  log.error("exception with socket", e);
+                }
+              },
+              delayMillis,
+              TimeUnit.MILLISECONDS);
         }
       } catch (IOException e) {
         log.debug("shutting down due to error", e);

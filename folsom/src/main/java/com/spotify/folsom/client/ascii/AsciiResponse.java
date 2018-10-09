@@ -31,6 +31,14 @@ public class AsciiResponse {
   }
 
   public enum Type {
-    VALUE, NUMERIC_VALUE, STORED, EXISTS, DELETED, NOT_FOUND, NOT_STORED, TOUCHED, OK
+    VALUE,
+    NUMERIC_VALUE,
+    STORED,
+    EXISTS,
+    DELETED,
+    NOT_FOUND,
+    NOT_STORED,
+    TOUCHED,
+    OK
   }
 }

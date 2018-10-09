@@ -18,8 +18,8 @@ package com.spotify.folsom.client;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A utility for checking whether some state has changed within a specified timout. Could be used
- * to verify that the head of a request queue changes quickly enough, indicating forward progress.
+ * A utility for checking whether some state has changed within a specified timout. Could be used to
+ * verify that the head of a request queue changes quickly enough, indicating forward progress.
  */
 class TimeoutChecker<T> {
 

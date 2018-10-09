@@ -48,6 +48,7 @@ public class SrvChangeIntegrationTest {
   private SrvKetamaClient srvKetamaClient;
 
   private int connections;
+
   @BeforeClass
   public static void setUpClass() throws Exception {
     servers = new KetamaIntegrationTest.Servers(3);
@@ -63,21 +64,21 @@ public class SrvChangeIntegrationTest {
     connections = Utils.getGlobalConnectionCount();
 
     fullResults = toResult(servers.getServers());
-    oneMissing = ImmutableList.copyOf(
-        fullResults.subList(0, fullResults.size() - 1));
+    oneMissing = ImmutableList.copyOf(fullResults.subList(0, fullResults.size() - 1));
 
     dnsSrvResolver = mock(DnsSrvResolver.class);
     when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
 
-    MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-        .withSRVRecord("memcached.srv")
-        .withSrvResolver(dnsSrvResolver)
-        .withSRVRefreshPeriod(1)
-        .withSRVShutdownDelay(0)
-        .withMaxOutstandingRequests(10000)
-        .withMetrics(NoopMetrics.INSTANCE)
-        .withRetry(false)
-        .withRequestTimeoutMillis(10 * 1000);
+    MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient()
+            .withSRVRecord("memcached.srv")
+            .withSrvResolver(dnsSrvResolver)
+            .withSRVRefreshPeriod(1)
+            .withSRVShutdownDelay(0)
+            .withMaxOutstandingRequests(10000)
+            .withMetrics(NoopMetrics.INSTANCE)
+            .withRetry(false)
+            .withRequestTimeoutMillis(10 * 1000);
     client = builder.connectAscii();
 
     DefaultAsciiMemcacheClient client2 = (DefaultAsciiMemcacheClient) this.client;
@@ -102,15 +103,14 @@ public class SrvChangeIntegrationTest {
       srvKetamaClient.updateDNS();
       waitUntilSuccess(
           1000,
-          () -> assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections())
-      );
+          () ->
+              assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections()));
 
       when(dnsSrvResolver.resolve(anyString())).thenReturn(oneMissing);
       srvKetamaClient.updateDNS();
       waitUntilSuccess(
           1000,
-          () -> assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections())
-      );
+          () -> assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections()));
     }
   }
 
@@ -129,5 +129,4 @@ public class SrvChangeIntegrationTest {
     }
     runnable.run();
   }
-
 }

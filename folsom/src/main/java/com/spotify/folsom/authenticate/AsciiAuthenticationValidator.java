@@ -25,21 +25,21 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
- * If SASL is enabled then ascii protocol won't be allowed at all, so we simply expect a connection closed.
+ * If SASL is enabled then ascii protocol won't be allowed at all, so we simply expect a connection
+ * closed.
  */
 public class AsciiAuthenticationValidator implements Authenticator {
 
-  private static final AsciiAuthenticationValidator INSTANCE
-      = new AsciiAuthenticationValidator();
+  private static final AsciiAuthenticationValidator INSTANCE = new AsciiAuthenticationValidator();
 
   public static AsciiAuthenticationValidator getInstance() {
     return INSTANCE;
   }
 
-  private static final byte[] EXAMPLE_KEY = "folsom_authentication_validation".getBytes(Charsets.US_ASCII);
+  private static final byte[] EXAMPLE_KEY =
+      "folsom_authentication_validation".getBytes(Charsets.US_ASCII);
 
-  private AsciiAuthenticationValidator() {
-  }
+  private AsciiAuthenticationValidator() {}
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(
@@ -48,16 +48,21 @@ public class AsciiAuthenticationValidator implements Authenticator {
     final GetRequest request = new GetRequest(EXAMPLE_KEY, false);
 
     return clientFuture.thenCompose(
-        client -> client.connectFuture().thenCompose(ignored ->
-        client.send(request)
-            .handle((status, throwable) -> {
-              if (throwable == null) {
-                return client;
-              } else {
-                throw new CompletionException(unwrap(throwable));
-              }
-            }))
-    );
+        client ->
+            client
+                .connectFuture()
+                .thenCompose(
+                    ignored ->
+                        client
+                            .send(request)
+                            .handle(
+                                (status, throwable) -> {
+                                  if (throwable == null) {
+                                    return client;
+                                  } else {
+                                    throw new CompletionException(unwrap(throwable));
+                                  }
+                                })));
   }
 
   @Override

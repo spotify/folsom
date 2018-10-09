@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

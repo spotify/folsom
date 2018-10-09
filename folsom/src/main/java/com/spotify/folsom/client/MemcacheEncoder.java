@@ -18,7 +18,6 @@ package com.spotify.folsom.client;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
-
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -35,12 +34,11 @@ public class MemcacheEncoder extends MessageToMessageEncoder<Request<?>> {
   private final ByteBuffer workingBuffer = ByteBuffer.allocate(MAX_REQUEST);
 
   @Override
-  public void encode(final ChannelHandlerContext ctx, final Request<?> request,
-                     final List<Object> out)
+  public void encode(
+      final ChannelHandlerContext ctx, final Request<?> request, final List<Object> out)
       throws Exception {
     workingBuffer.clear();
     final ByteBuf message = request.writeRequest(ctx.alloc(), workingBuffer);
     out.add(message);
   }
-
 }

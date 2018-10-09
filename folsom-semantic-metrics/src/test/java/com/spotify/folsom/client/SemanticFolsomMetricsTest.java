@@ -15,6 +15,10 @@
  */
 package com.spotify.folsom.client;
 
+import static com.spotify.futures.CompletableFutures.exceptionallyCompletedFuture;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.junit.Assert.assertEquals;
+
 import com.codahale.metrics.Gauge;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -24,23 +28,17 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics.OutstandingRequestsGauge;
 import com.spotify.metrics.core.MetricId;
 import com.spotify.metrics.core.SemanticMetricRegistry;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
-
-import static com.spotify.futures.CompletableFutures.exceptionallyCompletedFuture;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class SemanticFolsomMetricsTest {
 
   private static final OutstandingRequestsGauge GAUGE = () -> 123;
 
   private final SemanticMetricRegistry registry = new SemanticMetricRegistry();
-  private final SemanticFolsomMetrics metrics =
-      new SemanticFolsomMetrics(registry, MetricId.EMPTY);
+  private final SemanticFolsomMetrics metrics = new SemanticFolsomMetrics(registry, MetricId.EMPTY);
 
   @Test
   public void testGetMiss() {
@@ -54,7 +52,7 @@ public class SemanticFolsomMetricsTest {
 
   @Test
   public void testGetHit() {
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[]{}, 0)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {}, 0)));
 
     assertEquals(1, metrics.getGets().getCount());
     assertEquals(0, metrics.getGetMisses().getCount());
@@ -71,7 +69,6 @@ public class SemanticFolsomMetricsTest {
     assertEquals(0, metrics.getGetHits().getCount());
     assertEquals(1, metrics.getGetFailures().getCount());
   }
-
 
   @Test
   public void testSetSuccess() {
@@ -93,12 +90,10 @@ public class SemanticFolsomMetricsTest {
 
   @Test
   public void testMultigetSuccess() {
-    metrics.measureMultigetFuture(completedFuture(
-        ImmutableList.of(
-            GetResult.success(new byte[]{1}, 0),
-            GetResult.success(new byte[]{1}, 0)
-        )
-    ));
+    metrics.measureMultigetFuture(
+        completedFuture(
+            ImmutableList.of(
+                GetResult.success(new byte[] {1}, 0), GetResult.success(new byte[] {1}, 0))));
 
     assertEquals(1, metrics.getMultigets().getCount());
     assertEquals(1, metrics.getMultigetSuccesses().getCount());
@@ -174,8 +169,9 @@ public class SemanticFolsomMetricsTest {
   public void testRegisterOutstandingRequestsGauge() {
     metrics.registerOutstandingRequestsGauge(GAUGE);
     @SuppressWarnings("rawtypes")
-    final SortedMap<MetricId, Gauge> gauges = registry.getGauges(
-        (name, metric) -> "outstanding-requests".equals(name.getTags().get("what")));
+    final SortedMap<MetricId, Gauge> gauges =
+        registry.getGauges(
+            (name, metric) -> "outstanding-requests".equals(name.getTags().get("what")));
     assertEquals(1, gauges.size());
     assertEquals(123, gauges.values().iterator().next().getValue());
   }
@@ -184,19 +180,19 @@ public class SemanticFolsomMetricsTest {
   public void testRegisterOutstandingRequestsGaugeDuplicate() {
     metrics.registerOutstandingRequestsGauge(GAUGE);
     metrics.registerOutstandingRequestsGauge(GAUGE);
- }
+  }
 
   @Test
   public void testGetAndMultigetHitRatio() {
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[]{1}, 1)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {1}, 1)));
     metrics.measureGetFuture(completedFuture(missResult()));
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[]{2}, 1)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {2}, 1)));
 
-    final List<GetResult<byte[]>> list = Lists.newArrayList(
-        GetResult.success(new byte[]{3}, 3),
-        GetResult.success(new byte[]{4}, 4),
-        missResult()
-    );
+    final List<GetResult<byte[]>> list =
+        Lists.newArrayList(
+            GetResult.success(new byte[] {3}, 3),
+            GetResult.success(new byte[] {4}, 4),
+            missResult());
     metrics.measureMultigetFuture(completedFuture(list));
 
     assertEquals(4, metrics.getGetHits().getCount());
@@ -213,5 +209,4 @@ public class SemanticFolsomMetricsTest {
   private GetResult<byte[]> missResult() {
     return null;
   }
-
 }

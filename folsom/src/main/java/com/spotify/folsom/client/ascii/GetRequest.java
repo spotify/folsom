@@ -20,15 +20,13 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.GetResult;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
-public class GetRequest
-        extends AsciiRequest<GetResult<byte[]>>
-        implements com.spotify.folsom.client.GetRequest {
+public class GetRequest extends AsciiRequest<GetResult<byte[]>>
+    implements com.spotify.folsom.client.GetRequest {
 
   private static final byte[] GET = "get ".getBytes(Charsets.US_ASCII);
   private static final byte[] CAS_GET = "gets ".getBytes(Charsets.US_ASCII);
@@ -67,8 +65,8 @@ public class GetRequest
 
     ValueResponse valueResponse = values.get(0);
     if (!Arrays.equals(valueResponse.key, key)) {
-      String message = "Expected key " + decodeKey(key) +
-              " but got " + decodeKey(valueResponse.key);
+      String message =
+          "Expected key " + decodeKey(key) + " but got " + decodeKey(valueResponse.key);
       throw new IOException(message);
     }
 

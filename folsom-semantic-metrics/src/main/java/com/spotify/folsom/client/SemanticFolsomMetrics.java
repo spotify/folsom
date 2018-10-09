@@ -24,13 +24,12 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
 import com.spotify.metrics.core.MetricId;
 import com.spotify.metrics.core.SemanticMetricRegistry;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
- * {@link com.spotify.folsom.Metrics} implementation using semantic-metrics.
- * Mostly a port of the YammerMetrics class.
+ * {@link com.spotify.folsom.Metrics} implementation using semantic-metrics. Mostly a port of the
+ * YammerMetrics class.
  */
 public class SemanticFolsomMetrics implements Metrics {
 
@@ -39,9 +38,7 @@ public class SemanticFolsomMetrics implements Metrics {
   private final Meter getMisses;
   private final Meter getFailures;
 
-  /**
-   * reports the ratio of hits for (gets + multigets) to total (gets + multigets)
-   */
+  /** reports the ratio of hits for (gets + multigets) to total (gets + multigets) */
   private final RatioGauge hitRatio;
 
   private final Timer sets;
@@ -73,13 +70,14 @@ public class SemanticFolsomMetrics implements Metrics {
   private final SemanticMetricRegistry registry;
   private final MetricId id;
 
-
   public SemanticFolsomMetrics(final SemanticMetricRegistry registry, final MetricId baseMetricId) {
 
     this.registry = registry;
 
-    this.id = baseMetricId.tagged("what", "memcache-results",
-                                  "component", "memcache-client");
+    this.id =
+        baseMetricId.tagged(
+            "what", "memcache-results",
+            "component", "memcache-client");
 
     final MetricId meterId = id.tagged("unit", "operations");
 
@@ -89,18 +87,20 @@ public class SemanticFolsomMetrics implements Metrics {
     // the two meters can be summed to count total number of successes.
     MetricId getMetersId = MetricId.join(getId, meterId);
     this.getHits = registry.meter(getMetersId.tagged("result", "success", "cache-result", "hit"));
-    this.getMisses = registry.meter(
-            getMetersId.tagged("result", "success", "cache-result", "miss"));
+    this.getMisses =
+        registry.meter(getMetersId.tagged("result", "success", "cache-result", "miss"));
     this.getFailures = registry.meter(getMetersId.tagged("result", "failure"));
 
     // ratio of cache hits to total attempts
-    hitRatio = new RatioGauge() {
-      @Override
-      protected Ratio getRatio() {
-        return Ratio.of(getHits.getFiveMinuteRate(),
-            gets.getFiveMinuteRate() + multigetItems.getFiveMinuteRate());
-      }
-    };
+    hitRatio =
+        new RatioGauge() {
+          @Override
+          protected Ratio getRatio() {
+            return Ratio.of(
+                getHits.getFiveMinuteRate(),
+                gets.getFiveMinuteRate() + multigetItems.getFiveMinuteRate());
+          }
+        };
     // overwrite the 'what' as this metric doesn't make sense to be aggregated against any of the
     // other metrics
     registry.register(getId.tagged("what", "memcache-hit-ratio", "unit", "%"), hitRatio);
@@ -145,98 +145,104 @@ public class SemanticFolsomMetrics implements Metrics {
   public void measureGetFuture(CompletionStage<GetResult<byte[]>> future) {
     final Timer.Context context = gets.time();
 
-    future.whenComplete((result, t) -> {
-      context.stop();
-      if (t == null) {
-        if (result != null) {
-          getHits.mark();
-        } else {
-          getMisses.mark();
-        }
-      } else {
-        getFailures.mark();
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          context.stop();
+          if (t == null) {
+            if (result != null) {
+              getHits.mark();
+            } else {
+              getMisses.mark();
+            }
+          } else {
+            getFailures.mark();
+          }
+        });
   }
 
   @Override
   public void measureSetFuture(CompletionStage<MemcacheStatus> future) {
     final Timer.Context context = sets.time();
 
-    future.whenComplete((result, t) -> {
-      context.stop();
-      if (t == null) {
-        setSuccesses.mark();
-      } else {
-        setFailures.mark();
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          context.stop();
+          if (t == null) {
+            setSuccesses.mark();
+          } else {
+            setFailures.mark();
+          }
+        });
   }
 
   @Override
   public void measureMultigetFuture(CompletionStage<List<GetResult<byte[]>>> future) {
     final Timer.Context ctx = multigets.time();
 
-    future.whenComplete((result, t) -> {
-      ctx.stop();
-      if (t == null) {
-        multigetSuccesses.mark();
-        int hits = 0;
-        int total = result.size();
-        for (GetResult<byte[]> aResult : result) {
-          if (aResult != null) {
-            hits++;
+    future.whenComplete(
+        (result, t) -> {
+          ctx.stop();
+          if (t == null) {
+            multigetSuccesses.mark();
+            int hits = 0;
+            int total = result.size();
+            for (GetResult<byte[]> aResult : result) {
+              if (aResult != null) {
+                hits++;
+              }
+            }
+            getHits.mark(hits);
+            getMisses.mark(total - hits);
+            multigetItems.mark(total);
+          } else {
+            multigetFailures.mark();
           }
-        }
-        getHits.mark(hits);
-        getMisses.mark(total - hits);
-        multigetItems.mark(total);
-      } else {
-        multigetFailures.mark();
-      }
-    });
+        });
   }
 
   @Override
   public void measureDeleteFuture(CompletionStage<MemcacheStatus> future) {
     final Timer.Context ctx = deletes.time();
 
-    future.whenComplete((result, t) -> {
-      ctx.stop();
-      if (t == null) {
-        deleteSuccesses.mark();
-      } else {
-        deleteFailures.mark();
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          ctx.stop();
+          if (t == null) {
+            deleteSuccesses.mark();
+          } else {
+            deleteFailures.mark();
+          }
+        });
   }
 
   @Override
   public void measureIncrDecrFuture(CompletionStage<Long> future) {
     final Timer.Context ctx = incrDecrs.time();
 
-    future.whenComplete((result, t) -> {
-      ctx.stop();
-      if (t == null) {
-        incrDecrSuccesses.mark();
-      } else {
-        incrDecrFailures.mark();
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          ctx.stop();
+          if (t == null) {
+            incrDecrSuccesses.mark();
+          } else {
+            incrDecrFailures.mark();
+          }
+        });
   }
 
   @Override
   public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {
     final Timer.Context ctx = touches.time();
 
-    future.whenComplete((result, t) -> {
-      ctx.stop();
-      if (t == null) {
-        touchSuccesses.mark();
-      } else {
-        touchFailures.mark();
-      }
-    });
+    future.whenComplete(
+        (result, t) -> {
+          ctx.stop();
+          if (t == null) {
+            touchSuccesses.mark();
+          } else {
+            touchFailures.mark();
+          }
+        });
   }
 
   public Timer getGets() {
@@ -321,8 +327,10 @@ public class SemanticFolsomMetrics implements Metrics {
 
   @Override
   public void registerOutstandingRequestsGauge(final OutstandingRequestsGauge gauge) {
-    final MetricId gaugeId = id.tagged("what", "outstanding-requests",
-                                       "unit", "requests");
+    final MetricId gaugeId =
+        id.tagged(
+            "what", "outstanding-requests",
+            "unit", "requests");
     // registry doesn't allow duplicate registrations, so remove the metric if already existing
     synchronized (registry) {
       registry.remove(gaugeId);
@@ -338,6 +346,5 @@ public class SemanticFolsomMetrics implements Metrics {
       registry.remove(gaugeId);
       registry.register(gaugeId, (Gauge<Integer>) Utils::getGlobalConnectionCount);
     }
-
   }
 }

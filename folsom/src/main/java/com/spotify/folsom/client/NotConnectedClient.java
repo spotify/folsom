@@ -15,17 +15,16 @@
  */
 package com.spotify.folsom.client;
 
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
+import com.spotify.futures.CompletableFutures;
+import java.util.concurrent.CompletionStage;
 
 public class NotConnectedClient extends AbstractRawMemcacheClient {
 
   public static final NotConnectedClient INSTANCE = new NotConnectedClient();
 
-  private NotConnectedClient() {
-  }
+  private NotConnectedClient() {}
 
   @Override
   public <T> CompletionStage<T> send(final Request<T> request) {

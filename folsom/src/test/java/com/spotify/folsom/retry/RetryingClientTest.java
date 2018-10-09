@@ -15,6 +15,11 @@
  */
 package com.spotify.folsom.retry;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Charsets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
@@ -22,24 +27,17 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.binary.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
-
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletableFuture;
-import org.junit.Test;
-
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Test;
 
 public class RetryingClientTest {
 
-  public static final GetRequest GET_REQUEST = new GetRequest(
-          "key1".getBytes(Charsets.UTF_8), OpCode.GET, -1);
-  public static final GetRequest FAIL_REQUEST = new GetRequest(
-          "key2".getBytes(Charsets.UTF_8), OpCode.GET, -1);
+  public static final GetRequest GET_REQUEST =
+      new GetRequest("key1".getBytes(Charsets.UTF_8), OpCode.GET, -1);
+  public static final GetRequest FAIL_REQUEST =
+      new GetRequest("key2".getBytes(Charsets.UTF_8), OpCode.GET, -1);
 
   @Test
   public void testSimple() throws Exception {
@@ -72,6 +70,5 @@ public class RetryingClientTest {
       assertEquals(MemcacheClosedException.class, cause.getClass());
       assertEquals("reason2", cause.getMessage());
     }
-
   }
 }

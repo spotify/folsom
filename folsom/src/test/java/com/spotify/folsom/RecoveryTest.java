@@ -16,17 +16,25 @@
 
 package com.spotify.folsom;
 
+import static io.netty.util.CharsetUtil.UTF_8;
+import static org.hamcrest.Matchers.is;
+import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
-import java.util.concurrent.CompletionStage;
-
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.thimbleware.jmemcached.Cache;
 import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
-
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -36,17 +44,6 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static io.netty.util.CharsetUtil.UTF_8;
-import static org.hamcrest.Matchers.is;
-import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RecoveryTest {
@@ -68,14 +65,15 @@ public class RecoveryTest {
     server = new EmbeddedServer(true, cache);
     int port = server.getPort();
 
-    final MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-        .withAddress("127.0.0.1", port)
-        .withConnections(1)
-        .withMaxOutstandingRequests(MAX_OUTSTANDING_REQUESTS)
-        .withMetrics(NoopMetrics.INSTANCE)
-        .withRetry(false)
-        .withoutAuthenticationValidation()
-        .withRequestTimeoutMillis(TIMEOUT_MILLIS);
+    final MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress("127.0.0.1", port)
+            .withConnections(1)
+            .withMaxOutstandingRequests(MAX_OUTSTANDING_REQUESTS)
+            .withMetrics(NoopMetrics.INSTANCE)
+            .withRetry(false)
+            .withoutAuthenticationValidation()
+            .withRequestTimeoutMillis(TIMEOUT_MILLIS);
 
     client = builder.connectBinary();
     client.awaitConnected(10, TimeUnit.SECONDS);
@@ -116,8 +114,8 @@ public class RecoveryTest {
         final Throwable cause = e.getCause();
         if (cause instanceof MemcacheOverloadedException) {
           overloaded++;
-        } else if (cause instanceof MemcacheClosedException &&
-                   cause.getMessage().contains("Timeout")) {
+        } else if (cause instanceof MemcacheClosedException
+            && cause.getMessage().contains("Timeout")) {
           timeout++;
         }
       }

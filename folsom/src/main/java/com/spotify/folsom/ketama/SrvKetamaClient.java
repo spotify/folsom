@@ -17,8 +17,6 @@ package com.spotify.folsom.ketama;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.spotify.folsom.guava.HostAndPort;
-import java.util.concurrent.CompletionStage;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
@@ -27,15 +25,16 @@ import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.spotify.folsom.guava.HostAndPort;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private static final Logger log = LoggerFactory.getLogger(SrvKetamaClient.class);
@@ -62,13 +61,15 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private volatile RawMemcacheClient pendingClient = null;
   private boolean shutdown = false;
 
-
-  public SrvKetamaClient(final String srvRecord,
-                         DnsSrvResolver srvResolver,
-                         ScheduledExecutorService executor,
-                         long period, TimeUnit periodUnit,
-                         final Connector connector,
-                         long shutdownDelay, TimeUnit shutdownUnit) {
+  public SrvKetamaClient(
+      final String srvRecord,
+      DnsSrvResolver srvResolver,
+      ScheduledExecutorService executor,
+      long period,
+      TimeUnit periodUnit,
+      final Connector connector,
+      long shutdownDelay,
+      TimeUnit shutdownUnit) {
     this.srvRecord = srvRecord;
     this.srvResolver = srvResolver;
     this.period = period;
@@ -101,8 +102,8 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
           hosts.add(HostAndPort.fromParts(lookupResult.host(), lookupResult.port()));
           ttl = Math.min(ttl, lookupResult.ttl());
         }
-        List<HostAndPort> newAddresses = Ordering.from(HostAndPortComparator.INSTANCE)
-                .sortedCopy(hosts);
+        List<HostAndPort> newAddresses =
+            Ordering.from(HostAndPortComparator.INSTANCE).sortedCopy(hosts);
         if (!newAddresses.equals(addresses)) {
           addresses = newAddresses;
           log.info("Connecting to " + newAddresses);
@@ -186,21 +187,24 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       pendingClient = newPending;
     }
 
-    newPending.connectFuture().thenRun(() -> {
-      final RawMemcacheClient oldClient;
-      synchronized (sync) {
-        if (newPending != pendingClient) {
-          // We don't care about this event if it's not the expected client
-          return;
-        }
+    newPending
+        .connectFuture()
+        .thenRun(
+            () -> {
+              final RawMemcacheClient oldClient;
+              synchronized (sync) {
+                if (newPending != pendingClient) {
+                  // We don't care about this event if it's not the expected client
+                  return;
+                }
 
-        oldClient = currentClient;
-        currentClient = pendingClient;
-        pendingClient = null;
-      }
-      notifyConnectionChange();
-      executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
-    });
+                oldClient = currentClient;
+                currentClient = pendingClient;
+                pendingClient = null;
+              }
+              notifyConnectionChange();
+              executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
+            });
     if (oldPending != null) {
       oldPending.unregisterForConnectionChanges(listener);
       oldPending.shutdown();

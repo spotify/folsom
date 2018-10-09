@@ -20,21 +20,18 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class IncrRequest extends AsciiRequest<Long> {
 
   private static final byte[] INCR_CMD = "incr ".getBytes(Charsets.US_ASCII);
-  private  static final byte[] DECR_CMD = "decr ".getBytes(Charsets.US_ASCII);
+  private static final byte[] DECR_CMD = "decr ".getBytes(Charsets.US_ASCII);
 
   private final byte[] operation;
   private final long by;
 
-  private IncrRequest(final byte[] operation,
-                      final byte[] key,
-                      final long by) {
+  private IncrRequest(final byte[] operation, final byte[] key, final long by) {
     super(key);
     this.operation = operation;
     this.by = by;

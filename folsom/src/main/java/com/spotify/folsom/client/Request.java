@@ -67,8 +67,8 @@ public abstract class Request<V> extends CompletableFuture<V> {
     byte[] keyBytes = key.getBytes(charset);
     int length = keyBytes.length;
     if (length > maxKeyLength) {
-      String message = "Key is too long. Max-length is " + maxKeyLength +
-                       " but key was " + length + ": " + key;
+      String message =
+          "Key is too long. Max-length is " + maxKeyLength + " but key was " + length + ": " + key;
       throw new IllegalArgumentException(message);
     }
     if (length <= 0) {
@@ -90,5 +90,4 @@ public abstract class Request<V> extends CompletableFuture<V> {
     }
     return res;
   }
-
 }

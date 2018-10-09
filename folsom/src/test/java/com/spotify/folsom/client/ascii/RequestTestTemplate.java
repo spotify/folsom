@@ -17,12 +17,11 @@
 package com.spotify.folsom.client.ascii;
 
 import static org.junit.Assert.assertEquals;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-
 import java.nio.ByteBuffer;
-
 
 public class RequestTestTemplate {
 

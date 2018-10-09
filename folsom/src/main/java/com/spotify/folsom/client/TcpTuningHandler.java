@@ -13,10 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-/**
- * Copyright (C) 2012-2014 Spotify AB
- */
-
+/** Copyright (C) 2012-2014 Spotify AB */
 package com.spotify.folsom.client;
 
 import io.netty.channel.ChannelHandlerContext;

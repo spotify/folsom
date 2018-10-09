@@ -15,14 +15,14 @@
  */
 package com.spotify.folsom;
 
-import java.util.concurrent.CompletionStage;
-
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 public interface MemcacheClient<V> extends ObservableClient {
 
   /**
    * Set a key in memcache to the provided value, with the specified TTL
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -32,6 +32,7 @@ public interface MemcacheClient<V> extends ObservableClient {
 
   /**
    * Compare and set a key in memcache to the provided value, with the specified TTL
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -49,8 +50,9 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<MemcacheStatus> delete(String key);
 
   /**
-   * Add a key in memcache with the provided value, with the specified TTL. Key must not exist
-   * in memcache
+   * Add a key in memcache with the provided value, with the specified TTL. Key must not exist in
+   * memcache
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -59,8 +61,9 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<MemcacheStatus> add(String key, V value, int ttl);
 
   /**
-   * Replace a key in memcache with the provided value, with the specified TTL. Key must exist
-   * in memcache
+   * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
+   * memcache
+   *
    * @param key The key, must not be null
    * @param value The value, must not be null
    * @param ttl The TTL in seconds
@@ -74,9 +77,10 @@ public interface MemcacheClient<V> extends ObservableClient {
 
   /**
    * Get the value for the provided key
+   *
    * @param key The key, must not be null
    * @return A future representing completion of the request, with the value, or null if the key
-   *         does not exist
+   *     does not exist
    */
   CompletionStage<V> get(String key);
 
@@ -85,7 +89,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    *
    * @param key First key, must not be null
    * @return A future representing completion of the request, with the value, including the CAS
-   * value, or null if the value does not exists.
+   *     value, or null if the value does not exists.
    */
   CompletionStage<GetResult<V>> casGet(String key);
 
@@ -94,7 +98,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    *
    * @param keys Keys, must not be null, nor must any key in the list
    * @return A future representing completion of the request, with the values. Any non existing
-   * values will be null. Order will be maintained from the input keys
+   *     values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<V>> get(List<String> keys);
 
@@ -102,9 +106,8 @@ public interface MemcacheClient<V> extends ObservableClient {
    * Get the value for the provided keys
    *
    * @param keys Keys, must not be null, nor must any key in the list
-   * @return A future representing completion of the request, with the values,
-   * including the CAS value. Any non existing
-   * values will be null. Order will be maintained from the input keys
+   * @return A future representing completion of the request, with the values, including the CAS
+   *     value. Any non existing values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<GetResult<V>>> casGet(List<String> keys);
 
@@ -125,15 +128,13 @@ public interface MemcacheClient<V> extends ObservableClient {
    */
   CompletionStage<MemcacheStatus> flushAll(int delay);
 
-  /**
-   * Shut down the client.
-   */
+  /** Shut down the client. */
   void shutdown();
 
   /**
    * Note: This is typically only useful for testing and debugging
+   *
    * @return the underlying raw memcache client.
    */
   RawMemcacheClient getRawMemcacheClient();
-
 }

@@ -16,9 +16,9 @@
 
 package com.spotify.folsom;
 
-
 public interface Transcoder<T> {
 
   T decode(byte[] b);
+
   byte[] encode(T t);
 }

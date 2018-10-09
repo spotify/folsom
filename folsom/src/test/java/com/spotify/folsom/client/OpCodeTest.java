@@ -15,9 +15,9 @@
  */
 package com.spotify.folsom.client;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
 
 public class OpCodeTest {
 
@@ -33,5 +33,5 @@ public class OpCodeTest {
     assertEquals(OpCode.GET, OpCode.getKind(OpCode.GETQ));
 
     assertEquals(OpCode.TOUCH, OpCode.getKind(OpCode.TOUCH));
- }
+  }
 }

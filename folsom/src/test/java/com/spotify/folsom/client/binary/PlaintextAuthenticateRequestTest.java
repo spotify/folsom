@@ -38,7 +38,8 @@ public class PlaintextAuthenticateRequestTest extends RequestTestTemplate {
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
-    assertHeader(b, OpCode.SASL_AUTH, KEY.length(), 0, KEY.length() + VALUE.length(), req.opaque, 0);
+    assertHeader(
+        b, OpCode.SASL_AUTH, KEY.length(), 0, KEY.length() + VALUE.length(), req.opaque, 0);
     assertString(KEY, b);
     assertString(VALUE, b);
     assertEOM(b);

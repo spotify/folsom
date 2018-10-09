@@ -22,7 +22,6 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -62,5 +61,4 @@ public class NoopRequest extends BinaryRequest<Void> {
       throw new IOException("Unexpected response: " + reply.status);
     }
   }
-
 }

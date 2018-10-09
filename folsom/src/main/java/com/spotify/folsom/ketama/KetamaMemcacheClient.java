@@ -16,30 +16,29 @@
 
 package com.spotify.folsom.ketama;
 
-import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.FlushRequest;
-import com.spotify.futures.CompletableFutures;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.util.concurrent.CompletionStage;
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
-import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.FlushRequest;
 import com.spotify.folsom.client.MultiRequest;
-
+import com.spotify.folsom.client.Request;
+import com.spotify.futures.CompletableFutures;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
-  private static  Collection<RawMemcacheClient> clientsOnly(
-    final Collection<AddressAndClient> addressAndClients) {
+  private static Collection<RawMemcacheClient> clientsOnly(
+      final Collection<AddressAndClient> addressAndClients) {
 
     int size = addressAndClients.size();
     final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(size);
@@ -67,7 +66,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       // T for Request should always be List<GetResult<byte[]>> here
       // which means that MultiRequest should have T = GetResult<byte[]>
       final MultiRequest<GetResult<byte[]>> multiRequest =
-              (MultiRequest<GetResult<byte[]>>) request;
+          (MultiRequest<GetResult<byte[]>>) request;
       if (multiRequest.getKeys().size() > 1) {
         return (CompletionStage<T>) sendSplitRequest(multiRequest);
       }
@@ -78,14 +77,18 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
   }
 
   private <T> CompletionStage<MemcacheStatus> sendToAll(final Request<T> request) {
-    List<CompletionStage<MemcacheStatus>> futures = clients.stream()
+    List<CompletionStage<MemcacheStatus>> futures =
+        clients
+            .stream()
             .map(client -> (CompletionStage<MemcacheStatus>) client.send(request))
             .collect(Collectors.toList());
-    return CompletableFutures.allAsList(futures).thenApply(ts ->
-        ts.stream()
-            .filter(status -> status != MemcacheStatus.OK)
-            .findFirst().orElse(MemcacheStatus.OK)
-    );
+    return CompletableFutures.allAsList(futures)
+        .thenApply(
+            ts ->
+                ts.stream()
+                    .filter(status -> status != MemcacheStatus.OK)
+                    .findFirst()
+                    .orElse(MemcacheStatus.OK));
   }
 
   private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
@@ -110,8 +113,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       futures.put(client, send);
     }
     final Collection<CompletionStage<List<T>>> values = futures.values();
-    return CompletableFuture
-        .allOf(values.toArray(new CompletableFuture<?>[values.size()]))
+    return CompletableFuture.allOf(values.toArray(new CompletableFuture<?>[values.size()]))
         .thenApply(new Assembler<>(futures, routing2));
   }
 

@@ -15,11 +15,10 @@
  */
 package com.spotify.folsom.transcoder;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.Serializable;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class SerializableObjectTranscoderTest {
 
@@ -39,7 +38,7 @@ public class SerializableObjectTranscoderTest {
 
     final byte[] encoded = SerializableObjectTranscoder.INSTANCE.encode(b);
     final SerializableTestObject testObject =
-            (SerializableTestObject) SerializableObjectTranscoder.INSTANCE.decode(encoded);
+        (SerializableTestObject) SerializableObjectTranscoder.INSTANCE.decode(encoded);
 
     assertEquals("hello", testObject.value1);
     assertEquals("world", testObject.value2);

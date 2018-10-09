@@ -18,9 +18,8 @@ package com.spotify.folsom.transcoder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
-
 import com.google.common.base.Charsets;
+import org.junit.Test;
 
 public class StringTranscoderTest {
 

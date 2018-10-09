@@ -15,6 +15,10 @@
  */
 package com.spotify.folsom.roundrobin;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.google.common.base.Charsets;
 import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
@@ -23,16 +27,11 @@ import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
 
 public class RoundRobinMemcacheClientTest {
 
@@ -50,10 +49,13 @@ public class RoundRobinMemcacheClientTest {
     client3 = new FakeRawMemcacheClient();
     clientList = Arrays.<RawMemcacheClient>asList(client1, client2, client3);
     roundRobinMemcacheClient = new RoundRobinMemcacheClient(clientList);
-    memcacheClient = new DefaultAsciiMemcacheClient<>(
-            roundRobinMemcacheClient, new NoopMetrics(),
-            StringTranscoder.UTF8_INSTANCE, Charsets.UTF_8,
-        MemcacheEncoder.MAX_KEY_LEN);
+    memcacheClient =
+        new DefaultAsciiMemcacheClient<>(
+            roundRobinMemcacheClient,
+            new NoopMetrics(),
+            StringTranscoder.UTF8_INSTANCE,
+            Charsets.UTF_8,
+            MemcacheEncoder.MAX_KEY_LEN);
   }
 
   @Test

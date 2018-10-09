@@ -27,7 +27,6 @@ public class MemcachedServer {
 
   public MemcachedServer() {
     this(null, null);
-
   }
 
   public MemcachedServer(String username, String password) {
@@ -39,8 +38,8 @@ public class MemcachedServer {
     }
     container.start();
 
-    final MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
-        .withAddress(getHost(), getPort());
+    final MemcacheClientBuilder<String> builder =
+        MemcacheClientBuilder.newStringClient().withAddress(getHost(), getPort());
     if (username != null && password != null) {
       builder.withUsernamePassword(username, password);
     }

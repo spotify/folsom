@@ -21,12 +21,10 @@ import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
-
 import java.util.Collection;
 
-public abstract class AbstractMultiMemcacheClient
-        extends AbstractRawMemcacheClient
-        implements ConnectionChangeListener {
+public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheClient
+    implements ConnectionChangeListener {
 
   protected final Collection<RawMemcacheClient> clients;
 
@@ -37,7 +35,6 @@ public abstract class AbstractMultiMemcacheClient
       client.registerForConnectionChanges(this);
     }
   }
-
 
   @Override
   public void shutdown() {

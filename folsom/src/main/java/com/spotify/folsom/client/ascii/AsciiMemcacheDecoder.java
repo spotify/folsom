@@ -19,7 +19,6 @@ package com.spotify.folsom.client.ascii;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -49,8 +48,8 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   }
 
   @Override
-  protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf,
-                        final List<Object> out) throws Exception {
+  protected void decode(final ChannelHandlerContext ctx, final ByteBuf buf, final List<Object> out)
+      throws Exception {
     while (true) {
       int readableBytes = buf.readableBytes();
       if (readableBytes == 0) {
@@ -220,7 +219,6 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
       if (token.get() != compareTo.charAt(i)) {
         throw fail();
       }
-
     }
   }
 
