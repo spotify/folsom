@@ -56,7 +56,7 @@ public final class OpCode {
   public static final int GAT = 0x1d;
   public static final int GATQ = 0x1e;
   public static final int SASL_LIST_MECHS = 0x20;
-  public static final int SASL_AUTH = 0x21;
+  public static final byte SASL_AUTH = 0x21;
   public static final int SASL_STEP = 0x22;
 
   public static final int RGET = 0x30;

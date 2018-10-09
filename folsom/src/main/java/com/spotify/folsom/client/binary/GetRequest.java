@@ -16,17 +16,16 @@
 
 package com.spotify.folsom.client.binary;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GetRequest
         extends BinaryRequest<GetResult<byte[]>>

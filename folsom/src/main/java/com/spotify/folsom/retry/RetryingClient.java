@@ -66,6 +66,11 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
+  public Throwable getConnectionFailure() {
+    return delegate.getConnectionFailure();
+  }
+
+  @Override
   public int numTotalConnections() {
     return delegate.numTotalConnections();
   }

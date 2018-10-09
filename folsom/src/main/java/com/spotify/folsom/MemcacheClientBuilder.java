@@ -23,6 +23,11 @@ import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.spotify.folsom.authenticate.Authenticator;
+import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
+import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
+import com.spotify.folsom.authenticate.NoAuthenticationValidation;
+import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.guava.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
@@ -46,6 +51,7 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -60,7 +66,6 @@ public class MemcacheClientBuilder<V> {
   private static final int DEFAULT_MAX_OUTSTANDING = 1000;
   private static final String DEFAULT_HOSTNAME = "127.0.0.1";
   private static final int DEFAULT_PORT = 11211;
-
 
   /**
    * Lazily instantiated singleton default executor.
@@ -118,6 +123,7 @@ public class MemcacheClientBuilder<V> {
   private int maxKeyLength = MAX_KEY_LEN;
   private EventLoopGroup eventLoopGroup;
   private Class<? extends Channel> channelClass;
+  private Optional<Authenticator> authenticator = Optional.empty();
 
   /**
    * Create a client builder for byte array values.
@@ -407,12 +413,37 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
+   * Authenticate with memcached using plaintext SASL. This only works for binary connections, not ascii.
+   * @param username
+   * @param password
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withUsernamePassword(final String username, final String password) {
+    this.authenticator = Optional.of(new PlaintextAuthenticator(username, password));
+    return this;
+  }
+
+  /**
+   * Disable authentication validation - only useful for tests against
+   * jmemcached which does not support binary NOOP
+   *
+   * @return itself
+   */
+  MemcacheClientBuilder<V> withoutAuthenticationValidation() {
+    this.authenticator = Optional.of(NoAuthenticationValidation.getInstance());
+    return this;
+  }
+
+
+  /**
    * Create a client that uses the binary memcache protocol.
    * @return a {@link com.spotify.folsom.BinaryMemcacheClient}
    */
   public BinaryMemcacheClient<V> connectBinary() {
+    final Authenticator authenticator = this.authenticator.orElse(BinaryAuthenticationValidator.getInstance());
+    authenticator.validate(true);
     return new DefaultBinaryMemcacheClient<>(
-        connectRaw(true), metrics, valueTranscoder, charset, maxKeyLength);
+        connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
   }
 
   /**
@@ -420,8 +451,10 @@ public class MemcacheClientBuilder<V> {
    * @return a {@link com.spotify.folsom.AsciiMemcacheClient}
    */
   public AsciiMemcacheClient<V> connectAscii() {
+    final Authenticator authenticator = this.authenticator.orElse(AsciiAuthenticationValidator.getInstance());
+    authenticator.validate(false);
     return new DefaultAsciiMemcacheClient<>(
-        connectRaw(false), metrics, valueTranscoder, charset, maxKeyLength);
+        connectRaw(false, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
   }
 
   /**
@@ -430,21 +463,21 @@ public class MemcacheClientBuilder<V> {
    * @param binary whether to use the binary protocol or not.
    * @return A raw memcached client.
    */
-  protected RawMemcacheClient connectRaw(boolean binary) {
+  protected RawMemcacheClient connectRaw(boolean binary, Authenticator authenticator) {
     List<HostAndPort> addresses = this.addresses;
     RawMemcacheClient client;
     if (srvRecord != null) {
       if (!addresses.isEmpty()) {
         throw new IllegalStateException("You may not specify both srvRecord and addresses");
       }
-      client = createSRVClient(binary);
+      client = createSRVClient(binary, authenticator);
     } else {
       if (addresses.isEmpty()) {
         addresses = ImmutableList.of(
                 HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
       }
 
-      final List<RawMemcacheClient> clients = createClients(addresses, binary);
+      final List<RawMemcacheClient> clients = createClients(addresses, binary, authenticator);
       if (addresses.size() > 1) {
         checkState(clients.size() == addresses.size());
 
@@ -466,17 +499,19 @@ public class MemcacheClientBuilder<V> {
     return client;
   }
 
-  private List<RawMemcacheClient> createClients(List<HostAndPort> addresses, boolean binary) {
+  private List<RawMemcacheClient> createClients(final List<HostAndPort> addresses,
+                                                final boolean binary,
+                                                final Authenticator authenticator) {
 
-    final List<RawMemcacheClient> clients =
-        Lists.newArrayListWithCapacity(addresses.size());
+    final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(addresses.size());
     for (final HostAndPort address : addresses) {
-      clients.add(createClient(address, binary));
+      clients.add(createClient(address, binary, authenticator));
     }
     return clients;
   }
 
-  private RawMemcacheClient createSRVClient(final boolean binary) {
+  private RawMemcacheClient createSRVClient(final boolean binary,
+                                            final Authenticator authenticator) {
     DnsSrvResolver resolver = srvResolver;
     if (resolver == null) {
       resolver = DefaultDnsResolver.INSTANCE;
@@ -485,31 +520,36 @@ public class MemcacheClientBuilder<V> {
     SrvKetamaClient client = new SrvKetamaClient(srvRecord, resolver,
             DefaultScheduledExecutor.INSTANCE,
             dnsRefreshPeriod, TimeUnit.MILLISECONDS,
-        input -> createClient(input, binary),
+            input -> createClient(input, binary, authenticator),
             shutdownDelay, TimeUnit.MILLISECONDS);
 
     client.start();
     return client;
   }
 
-  private RawMemcacheClient createClient(final HostAndPort address, boolean binary) {
+  private RawMemcacheClient createClient(final HostAndPort address,
+                                         final boolean binary,
+                                         final Authenticator authenticator) {
     if (connections == 1) {
-      return createReconnectingClient(address, binary);
+      return createReconnectingClient(address, binary, authenticator);
     }
     final List<RawMemcacheClient> clients = Lists.newArrayList();
     for (int i = 0; i < connections; i++) {
-      clients.add(createReconnectingClient(address, binary));
+      clients.add(createReconnectingClient(address, binary, authenticator));
     }
     return new RoundRobinMemcacheClient(clients);
   }
 
-  private  RawMemcacheClient createReconnectingClient(final HostAndPort address, boolean binary) {
+  private  RawMemcacheClient createReconnectingClient(final HostAndPort address,
+                                                      final boolean binary,
+                                                      final Authenticator authenticator) {
     return new ReconnectingClient(
         backoffFunction,
         ReconnectingClient.singletonExecutor(),
         address,
         maxOutstandingRequests,
         binary,
+        authenticator,
         executor,
         timeoutMillis,
         charset,

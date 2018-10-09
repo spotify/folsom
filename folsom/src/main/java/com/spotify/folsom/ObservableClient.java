@@ -50,29 +50,94 @@ public interface ObservableClient {
    */
   boolean isConnected();
 
+  /**
+   * @return completes when at least one underlying client is connected
+   */
   default CompletionStage<Void> connectFuture() {
     return ConnectFuture.connectFuture(this);
   }
 
+  /**
+   * @return completes when at least one underlying client is disconnected
+   */
   default CompletionStage<Void> disconnectFuture() {
     return ConnectFuture.disconnectFuture(this);
   }
 
+  /**
+   * @return completes when all underlying clients are connected
+   */
+  default CompletionStage<Void> fullyConnectedFuture() {
+    return ConnectFuture.fullyConnectedFuture(this);
+  }
+
+  /**
+   * @return completes when all underlying clients are disconnected
+   */
+  default CompletionStage<Void> fullyDisconnectFuture() {
+    return ConnectFuture.fullyDisconnectedFuture(this);
+  }
+
+  /**
+   * Wait for at least one underlying client to be connected
+   */
   default void awaitConnected(final long waitTime, final TimeUnit unit)
       throws TimeoutException, InterruptedException {
+    awaitFuture(connectFuture(), waitTime, unit);
+  }
+
+  /**
+   * Wait for at least one underlying client to be disconnected
+   */
+  default void awaitDisconnected(final long waitTime, final TimeUnit unit)
+      throws TimeoutException, InterruptedException {
+    awaitFuture(disconnectFuture(), waitTime, unit);
+  }
+
+  /**
+   * Wait for all underlying clients to be connected
+   */
+  default void awaitFullyConnected(final long waitTime, final TimeUnit unit)
+      throws TimeoutException, InterruptedException {
+    awaitFuture(fullyConnectedFuture(), waitTime, unit);
+  }
+
+  /**
+   * Wait for all underlying clients to be disconnected
+   */
+  default void awaitFullyDisconnected(final long waitTime, final TimeUnit unit)
+      throws TimeoutException, InterruptedException {
+    awaitFuture(fullyDisconnectFuture(), waitTime, unit);
+  }
+
+  default void awaitFuture(final CompletionStage<Void> future, final long waitTime, final TimeUnit unit)
+      throws InterruptedException, TimeoutException {
     try {
-      connectFuture().toCompletableFuture().get(waitTime, unit);
+      future.toCompletableFuture().get(waitTime, unit);
     } catch (final ExecutionException e) {
+      if (e.getCause() instanceof MemcacheAuthenticationException) {
+        throw (MemcacheAuthenticationException) e.getCause();
+      }
       throw new RuntimeException(e);
     }
   }
 
-  default void awaitDisconnected(final long waitTime, final TimeUnit unit)
-      throws TimeoutException, InterruptedException {
-    try {
-      disconnectFuture().toCompletableFuture().get(waitTime, unit);
-    } catch (final ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  /**
+   * Returns the unrecoverable connection failure, if any.
+   *
+   * @return null, if there's no connection failure
+   */
+  Throwable getConnectionFailure();
+
+  /**
+   * How many actual socket connections do we have, including currently disconnected clients.
+   * @return the number of total connections
+   */
+  int numTotalConnections();
+
+  /**
+   * How many active socket connections do we have (i.e. not disconnected)
+   * @return the number of active connections
+   */
+  int numActiveConnections();
 }

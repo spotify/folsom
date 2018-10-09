@@ -16,21 +16,20 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Charsets;
-import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import com.google.common.base.Charsets;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import java.util.concurrent.TimeUnit;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class MisbehavingServerTest {
   private Server server;
@@ -228,7 +227,17 @@ public class MisbehavingServerTest {
         private void handleConnection(Socket socket) throws Exception {
           BufferedReader reader =
               new BufferedReader(new InputStreamReader(socket.getInputStream()), 1);
-          String s = reader.readLine();
+          String s;
+          while (true) {
+            s = reader.readLine();
+            if (s.equals("get folsom_authentication_validation")) {
+              // Handle authentication phase first
+              socket.getOutputStream().write("END\r\n".getBytes(Charsets.UTF_8));
+              socket.getOutputStream().flush();
+            } else {
+              break;
+            }
+          }
           if (s.startsWith("get ") || s.startsWith("touch ")) {
             // Don't need to read any more lines
           } else if (s.startsWith("set ")) {

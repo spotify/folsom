@@ -158,6 +158,11 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public Throwable getConnectionFailure() {
+    return currentClient.getConnectionFailure();
+  }
+
+  @Override
   public int numTotalConnections() {
     return currentClient.numTotalConnections();
   }

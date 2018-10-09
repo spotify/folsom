@@ -353,6 +353,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   @Override
+  public Throwable getConnectionFailure() {
+    return rawMemcacheClient.getConnectionFailure();
+  }
+
+  @Override
   public int numTotalConnections() {
     return rawMemcacheClient.numTotalConnections();
   }

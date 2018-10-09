@@ -131,18 +131,6 @@ public interface MemcacheClient<V> extends ObservableClient {
   void shutdown();
 
   /**
-   * How many actual socket connections do we have, including currently disconnected clients.
-   * @return the number of total connections
-   */
-  int numTotalConnections();
-
-  /**
-   * How many active socket connections do we have (i.e. not disconnected)
-   * @return the number of active connections
-   */
-  int numActiveConnections();
-
-  /**
    * Note: This is typically only useful for testing and debugging
    * @return the underlying raw memcache client.
    */

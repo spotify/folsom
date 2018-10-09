@@ -26,13 +26,25 @@ public class MemcachedServer {
   private final MemcacheClient<String> client;
 
   public MemcachedServer() {
-    container = new GenericContainer("memcached:1.5.10-alpine");
+    this(null, null);
+
+  }
+
+  public MemcachedServer(String username, String password) {
+    container = new GenericContainer("bitnami/memcached:1.5.10");
     container.addExposedPort(11211);
+    if (username != null && password != null) {
+      container.withEnv("MEMCACHED_USERNAME", username);
+      container.withEnv("MEMCACHED_PASSWORD", password);
+    }
     container.start();
 
-    client = MemcacheClientBuilder.newStringClient()
-        .withAddress(getHost(), getPort())
-        .connectAscii();
+    final MemcacheClientBuilder<String> builder = MemcacheClientBuilder.newStringClient()
+        .withAddress(getHost(), getPort());
+    if (username != null && password != null) {
+      builder.withUsernamePassword(username, password);
+    }
+    client = builder.connectBinary();
     try {
       client.awaitConnected(10, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {

@@ -59,10 +59,11 @@ public class RecoveryTest {
   private EmbeddedServer server;
 
   private MemcacheClient<String> client;
+  private int globalConnectionCount;
 
   @Before
   public void setUp() throws Exception {
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    globalConnectionCount = Utils.getGlobalConnectionCount();
 
     server = new EmbeddedServer(true, cache);
     int port = server.getPort();
@@ -73,6 +74,7 @@ public class RecoveryTest {
         .withMaxOutstandingRequests(MAX_OUTSTANDING_REQUESTS)
         .withMetrics(NoopMetrics.INSTANCE)
         .withRetry(false)
+        .withoutAuthenticationValidation()
         .withRequestTimeoutMillis(TIMEOUT_MILLIS);
 
     client = builder.connectBinary();
@@ -89,7 +91,7 @@ public class RecoveryTest {
       server.stop();
     }
 
-    assertEquals(0, Utils.getGlobalConnectionCount());
+    assertEquals(globalConnectionCount, Utils.getGlobalConnectionCount());
   }
 
   @Test

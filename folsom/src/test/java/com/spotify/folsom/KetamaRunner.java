@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.concurrent.CompletionStage;
-import com.spotify.folsom.transcoder.StringTranscoder;
 
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +26,7 @@ public class KetamaRunner {
 
   public static void main(final String[] args) throws Throwable {
     final BinaryMemcacheClient<String> client =
-            new MemcacheClientBuilder<>(StringTranscoder.UTF8_INSTANCE)
+            MemcacheClientBuilder.newStringClient()
                     .withAddress("127.0.0.1", 11211)
                     .withAddress("127.0.0.1", 11213)
                     .connectBinary();

@@ -22,25 +22,36 @@ public class ConnectFuture
     extends CompletableFuture<Void>
     implements ConnectionChangeListener {
 
-  private final boolean awaitedState;
+  private final boolean awaitConnected;
+  private final boolean requireAll;
 
   /**
    * Create a future that completes once the client reaches the awaited state
    * @param client
-   * @param awaitedState
+   * @param awaitConnected
+   * @param requireAll
    */
-  private ConnectFuture(ObservableClient client, boolean awaitedState) {
-    this.awaitedState = awaitedState;
+  private ConnectFuture(ObservableClient client, boolean awaitConnected, final boolean requireAll) {
+    this.awaitConnected = awaitConnected;
+    this.requireAll = requireAll;
     client.registerForConnectionChanges(this);
     check(client);
   }
 
   public static CompletionStage<Void> disconnectFuture(ObservableClient client) {
-    return new ConnectFuture(client, false);
+    return new ConnectFuture(client, false, false);
+  }
+
+  public static CompletionStage<Void> fullyDisconnectedFuture(ObservableClient client) {
+    return new ConnectFuture(client, false, true);
   }
 
   public static CompletionStage<Void> connectFuture(ObservableClient client) {
-    return new ConnectFuture(client, true);
+    return new ConnectFuture(client, true, false);
+  }
+
+  public static CompletionStage<Void> fullyConnectedFuture(ObservableClient client) {
+    return new ConnectFuture(client, true, true);
   }
 
   @Override
@@ -49,9 +60,22 @@ public class ConnectFuture
   }
 
   private void check(ObservableClient client) {
-    if (awaitedState == client.isConnected()) {
-      if (complete(null)) {
-        client.unregisterForConnectionChanges(this);
+    final Throwable failure = client.getConnectionFailure();
+    if (failure != null) {
+      completeExceptionally(failure);
+    }
+    if (requireAll) {
+      final int expectedConnections = awaitConnected ? client.numTotalConnections() : 0;
+      if (client.numActiveConnections() == expectedConnections) {
+        if (complete(null)) {
+          client.unregisterForConnectionChanges(this);
+        }
+      }
+    } else {
+      if (awaitConnected == client.isConnected()) {
+        if (complete(null)) {
+          client.unregisterForConnectionChanges(this);
+        }
       }
     }
   }

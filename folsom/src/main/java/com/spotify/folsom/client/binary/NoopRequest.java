@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.binary;
 
 import com.google.common.base.Charsets;
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
@@ -55,6 +56,8 @@ public class NoopRequest extends BinaryRequest<Void> {
 
     if (reply.status == MemcacheStatus.OK) {
       succeed(null);
+    } else if (reply.status == MemcacheStatus.UNAUTHORIZED) {
+      fail(new MemcacheAuthenticationException("Authentication required"));
     } else {
       throw new IOException("Unexpected response: " + reply.status);
     }

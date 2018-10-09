@@ -43,6 +43,11 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public Throwable getConnectionFailure() {
+    return null;
+  }
+
+  @Override
   public int numTotalConnections() {
     return 1;
   }
