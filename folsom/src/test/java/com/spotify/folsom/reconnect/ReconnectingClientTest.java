@@ -18,6 +18,7 @@ package com.spotify.folsom.reconnect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -246,9 +247,9 @@ public class ReconnectingClientTest {
 
   private long getFDCount() {
     OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-    if (os instanceof UnixOperatingSystemMXBean) {
-      return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
-    }
-    throw new UnsupportedOperationException("Unavailable");
+
+    assumeTrue("Test only supported on Unix based OSes", os instanceof UnixOperatingSystemMXBean);
+
+    return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
   }
 }
