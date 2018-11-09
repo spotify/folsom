@@ -1,3 +1,6 @@
+### 1.2.1
+* Fixed memory/fd/thread leak introduced in 1.1.0
+
 ### 1.2.0
 * Added MemcachedClient.flushAll() method
 * Add support for SASL authentication for binary protocol
