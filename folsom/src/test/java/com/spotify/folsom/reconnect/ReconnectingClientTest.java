@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.reconnect;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyLong;
@@ -28,13 +29,20 @@ import static org.mockito.Mockito.when;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.BackoffFunction;
 import com.spotify.folsom.ConnectionChangeListener;
+import com.spotify.folsom.EmbeddedServer;
+import com.spotify.folsom.MemcacheClient;
+import com.spotify.folsom.MemcacheClientBuilder;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
+import com.sun.management.UnixOperatingSystemMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -202,5 +210,45 @@ public class ReconnectingClientTest {
         notifyConnectionChange();
       }
     }
+  }
+
+  @Test
+  public void testFiledescriptorLeak() throws InterruptedException, TimeoutException {
+    final EmbeddedServer embeddedServer = new EmbeddedServer(false);
+    final MemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
+            .withAddress("localhost", embeddedServer.getPort())
+            .connectAscii();
+    client.awaitFullyConnected(1, TimeUnit.MINUTES);
+
+    // Warmup (maybe not needed?)
+    for (int i = 0; i < 10; i++) {
+      triggerReconnect(embeddedServer, client);
+    }
+
+    long fdCountPre = getFDCount();
+    for (int i = 0; i < 10; i++) {
+      triggerReconnect(embeddedServer, client);
+    }
+    long fdCountPost = getFDCount();
+
+    assertEquals(fdCountPost, fdCountPre);
+  }
+
+  private void triggerReconnect(
+      final EmbeddedServer embeddedServer, final MemcacheClient<String> client)
+      throws TimeoutException, InterruptedException {
+    embeddedServer.stop();
+    client.awaitFullyDisconnected(1, TimeUnit.MINUTES);
+    embeddedServer.start();
+    client.awaitFullyConnected(1, TimeUnit.MINUTES);
+  }
+
+  private long getFDCount() {
+    OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+    if (os instanceof UnixOperatingSystemMXBean) {
+      return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
+    }
+    throw new UnsupportedOperationException("Unavailable");
   }
 }

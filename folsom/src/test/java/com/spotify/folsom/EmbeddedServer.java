@@ -43,6 +43,10 @@ public class EmbeddedServer {
     this.daemon = daemon;
   }
 
+  public <E extends CacheElement> EmbeddedServer(final boolean binary) {
+    this(binary, defaultCache());
+  }
+
   private static CacheImpl defaultCache() {
     final int maxItems = 1492;
     final int maxBytes = 1024 * 1000;
@@ -62,6 +66,10 @@ public class EmbeddedServer {
 
   public void stop() {
     daemon.stop();
+  }
+
+  public void start() {
+    daemon.start();
   }
 
   public int getPort() {
