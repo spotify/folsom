@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Queues;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
@@ -83,6 +85,14 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final int maxSetLength;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
+  private static final ThreadFactory THREAD_FACTORY =
+      new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
+  private static final Supplier<EventLoopGroup> DEFAULT_EVENT_LOOP_GROUP =
+      Suppliers.memoize(
+          () ->
+              Epoll.isAvailable()
+                  ? new EpollEventLoopGroup(0, THREAD_FACTORY)
+                  : new NioEventLoopGroup(0, THREAD_FACTORY));
 
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
@@ -119,7 +129,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     final CompletableFuture<RawMemcacheClient> clientFuture = new CompletableFuture<>();
 
-    EventLoopGroup effectiveELG = eventLoopGroup != null ? eventLoopGroup : defaultEventLoopGroup();
+    final EventLoopGroup effectiveELG =
+        eventLoopGroup != null ? eventLoopGroup : DEFAULT_EVENT_LOOP_GROUP.get();
     Class<? extends Channel> effectiveChannelClass =
         channelClass != null ? channelClass : defaultChannelClass(effectiveELG);
 
@@ -155,13 +166,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
             });
 
     return onExecutor(clientFuture, executor);
-  }
-
-  private static EventLoopGroup defaultEventLoopGroup() {
-    ThreadFactory factory = new DefaultThreadFactory(DefaultRawMemcacheClient.class, true);
-    return Epoll.isAvailable()
-        ? new EpollEventLoopGroup(0, factory)
-        : new NioEventLoopGroup(0, factory);
   }
 
   private static Class<? extends Channel> defaultChannelClass(EventLoopGroup elg) {
