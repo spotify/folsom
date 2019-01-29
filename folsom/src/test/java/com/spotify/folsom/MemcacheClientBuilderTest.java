@@ -108,7 +108,7 @@ public class MemcacheClientBuilderTest {
     AsciiMemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
-            .withMaxOutstandingRequests(100)
+            .withMaxOutstandingRequests(10)
             .connectAscii();
     client.awaitConnected(10, TimeUnit.SECONDS);
 

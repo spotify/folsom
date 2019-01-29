@@ -28,9 +28,11 @@ import java.util.concurrent.CompletableFuture;
 
 public abstract class Request<V> extends CompletableFuture<V> {
   protected final byte[] key;
+  protected final long createdNanos;
 
   protected Request(byte[] key) {
     this.key = key;
+    createdNanos = System.nanoTime();
   }
 
   protected static ByteBuf toBuffer(final ByteBufAllocator alloc, ByteBuffer dst) {
@@ -39,6 +41,10 @@ public abstract class Request<V> extends CompletableFuture<V> {
 
   public byte[] getKey() {
     return key;
+  }
+
+  public long getCreatedNanos() {
+    return createdNanos;
   }
 
   public abstract ByteBuf writeRequest(final ByteBufAllocator alloc, ByteBuffer dst);

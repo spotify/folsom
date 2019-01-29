@@ -18,35 +18,25 @@ package com.spotify.folsom.client;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A utility for checking whether some state has changed within a specified timout. Could be used to
- * verify that the head of a request queue changes quickly enough, indicating forward progress.
+ * A utility for checking whether a {@link Request} has timed out.
  */
-class TimeoutChecker<T> {
+class TimeoutChecker {
 
   private final long timeoutNanos;
 
-  private T pending;
-  private long timestamp;
-
-  public TimeoutChecker(final TimeUnit unit, final long timeout) {
-    this.timeoutNanos = unit.toNanos(timeout);
+  private TimeoutChecker(final TimeUnit unit, final long timeout) {
+    timeoutNanos = unit.toNanos(timeout);
   }
 
-  public boolean check(final T current) {
-    final long nowNanos = System.nanoTime();
-
-    // New task?
-    if (current != pending) {
-      pending = current;
-      timestamp = nowNanos;
-      return false;
-    }
-
-    // Timed out?
-    return nowNanos - timestamp > timeoutNanos;
+  public boolean check(final Request<?> request) {
+    return elapsedNanos(request) > timeoutNanos;
   }
 
-  public static <T> TimeoutChecker<T> create(final TimeUnit unit, final long timeout) {
-    return new TimeoutChecker<>(unit, timeout);
+  public long elapsedNanos(final Request<?> request) {
+    return System.nanoTime() - request.getCreatedNanos();
+  }
+
+  public static TimeoutChecker create(final TimeUnit unit, final long timeout) {
+    return new TimeoutChecker(unit, timeout);
   }
 }

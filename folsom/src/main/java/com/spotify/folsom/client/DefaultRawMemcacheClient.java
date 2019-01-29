@@ -71,6 +71,11 @@ import org.slf4j.LoggerFactory;
 public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private static final AtomicInteger GLOBAL_CONNECTION_COUNT = new AtomicInteger();
+  private static final double NANOS_IN_MILLIS = 1000000.0;
+  /**
+   * how often to check if the request has timed out
+   */
+  private static final int TIMEOUT_POLL_INTERVAL_MILLIS = 10;
 
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
 
@@ -283,13 +288,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private class ConnectionHandler extends ChannelDuplexHandler {
 
     private final Queue<Request<?>> outstanding = Queues.newArrayDeque();
-    private final TimeoutChecker<Request<?>> timeoutChecker =
+    private final TimeoutChecker timeoutChecker =
         TimeoutChecker.create(MILLISECONDS, timeoutMillis);
 
     private final Future<?> timeoutCheckTask;
 
     ConnectionHandler() {
-      final long pollIntervalMillis = Math.min(timeoutMillis, SECONDS.toMillis(1));
       timeoutCheckTask =
           channel
               .eventLoop()
@@ -300,12 +304,13 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                       return;
                     }
                     if (timeoutChecker.check(head)) {
-                      log.error("Request timeout: {} {}", channel, head);
+                      double elapsedMs = timeoutChecker.elapsedNanos(head) / NANOS_IN_MILLIS;
+                      log.info("Request timeout after {} ms: {} {}", elapsedMs, channel, head);
                       DefaultRawMemcacheClient.this.setDisconnected("Timeout");
                     }
                   },
-                  pollIntervalMillis,
-                  pollIntervalMillis,
+                  TIMEOUT_POLL_INTERVAL_MILLIS,
+                  TIMEOUT_POLL_INTERVAL_MILLIS,
                   MILLISECONDS);
     }
 
