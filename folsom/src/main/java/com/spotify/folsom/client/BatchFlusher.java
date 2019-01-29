@@ -64,7 +64,8 @@ class BatchFlusher {
       };
 
   /**
-   * Deprecated - use {@link BatchFlusher#BatchFlusher(Channel, int)} with explicit maxPending parameter instead.
+   * Deprecated - use {@link BatchFlusher#BatchFlusher(Channel, int)} with explicit maxPending
+   * parameter instead.
    */
   @Deprecated
   public BatchFlusher(final Channel channel) {
