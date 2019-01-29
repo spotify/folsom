@@ -17,9 +17,7 @@ package com.spotify.folsom.client;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * A utility for checking whether a {@link Request} has timed out.
- */
+/** A utility for checking whether a {@link Request} has timed out. */
 class TimeoutChecker {
 
   private final long timeoutNanos;

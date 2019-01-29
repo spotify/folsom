@@ -15,18 +15,16 @@
  */
 package com.spotify.folsom.client;
 
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class TimeoutCheckerTest {
 
@@ -64,18 +62,15 @@ public class TimeoutCheckerTest {
   @Test
   public void testElapsedLessThanOne() throws InterruptedException {
     request = new DummyRequest();
-    assertTrue(sut.elapsedNanos(request) <
-            TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS));
+    assertTrue(sut.elapsedNanos(request) < TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS));
   }
 
   @Test
   public void testElapsedMoreThanOne() throws InterruptedException {
     request = new DummyRequest();
     Thread.sleep(1);
-    assertTrue(sut.elapsedNanos(request) >
-            TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS));
+    assertTrue(sut.elapsedNanos(request) > TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS));
   }
-
 
   class DummyRequest extends Request<Integer> {
 
@@ -89,8 +84,6 @@ public class TimeoutCheckerTest {
     }
 
     @Override
-    public void handle(final Object response) throws IOException {
-
-    }
+    public void handle(final Object response) throws IOException {}
   }
 }
