@@ -94,6 +94,7 @@ public class MemcacheClientBuilder<V> {
 
   private final List<HostAndPort> addresses = new ArrayList<>();
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
+  private int batchSize = Settings.DEFAULT_BATCH_SIZE;
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
 
@@ -273,6 +274,30 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder<V> withMaxOutstandingRequests(final int maxOutstandingRequests) {
     this.maxOutstandingRequests = maxOutstandingRequests;
+    return this;
+  }
+
+  /**
+   * Specify the maximum number of operations that will be batched together in one network
+   * request.
+   *
+   * If the client's batch-size is larger than your memcached server's value, you may experience
+   * an increase in `conn_yields` on your memcached server's stats...which indicates your server
+   * is switching to other I/O connections during the batch request to not starve other
+   * connections.
+   *
+   * If this value is too low, your will make more network requests per operation, thus reducing
+   * your server's overall throughput.
+   *
+   * The optimal value should be matched to your workload and roughly the same value as your
+   * memcached server's `-R` argument, which defaults to 20.
+   *
+   * @param batchSize the maximum number of operations per batched client request.
+   *                  Default is {@value Settings#DEFAULT_BATCH_SIZE}.
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withRequestBatchSize(final int batchSize) {
+    this.batchSize = batchSize;
     return this;
   }
 
@@ -551,6 +576,7 @@ public class MemcacheClientBuilder<V> {
         ReconnectingClient.singletonExecutor(),
         address,
         maxOutstandingRequests,
+        batchSize,
         binary,
         authenticator,
         executor,

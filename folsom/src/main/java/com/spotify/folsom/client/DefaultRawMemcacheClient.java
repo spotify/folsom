@@ -97,6 +97,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
       final int outstandingRequestLimit,
+      final int batchSize,
       final boolean binary,
       final Executor executor,
       final long timeoutMillis,
@@ -154,6 +155,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                         address,
                         future.channel(),
                         outstandingRequestLimit,
+                        batchSize,
                         executor,
                         timeoutMillis,
                         metrics,
@@ -176,6 +178,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final HostAndPort address,
       final Channel channel,
       final int outstandingRequestLimit,
+      final int batchSize,
       final Executor executor,
       final long timeoutMillis,
       final Metrics metrics,
@@ -185,7 +188,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.timeoutMillis = timeoutMillis;
     this.maxSetLength = maxSetLength;
     this.channel = checkNotNull(channel, "channel");
-    this.flusher = new BatchFlusher(channel);
+    this.flusher = new BatchFlusher(channel, batchSize);
     this.outstandingRequestLimit = outstandingRequestLimit;
 
     GLOBAL_CONNECTION_COUNT.incrementAndGet();
