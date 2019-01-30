@@ -130,7 +130,8 @@ get a period of low cache hit ratio.
 
 #### Yammer metrics
 
-You can optionally choose to track performance using yammer metrics.
+You can optionally choose to track performance using yammer metrics. You will need to include
+`folsom-yammer-metrics` dependency in this case.
 
 ### Building
 

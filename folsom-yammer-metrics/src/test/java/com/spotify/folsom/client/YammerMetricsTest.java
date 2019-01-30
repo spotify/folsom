@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNull;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.AsciiMemcacheClient;
-import com.spotify.folsom.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
