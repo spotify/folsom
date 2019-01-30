@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
+import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import com.yammer.metrics.core.Metered;
 import com.yammer.metrics.core.MetricsRegistry;

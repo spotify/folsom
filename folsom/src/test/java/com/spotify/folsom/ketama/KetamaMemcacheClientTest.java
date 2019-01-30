@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNull;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.spotify.folsom.FakeRawMemcacheClient;
+import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.MemcacheEncoder;
