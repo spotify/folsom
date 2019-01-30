@@ -16,6 +16,7 @@
 
 package com.spotify.folsom;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
@@ -295,6 +296,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withRequestBatchSize(final int batchSize) {
+    checkArgument(batchSize > 0, "batch size must be > 0");
     this.batchSize = batchSize;
     return this;
   }
