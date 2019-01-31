@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.client;
 
+import com.spotify.folsom.Settings;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoop;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -25,8 +26,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * into fewer syscalls.
  */
 class BatchFlusher {
-
-  private static final int DEFAULT_MAX_PENDING = 64;
 
   private final Channel channel;
   private final EventLoop eventLoop;
@@ -64,8 +63,13 @@ class BatchFlusher {
         }
       };
 
+  /**
+   * Deprecated - use {@link BatchFlusher#BatchFlusher(Channel, int)} with explicit maxPending
+   * parameter instead.
+   */
+  @Deprecated
   public BatchFlusher(final Channel channel) {
-    this(channel, DEFAULT_MAX_PENDING);
+    this(channel, Settings.DEFAULT_BATCH_SIZE);
   }
 
   public BatchFlusher(final Channel channel, final int maxPending) {

@@ -63,6 +63,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       final ScheduledExecutorService scheduledExecutorService,
       final HostAndPort address,
       final int outstandingRequestLimit,
+      final int batchSize,
       final boolean binary,
       final Authenticator authenticator,
       final Executor executor,
@@ -79,6 +80,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
             DefaultRawMemcacheClient.connect(
                 address,
                 outstandingRequestLimit,
+                batchSize,
                 binary,
                 executor,
                 timeoutMillis,

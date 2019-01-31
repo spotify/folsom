@@ -57,6 +57,8 @@ import org.junit.Test;
 
 public class DefaultRawMemcacheClientTest {
 
+  private static final int BATCH_SIZE = 20;
+
   private MemcachedServer server;
 
   @Before
@@ -77,6 +79,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 HostAndPort.fromParts(server.getHost(), server.getPort()),
                 5000,
+                BATCH_SIZE,
                 false,
                 null,
                 3000,
@@ -176,6 +179,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 5000,
+                BATCH_SIZE,
                 false,
                 null,
                 1000,
@@ -214,6 +218,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 outstandingRequestLimit,
+                BATCH_SIZE,
                 binary,
                 executor,
                 timeoutMillis,
@@ -257,6 +262,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 outstandingRequestLimit,
+                BATCH_SIZE,
                 binary,
                 executor,
                 timeoutMillis,
@@ -292,6 +298,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 5000,
+                BATCH_SIZE,
                 false,
                 null,
                 1000,
@@ -318,6 +325,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 1,
+                BATCH_SIZE,
                 false,
                 null,
                 1000,
@@ -365,6 +373,7 @@ public class DefaultRawMemcacheClientTest {
         DefaultRawMemcacheClient.connect(
                 address,
                 1,
+                BATCH_SIZE,
                 false,
                 null,
                 1000,
@@ -404,6 +413,7 @@ public class DefaultRawMemcacheClientTest {
           DefaultRawMemcacheClient.connect(
                   HostAndPort.fromParts("127.0.0.12", port),
                   5000,
+                  BATCH_SIZE,
                   false,
                   null,
                   3000,
