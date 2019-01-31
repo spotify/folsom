@@ -1,3 +1,9 @@
+### 1.3.0-SNAPSHOT
+* Extracted Yammer metrics to a separate module to limit dependencies. 
+add "folsom-yammer-metrics" module to your project's dependencies if you need `YammerMetrics` class.
+* Added support for configurable batch size when creating clients. See the new 
+`withRequestBatchSize(int)` method in `MemcacheClientBuilder`.
+
 ### 1.2.1
 * Fixed memory/fd/thread leak introduced in 1.1.0
 
