@@ -13,10 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.spotify.folsom;
+package com.spotify.folsom.client.test;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.spotify.folsom.AbstractRawMemcacheClient;
+import com.spotify.folsom.GetResult;
+import com.spotify.folsom.MemcacheClosedException;
+import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.Metrics;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
+import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.SrvKetamaClient;
 import java.util.Map;
