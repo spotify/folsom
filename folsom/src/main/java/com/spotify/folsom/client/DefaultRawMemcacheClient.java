@@ -18,7 +18,6 @@ package com.spotify.folsom.client;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -72,9 +71,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private static final AtomicInteger GLOBAL_CONNECTION_COUNT = new AtomicInteger();
 
-  /**
-   * how often to check if a request timed out, in msec.
-   */
+  /** how often to check if a request timed out, in msec. */
   private final int DEFAULT_TIMEOUT_POLL_INTERVAL_MILLIS = 10;
 
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
