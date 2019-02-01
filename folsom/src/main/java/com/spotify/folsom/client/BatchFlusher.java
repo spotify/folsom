@@ -63,15 +63,6 @@ class BatchFlusher {
         }
       };
 
-  /**
-   * Deprecated - use {@link BatchFlusher#BatchFlusher(Channel, int)} with explicit maxPending
-   * parameter instead.
-   */
-  @Deprecated
-  public BatchFlusher(final Channel channel) {
-    this(channel, Settings.DEFAULT_BATCH_SIZE);
-  }
-
   public BatchFlusher(final Channel channel, final int maxPending) {
     this.channel = channel;
     this.maxPending = maxPending;
