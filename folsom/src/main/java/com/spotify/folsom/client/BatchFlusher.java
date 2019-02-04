@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom.client;
 
-import com.spotify.folsom.Settings;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoop;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;

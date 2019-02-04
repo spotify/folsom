@@ -18,7 +18,6 @@ package com.spotify.folsom.client;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -71,6 +70,9 @@ import org.slf4j.LoggerFactory;
 public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private static final AtomicInteger GLOBAL_CONNECTION_COUNT = new AtomicInteger();
+
+  /** how often to check if a request timed out, in msec. */
+  private final int DEFAULT_TIMEOUT_POLL_INTERVAL_MILLIS = 10;
 
   private final Logger log = LoggerFactory.getLogger(DefaultRawMemcacheClient.class);
 
@@ -292,7 +294,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     private final Future<?> timeoutCheckTask;
 
     ConnectionHandler() {
-      final long pollIntervalMillis = Math.min(timeoutMillis, SECONDS.toMillis(1));
+      final long pollIntervalMillis = DEFAULT_TIMEOUT_POLL_INTERVAL_MILLIS;
       timeoutCheckTask =
           channel
               .eventLoop()
