@@ -42,7 +42,8 @@ public final class Utils {
     if (expirationTime < 0) {
       // throw new IllegalArgumentException("TTL set too far into the future (Y2038 limitation)");
       // Not strictly correct - should switch to failure on the next major version bump
-      return Integer.MAX_VALUE - 1; // Avoid Integer.MAX_VALUE in case memcached treats it in some special way.
+      return Integer.MAX_VALUE
+          - 1; // Avoid Integer.MAX_VALUE in case memcached treats it in some special way.
     }
     return expirationTime;
   }
