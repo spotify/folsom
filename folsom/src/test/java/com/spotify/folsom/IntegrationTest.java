@@ -554,6 +554,17 @@ public class IntegrationTest {
     }
   }
 
+  @Test
+  public void testExpiredKey() throws Exception {
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 5).toCompletableFuture().get());
+    Thread.sleep(4000);
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+    Thread.sleep(2000);
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
   private String createValue(int size) {
     StringBuilder sb = new StringBuilder(size);
     for (int i = 0; i < size; i++) {
