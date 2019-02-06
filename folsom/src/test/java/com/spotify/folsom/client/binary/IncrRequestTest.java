@@ -41,7 +41,7 @@ public class IncrRequestTest extends RequestTestTemplate {
     assertHeader(b, OpCode.INCREMENT, KEY.length(), 20, KEY.length() + 20, req.opaque, 0);
     assertEquals(2L, b.readLong());
     assertEquals(3L, b.readLong());
-    assertExpiration(b.readInt());
+    assertEquals(1000, b.readInt());
     assertString(KEY, b);
     assertEOM(b);
   }

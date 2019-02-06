@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -114,7 +115,7 @@ public class KetamaIntegrationTest {
 
   public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3);
 
-  protected static final int TTL = Integer.MAX_VALUE;
+  protected static final int TTL = (int) Duration.ofMinutes(10).getSeconds();
 
   @Test
   public void testSetGet() throws Exception {

@@ -30,7 +30,7 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(String username, String password) {
-    container = new GenericContainer("bitnami/memcached:1.5.10");
+    container = new GenericContainer("bitnami/memcached:1.5.12");
     container.addExposedPort(11211);
     if (username != null && password != null) {
       container.withEnv("MEMCACHED_USERNAME", username);
