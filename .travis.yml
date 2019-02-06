@@ -11,10 +11,10 @@ jdk:
   - openjdk11
 
 install:
-  - mvn install -DskipTests=true -Dgpg.skip=true
+  - mvn -B install -DskipTests=true -Dgpg.skip=true
 
 after_success:
-  - mvn clean cobertura:cobertura coveralls:report -Dcoveralls.token=${COVERALLS_TOKEN}
+  - mvn -B clean cobertura:cobertura coveralls:report -Dcoveralls.token=${COVERALLS_TOKEN}
 
 services:
   - docker
