@@ -50,8 +50,12 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   @AfterClass
   public static void tearDownClass() {
-    server.stop();
-    noauthserver.stop();
+    if (server != null) {
+      server.stop();
+    }
+    if (noauthserver != null) {
+      noauthserver.stop();
+    }
   }
 
   @Test

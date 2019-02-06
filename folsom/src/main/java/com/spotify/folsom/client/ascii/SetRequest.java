@@ -18,6 +18,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -79,7 +80,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     dst.put(CMD.get(operation));
     dst.put(key);
     dst.put(FLAGS);
-    dst.put(String.valueOf(ttl).getBytes());
+    dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value.length).getBytes());
     if (operation == Operation.CAS) {

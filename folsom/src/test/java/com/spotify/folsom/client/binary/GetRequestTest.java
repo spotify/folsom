@@ -16,6 +16,8 @@
 
 package com.spotify.folsom.client.binary;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
@@ -50,7 +52,7 @@ public class GetRequestTest extends RequestTestTemplate {
     ByteBuf b = (ByteBuf) out.get(0);
 
     assertHeader(b, OpCode.GET, KEY.length(), 4, KEY.length() + 4, get.opaque, 0);
-    assertExpiration(b.readInt());
+    assertEquals(123, b.readInt());
     assertString(KEY, b);
     assertEOM(b);
   }

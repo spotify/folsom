@@ -30,6 +30,7 @@ import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -139,7 +140,7 @@ public class IntegrationTest {
 
   public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3, KEY4);
 
-  protected static final int TTL = Integer.MAX_VALUE;
+  protected static final int TTL = (int) Duration.ofMinutes(10).getSeconds();
 
   @Test
   public void testSetGet() throws Exception {
@@ -552,6 +553,17 @@ public class IntegrationTest {
           MemcacheStatus.OK, client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
       assertEquals(smallValue, client.get(KEY1).toCompletableFuture().get());
     }
+  }
+
+  @Test
+  public void testExpiredKey() throws Exception {
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 5).toCompletableFuture().get());
+    Thread.sleep(4000);
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+    Thread.sleep(2000);
+    assertNull(client.get(KEY1).toCompletableFuture().get());
   }
 
   private String createValue(int size) {

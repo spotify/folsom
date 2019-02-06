@@ -62,11 +62,7 @@ public class SetRequestTest extends RequestTestTemplate {
     final int keyLen = KEY.length();
     assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.opaque, cas);
     assertZeros(b, 4);
-    if (ttl == 0) {
-      assertEquals(0, b.readInt());
-    } else {
-      assertExpiration(b.readInt());
-    }
+    assertEquals(ttl, b.readInt());
     assertString(KEY, b);
     assertString(VALUE, b);
     assertEOM(b);

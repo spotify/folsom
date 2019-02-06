@@ -16,6 +16,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
     dst.put(CMD);
     dst.put(key);
     dst.put(SPACE_BYTES);
-    dst.put(String.valueOf(ttl).getBytes());
+    dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }

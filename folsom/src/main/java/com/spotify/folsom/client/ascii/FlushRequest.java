@@ -16,6 +16,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class FlushRequest extends AsciiRequest<MemcacheStatus>
   @Override
   public ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer dst) {
     dst.put(CMD);
-    dst.put(String.valueOf(delay).getBytes());
+    dst.put(String.valueOf(Utils.ttlToExpiration(delay)).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
   }
