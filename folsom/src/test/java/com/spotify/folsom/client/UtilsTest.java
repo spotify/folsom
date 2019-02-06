@@ -18,7 +18,7 @@ public class UtilsTest {
         assertTimestamp(3000000);
 
         // Overflows the timestamp
-        assertEquals(Integer.MAX_VALUE, Utils.ttlToExpiration(Integer.MAX_VALUE - 1234));
+        assertEquals(Integer.MAX_VALUE - 1, Utils.ttlToExpiration(Integer.MAX_VALUE - 1234));
     }
 
     private void assertTimestamp(int ttl) {
