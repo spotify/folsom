@@ -45,4 +45,7 @@ public class NoopMetrics implements Metrics {
 
   @Override
   public void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {}
+
+  @Override
+  public void unregisterOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {}
 }

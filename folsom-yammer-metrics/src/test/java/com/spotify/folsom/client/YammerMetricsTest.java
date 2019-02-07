@@ -166,13 +166,13 @@ public class YammerMetricsTest {
   @Test
   public void testOutstandingRequests() throws Exception {
     // baseline
-    assertEquals(0, metrics.getOutstandingRequestsGauge().value().intValue());
+    assertEquals(0L, metrics.getOutstandingRequests());
 
     fakeRawMemcacheClient.setOutstandingRequests(5);
-    assertEquals(5, metrics.getOutstandingRequestsGauge().value().intValue());
+    assertEquals(5L, metrics.getOutstandingRequests());
 
     fakeRawMemcacheClient.setOutstandingRequests(0);
-    assertEquals(0, metrics.getOutstandingRequestsGauge().value().intValue());
+    assertEquals(0L, metrics.getOutstandingRequests());
   }
 
   private void awaitCount(int expectedValue, Metered timer) throws InterruptedException {

@@ -38,6 +38,8 @@ public interface Metrics {
    */
   void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge);
 
+  void unregisterOutstandingRequestsGauge(OutstandingRequestsGauge gauge);
+
   interface OutstandingRequestsGauge {
     int getOutstandingRequests();
   }

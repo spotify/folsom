@@ -173,7 +173,7 @@ public class SemanticFolsomMetricsTest {
         registry.getGauges(
             (name, metric) -> "outstanding-requests".equals(name.getTags().get("what")));
     assertEquals(1, gauges.size());
-    assertEquals(123, gauges.values().iterator().next().getValue());
+    assertEquals(123L, gauges.values().iterator().next().getValue());
   }
 
   @Test

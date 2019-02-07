@@ -19,12 +19,14 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.RatioGauge;
 import com.codahale.metrics.Timer;
+import com.google.common.collect.Sets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
 import com.spotify.metrics.core.MetricId;
 import com.spotify.metrics.core.SemanticMetricRegistry;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -69,6 +71,8 @@ public class SemanticFolsomMetrics implements Metrics {
 
   private final SemanticMetricRegistry registry;
   private final MetricId id;
+
+  private final Set<OutstandingRequestsGauge> gauges = Sets.newCopyOnWriteArraySet();
 
   public SemanticFolsomMetrics(final SemanticMetricRegistry registry, final MetricId baseMetricId) {
 
@@ -138,7 +142,19 @@ public class SemanticFolsomMetrics implements Metrics {
     this.touchSuccesses = registry.meter(touchMetersId.tagged("result", "success"));
     this.touchFailures = registry.meter(touchMetersId.tagged("result", "failure"));
 
-    createConnectionCounterGauge();
+    final MetricId outstandingRequestGauge =
+        id.tagged(
+            "what", "outstanding-requests",
+            "unit", "requests");
+    registry.register(
+        outstandingRequestGauge,
+        (Gauge<Long>)
+            () ->
+                gauges.stream().mapToLong(OutstandingRequestsGauge::getOutstandingRequests).sum());
+
+    final MetricId globalConnectionCountGauge =
+        id.tagged("what", "global-connections", "unit", "connections");
+    registry.register(globalConnectionCountGauge, (Gauge<Integer>) Utils::getGlobalConnectionCount);
   }
 
   @Override
@@ -327,24 +343,11 @@ public class SemanticFolsomMetrics implements Metrics {
 
   @Override
   public void registerOutstandingRequestsGauge(final OutstandingRequestsGauge gauge) {
-    final MetricId gaugeId =
-        id.tagged(
-            "what", "outstanding-requests",
-            "unit", "requests");
-    // registry doesn't allow duplicate registrations, so remove the metric if already existing
-    synchronized (registry) {
-      registry.remove(gaugeId);
-      registry.register(gaugeId, (Gauge<Integer>) () -> gauge.getOutstandingRequests());
-    }
+    gauges.add(gauge);
   }
 
-  private void createConnectionCounterGauge() {
-    final MetricId gaugeId = id.tagged("what", "global-connections", "unit", "connections");
-
-    // registry doesn't allow duplicate registrations, so remove the metric if already existing
-    synchronized (registry) {
-      registry.remove(gaugeId);
-      registry.register(gaugeId, (Gauge<Integer>) Utils::getGlobalConnectionCount);
-    }
+  @Override
+  public void unregisterOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
+    gauges.remove(gauge);
   }
 }

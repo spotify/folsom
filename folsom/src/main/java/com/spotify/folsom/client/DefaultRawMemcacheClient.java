@@ -84,6 +84,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final HostAndPort address;
   private final Executor executor;
   private final long timeoutMillis;
+  private final Metrics metrics;
   private final int maxSetLength;
 
   private final AtomicReference<String> disconnectReason = new AtomicReference<>(null);
@@ -95,6 +96,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               Epoll.isAvailable()
                   ? new EpollEventLoopGroup(0, THREAD_FACTORY)
                   : new NioEventLoopGroup(0, THREAD_FACTORY));
+  private final int pendingCounterLimit;
 
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
@@ -188,14 +190,16 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.address = address;
     this.executor = executor;
     this.timeoutMillis = timeoutMillis;
+    this.metrics = metrics;
     this.maxSetLength = maxSetLength;
     this.channel = checkNotNull(channel, "channel");
     this.flusher = new BatchFlusher(channel, batchSize);
     this.outstandingRequestLimit = outstandingRequestLimit;
+    this.pendingCounterLimit = Math.max(Integer.MAX_VALUE / 2, outstandingRequestLimit);
 
     GLOBAL_CONNECTION_COUNT.incrementAndGet();
 
-    metrics.registerOutstandingRequestsGauge(pendingCounter::get);
+    metrics.registerOutstandingRequestsGauge(this::numPendingRequests);
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
   }
@@ -439,14 +443,25 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
       // Use the pending counter as a way of marking disconnected for performance reasons
       // Once we are disconnected we will not really decrease this value any more anyway.
-      pendingCounter.set(Math.max(Integer.MAX_VALUE / 2, outstandingRequestLimit));
+      pendingCounter.set(pendingCounterLimit);
       channel.close();
       GLOBAL_CONNECTION_COUNT.decrementAndGet();
+      metrics.unregisterOutstandingRequestsGauge(this::numPendingRequests);
       notifyConnectionChange();
     }
   }
 
   static int getGlobalConnectionCount() {
     return GLOBAL_CONNECTION_COUNT.get();
+  }
+
+  private int numPendingRequests() {
+    final int counter = pendingCounter.get();
+    if (counter >= pendingCounterLimit) {
+      if (disconnectReason.get() != null) {
+        return 0; // Disconnected implies no pending requests
+      }
+    }
+    return counter;
   }
 }
