@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -57,6 +58,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class MemcacheClientBuilder<V> {
 
@@ -67,31 +69,33 @@ public class MemcacheClientBuilder<V> {
   private static final int DEFAULT_PORT = 11211;
 
   /** Lazily instantiated singleton default executor. */
-  private static class DefaultExecutor {
-
-    private static final Executor INSTANCE =
-        new ForkJoinPool(
-            Runtime.getRuntime().availableProcessors(),
-            ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-            new UncaughtExceptionHandler(),
-            true);
-  }
+  private static final Supplier<Executor> DEFAULT_REPLY_EXECUTOR =
+      Suppliers.memoize(
+          () ->
+              new ForkJoinPool(
+                  Runtime.getRuntime().availableProcessors(),
+                  ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                  new UncaughtExceptionHandler(),
+                  true));
 
   /** Lazily instantiated singleton default srvResolver. */
-  private static class DefaultDnsResolver {
-    private static final DnsSrvResolver INSTANCE =
-        DnsSrvResolvers.newBuilder().cachingLookups(true).retainingDataOnFailures(true).build();
-  }
+  private static final Supplier<DnsSrvResolver> DEFAULT_SRV_RESOLVER_EXECUTOR =
+      Suppliers.memoize(
+          () ->
+              DnsSrvResolvers.newBuilder()
+                  .cachingLookups(true)
+                  .retainingDataOnFailures(true)
+                  .build());
 
   /** Lazily instantiated singleton default scheduled executor. */
-  private static class DefaultScheduledExecutor {
-    private static final ScheduledExecutorService INSTANCE =
-        Executors.newSingleThreadScheduledExecutor(
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("folsom-default-scheduled-executor")
-                .build());
-  }
+  private static final Supplier<ScheduledExecutorService> DEFAULT_SCHEDULED_EXECUTOR =
+      Suppliers.memoize(
+          () ->
+              Executors.newSingleThreadScheduledExecutor(
+                  new ThreadFactoryBuilder()
+                      .setDaemon(true)
+                      .setNameFormat("folsom-default-scheduled-executor")
+                      .build()));
 
   private final List<HostAndPort> addresses = new ArrayList<>();
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
@@ -103,7 +107,7 @@ public class MemcacheClientBuilder<V> {
 
   private int connections = 1;
   private boolean retry = true;
-  private Executor executor = DefaultExecutor.INSTANCE;
+  private Supplier<Executor> executor = DEFAULT_REPLY_EXECUTOR;
   private Charset charset = Charsets.UTF_8;
 
   private DnsSrvResolver srvResolver;
@@ -338,7 +342,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withReplyExecutor(final Executor executor) {
-    this.executor = executor;
+    this.executor = Suppliers.ofInstance(executor);
     return this;
   }
 
@@ -539,14 +543,14 @@ public class MemcacheClientBuilder<V> {
       final boolean binary, final Authenticator authenticator) {
     DnsSrvResolver resolver = srvResolver;
     if (resolver == null) {
-      resolver = DefaultDnsResolver.INSTANCE;
+      resolver = DEFAULT_SRV_RESOLVER_EXECUTOR.get();
     }
 
     SrvKetamaClient client =
         new SrvKetamaClient(
             srvRecord,
             resolver,
-            DefaultScheduledExecutor.INSTANCE,
+            DEFAULT_SCHEDULED_EXECUTOR.get(),
             dnsRefreshPeriod,
             TimeUnit.MILLISECONDS,
             input -> createClient(input, binary, authenticator),
@@ -579,7 +583,7 @@ public class MemcacheClientBuilder<V> {
         batchSize,
         binary,
         authenticator,
-        executor,
+        executor.get(),
         timeoutMillis,
         charset,
         metrics,
