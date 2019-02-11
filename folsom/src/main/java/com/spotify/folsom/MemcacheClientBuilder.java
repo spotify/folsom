@@ -18,7 +18,6 @@ package com.spotify.folsom;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 
 import com.google.common.base.Charsets;
@@ -38,9 +37,8 @@ import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
-import com.spotify.folsom.ketama.AddressAndClient;
-import com.spotify.folsom.ketama.KetamaMemcacheClient;
 import com.spotify.folsom.ketama.SrvKetamaClient;
+import com.spotify.folsom.ketama.SrvResolver;
 import com.spotify.folsom.reconnect.ReconnectingClient;
 import com.spotify.folsom.retry.RetryingClient;
 import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
@@ -110,6 +108,7 @@ public class MemcacheClientBuilder<V> {
   private Supplier<Executor> executor = DEFAULT_REPLY_EXECUTOR;
   private Charset charset = Charsets.UTF_8;
 
+  private Resolver resolver;
   private DnsSrvResolver srvResolver;
   private String srvRecord;
   private long dnsRefreshPeriod = 60 * 1000L;
@@ -210,12 +209,18 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
+  public MemcacheClientBuilder<V> withResolver(final Resolver resolver) {
+    this.resolver = resolver;
+    return this;
+  }
+
   /**
    * Use SRV to lookup nodes instead of a fixed set of addresses. This means that the set of nodes
    * can change dynamically over time.
    *
    * @param srvRecord the SRV record to use.
    * @return itself
+   * @deprecated Use #withResolver
    */
   public MemcacheClientBuilder<V> withSRVRecord(final String srvRecord) {
     this.srvRecord = checkNotNull(srvRecord);
@@ -252,9 +257,11 @@ public class MemcacheClientBuilder<V> {
    * @param srvResolver the resolver to use. Default is a caching resolver from {@link
    *     com.spotify.dns.DnsSrvResolvers}
    * @return itself
+   * @deprecated Use #withResolver
    */
   public MemcacheClientBuilder<V> withSrvResolver(final DnsSrvResolver srvResolver) {
-    this.srvResolver = checkNotNull(srvResolver, "srvResolver");
+    checkNotNull(srvResolver, "srvResolver");
+    this.srvResolver = srvResolver;
     return this;
   }
 
@@ -514,60 +521,10 @@ public class MemcacheClientBuilder<V> {
    * @return A raw memcached client.
    */
   protected RawMemcacheClient connectRaw(boolean binary, Authenticator authenticator) {
-    List<HostAndPort> addresses = this.addresses;
-    RawMemcacheClient client;
-    if (srvRecord != null) {
-      if (!addresses.isEmpty()) {
-        throw new IllegalStateException("You may not specify both srvRecord and addresses");
-      }
-      client = createSRVClient(binary, authenticator);
-    } else {
-      if (addresses.isEmpty()) {
-        addresses = ImmutableList.of(HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
-      }
+    final Resolver resolver = getResolver();
 
-      final List<RawMemcacheClient> clients = createClients(addresses, binary, authenticator);
-      if (addresses.size() > 1) {
-        checkState(clients.size() == addresses.size());
-
-        final List<AddressAndClient> aac = Lists.newArrayListWithCapacity(clients.size());
-        for (int i = 0; i < clients.size(); i++) {
-          final HostAndPort address = addresses.get(i);
-          aac.add(new AddressAndClient(address, clients.get(i)));
-        }
-
-        client = new KetamaMemcacheClient(aac);
-      } else {
-        client = clients.get(0);
-      }
-    }
-
-    if (retry) {
-      return new RetryingClient(client);
-    }
-    return client;
-  }
-
-  private List<RawMemcacheClient> createClients(
-      final List<HostAndPort> addresses, final boolean binary, final Authenticator authenticator) {
-
-    final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(addresses.size());
-    for (final HostAndPort address : addresses) {
-      clients.add(createClient(address, binary, authenticator));
-    }
-    return clients;
-  }
-
-  private RawMemcacheClient createSRVClient(
-      final boolean binary, final Authenticator authenticator) {
-    DnsSrvResolver resolver = srvResolver;
-    if (resolver == null) {
-      resolver = DEFAULT_SRV_RESOLVER_EXECUTOR.get();
-    }
-
-    SrvKetamaClient client =
+    final SrvKetamaClient client =
         new SrvKetamaClient(
-            srvRecord,
             resolver,
             DEFAULT_SCHEDULED_EXECUTOR.get(),
             dnsRefreshPeriod,
@@ -577,7 +534,54 @@ public class MemcacheClientBuilder<V> {
             TimeUnit.MILLISECONDS);
 
     client.start();
+    if (retry) {
+      return new RetryingClient(client);
+    }
     return client;
+  }
+
+  private Resolver getResolver() {
+    if (resolver != null) {
+      if (srvRecord != null) {
+        throw new IllegalStateException(
+            "withResolver() can not be used together with withSrvRecord()");
+      }
+      if (srvResolver != null) {
+        throw new IllegalStateException(
+            "withResolver() can not be used together with withSrvResolver()");
+      }
+      if (!addresses.isEmpty()) {
+        throw new IllegalStateException(
+            "withResolver() can not be used together with withAddresses()");
+      }
+      return resolver;
+    }
+
+    if (srvResolver != null) {
+      if (srvRecord == null) {
+        throw new IllegalStateException(
+            "withSrvResolver() can not be used without withSrvRecord()");
+      }
+      if (!addresses.isEmpty()) {
+        throw new IllegalStateException(
+            "withSrvResolver() can not be used together with withAddresses()");
+      }
+      return new SrvResolver(srvResolver, srvRecord);
+    }
+
+    if (srvRecord != null) {
+      if (!addresses.isEmpty()) {
+        throw new IllegalStateException(
+            "withSrvRecord() can not be used together with withAddresses()");
+      }
+      return new SrvResolver(DEFAULT_SRV_RESOLVER_EXECUTOR.get(), srvRecord);
+    }
+
+    if (!addresses.isEmpty()) {
+      return ConstantResolver.fromAddresses(addresses);
+    }
+    return ConstantResolver.fromAddresses(
+        ImmutableList.of(HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT)));
   }
 
   private RawMemcacheClient createClient(

@@ -17,13 +17,10 @@ package com.spotify.folsom.ketama;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.spotify.dns.DnsSrvResolver;
-import com.spotify.dns.LookupResult;
-import com.spotify.folsom.AbstractRawMemcacheClient;
-import com.spotify.folsom.ConnectionChangeListener;
-import com.spotify.folsom.ObservableClient;
-import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.*;
+import com.spotify.folsom.Resolver.ResolveResult;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
@@ -47,8 +44,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   public static final int MAX_DNS_WAIT_TIME = 3600;
 
   private final ScheduledExecutorService executor;
-  private final String srvRecord;
-  private final DnsSrvResolver srvResolver;
+  private final Resolver resolver;
   private final long ttl;
 
   private final Connector connector;
@@ -67,16 +63,14 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private boolean shutdown = false;
 
   public SrvKetamaClient(
-      final String srvRecord,
-      DnsSrvResolver srvResolver,
+      Resolver resolver,
       ScheduledExecutorService executor,
       long period,
       TimeUnit periodUnit,
       final Connector connector,
       long shutdownDelay,
       TimeUnit shutdownUnit) {
-    this.srvRecord = srvRecord;
-    this.srvResolver = srvResolver;
+    this.resolver = resolver;
     this.connector = connector;
     this.shutdownDelay = shutdownDelay;
     this.shutdownUnit = shutdownUnit;
@@ -99,20 +93,24 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       }
       long ttl = this.ttl; // Default ttl to use if resolve fails
       try {
-        final List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
-        if (lookupResults.isEmpty()) {
-          // Just ignore empty results
+        List<ResolveResult> resolveResults = resolver.resolve();
+        if (resolveResults.isEmpty()) {
           return;
+        }
+        List<HostAndPort> hosts = Lists.newArrayListWithCapacity(resolveResults.size());
+        for (ResolveResult resolveResult : resolveResults) {
+          hosts.add(HostAndPort.fromParts(resolveResult.getHost(), resolveResult.getPort()));
+          ttl = Math.min(ttl, resolveResult.getTtl());
         }
 
         final ImmutableSet<HostAndPort> newAddresses =
-            lookupResults
+            resolveResults
                 .stream()
-                .map(result -> HostAndPort.fromParts(result.host(), result.port()))
+                .map(result -> HostAndPort.fromParts(result.getHost(), result.getPort()))
                 .collect(ImmutableSet.toImmutableSet());
 
         final long resolvedTtl =
-            lookupResults.stream().mapToLong(LookupResult::ttl).min().orElse(Long.MAX_VALUE);
+            resolveResults.stream().mapToLong(ResolveResult::getTtl).min().orElse(Long.MAX_VALUE);
         ttl = Math.min(ttl, resolvedTtl);
 
         final Set<HostAndPort> currentAddresses = clients.keySet();
@@ -176,7 +174,15 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
   @Override
   public Throwable getConnectionFailure() {
-    return currentClient.getConnectionFailure();
+    final Throwable e = currentClient.getConnectionFailure();
+    if (e != null) {
+      return e;
+    }
+    final RawMemcacheClient pendingClient = this.pendingClient;
+    if (pendingClient != null) {
+      return pendingClient.getConnectionFailure();
+    }
+    return null;
   }
 
   @Override
