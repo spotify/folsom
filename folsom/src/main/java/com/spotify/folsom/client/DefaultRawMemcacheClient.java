@@ -196,8 +196,10 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.flusher = new BatchFlusher(channel, batchSize);
     this.outstandingRequestLimit = outstandingRequestLimit;
 
-    // Since we are reusing the pendingCounter to detect disconnects, set the limit to something high.
-    // It might be enough to just use outstandingRequestLimit instead, if we can be sure we never decrease it
+    // Since we are reusing the pendingCounter to detect disconnects, set the limit to something
+    // high.
+    // It might be enough to just use outstandingRequestLimit instead, if we can be sure we never
+    // decrease it
     // after a disconnect.
     this.pendingCounterLimit = Math.max(Integer.MAX_VALUE / 2, outstandingRequestLimit);
 
