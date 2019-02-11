@@ -228,12 +228,13 @@ public class ReconnectingClientTest {
     }
 
     long fdCountPre = getFDCount();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 50; i++) {
       triggerReconnect(embeddedServer, client);
     }
     long fdCountPost = getFDCount();
 
-    assertEquals(fdCountPost, fdCountPre);
+    final int diff = Math.abs(fdCountPost - fdCountPre);
+    assertTrue(diff < 10);
   }
 
   private void triggerReconnect(

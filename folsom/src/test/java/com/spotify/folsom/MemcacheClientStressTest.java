@@ -40,6 +40,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class MemcacheClientStressTest {
 
   private static final String KEY = "mykey";

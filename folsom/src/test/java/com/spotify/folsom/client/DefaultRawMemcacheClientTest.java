@@ -51,22 +51,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.*;
 
 public class DefaultRawMemcacheClientTest {
 
   private static final int BATCH_SIZE = 20;
 
-  private MemcachedServer server;
+  private static MemcachedServer server;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     server = new MemcachedServer();
   }
 
-  @After
+  @AfterClass
   public void tearDown() throws Exception {
     server.stop();
   }
