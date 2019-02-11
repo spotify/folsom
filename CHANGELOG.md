@@ -1,3 +1,6 @@
+### 1.3.1
+* Fixed bug with the outstanding-requests metric.
+
 ### 1.3.0
 * Extracted Yammer metrics to a separate module to limit dependencies. 
 add "folsom-yammer-metrics" module to your project's dependencies if you need `YammerMetrics` class.
