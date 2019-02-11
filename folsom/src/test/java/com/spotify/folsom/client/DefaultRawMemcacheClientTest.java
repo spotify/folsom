@@ -66,7 +66,7 @@ public class DefaultRawMemcacheClientTest {
   }
 
   @AfterClass
-  public void tearDown() throws Exception {
+  public static void tearDown() throws Exception {
     server.stop();
   }
 

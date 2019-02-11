@@ -233,8 +233,8 @@ public class ReconnectingClientTest {
     }
     long fdCountPost = getFDCount();
 
-    final int diff = Math.abs(fdCountPost - fdCountPre);
-    assertTrue(diff < 10);
+    final long diff = Math.abs(fdCountPost - fdCountPre);
+    assertTrue(diff < 10L);
   }
 
   private void triggerReconnect(
