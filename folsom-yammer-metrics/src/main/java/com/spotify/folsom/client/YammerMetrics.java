@@ -18,6 +18,8 @@ package com.spotify.folsom.client;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -28,6 +30,7 @@ import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 public class YammerMetrics implements Metrics {
@@ -61,8 +64,7 @@ public class YammerMetrics implements Metrics {
   private final Meter touchSuccesses;
   private final Meter touchFailures;
 
-  private volatile OutstandingRequestsGauge internalOutstandingReqGauge;
-  private final Gauge<Integer> outstandingRequestsGauge;
+  private final Set<OutstandingRequestsGauge> gauges = Sets.newCopyOnWriteArraySet();
 
   public YammerMetrics(final MetricsRegistry registry) {
     this.gets = registry.newTimer(name("get", "requests"), SECONDS, SECONDS);
@@ -92,17 +94,15 @@ public class YammerMetrics implements Metrics {
     this.touchFailures = registry.newMeter(name("touch", "failures"), "Failures", SECONDS);
 
     final MetricName gaugeName = name("outstandingRequests", "count");
-    this.outstandingRequestsGauge =
-        registry.newGauge(
-            gaugeName,
-            new Gauge<Integer>() {
-              @Override
-              public Integer value() {
-                return internalOutstandingReqGauge != null
-                    ? internalOutstandingReqGauge.getOutstandingRequests()
-                    : 0;
-              }
-            });
+
+    registry.newGauge(
+        gaugeName,
+        new Gauge<Long>() {
+          @Override
+          public Long value() {
+            return getOutstandingRequests();
+          }
+        });
 
     final MetricName globalConnections = name("global-connections", "count");
     registry.newGauge(
@@ -113,6 +113,11 @@ public class YammerMetrics implements Metrics {
             return Utils.getGlobalConnectionCount();
           }
         });
+  }
+
+  @VisibleForTesting
+  long getOutstandingRequests() {
+    return gauges.stream().mapToLong(OutstandingRequestsGauge::getOutstandingRequests).sum();
   }
 
   private MetricName name(final String type, final String name) {
@@ -225,7 +230,12 @@ public class YammerMetrics implements Metrics {
 
   @Override
   public void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
-    this.internalOutstandingReqGauge = gauge;
+    gauges.add(gauge);
+  }
+
+  @Override
+  public void unregisterOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
+    gauges.remove(gauge);
   }
 
   public Timer getGets() {
@@ -306,9 +316,5 @@ public class YammerMetrics implements Metrics {
 
   public Meter getTouchFailures() {
     return touchFailures;
-  }
-
-  public Gauge<Integer> getOutstandingRequestsGauge() {
-    return outstandingRequestsGauge;
   }
 }
