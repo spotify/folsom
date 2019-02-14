@@ -171,7 +171,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               }
             });
 
-    return onExecutor(clientFuture, executor);
+    return Utils.onExecutor(clientFuture, executor);
   }
 
   private static Class<? extends Channel> defaultChannelClass(EventLoopGroup elg) {
@@ -242,14 +242,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
-    return onExecutor(future, executor);
-  }
-
-  private static <T> CompletionStage<T> onExecutor(CompletionStage<T> future, Executor executor) {
-    if (executor == null) {
-      return future;
-    }
-    return future.whenCompleteAsync((result, t) -> {}, executor);
+    return Utils.onExecutor(future, executor);
   }
 
   /**
