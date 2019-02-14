@@ -20,7 +20,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 public final class Utils {
@@ -62,5 +64,12 @@ public final class Utils {
       return unwrap(e.getCause());
     }
     return e;
+  }
+
+  static <T> CompletionStage<T> onExecutor(CompletionStage<T> future, Executor executor) {
+    if (executor == null) {
+      return future;
+    }
+    return future.whenCompleteAsync((t, throwable) -> {}, executor);
   }
 }
