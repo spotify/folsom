@@ -97,6 +97,19 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameC).isConnected());
     assertTrue(knownClients.get(hostNameD).isConnected());
 
+    // Ignore empty dns results
+    Mockito.when(resolver.resolve(Mockito.anyString()))
+            .thenReturn(ImmutableList.of());
+    ketamaClient.updateDNS();
+    executor.tick(1000, TimeUnit.SECONDS);
+
+    assertTrue(ketamaClient.isConnected());
+    assertFalse(knownClients.get(hostNameA).isConnected());
+    assertFalse(knownClients.get(hostNameB).isConnected());
+    assertTrue(knownClients.get(hostNameC).isConnected());
+    assertTrue(knownClients.get(hostNameD).isConnected());
+
+
     ketamaClient.shutdown();
   }
 

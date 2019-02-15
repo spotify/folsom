@@ -100,6 +100,11 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       long ttl = this.ttl; // Default ttl to use if resolve fails
       try {
         final List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
+        if (lookupResults.isEmpty()) {
+          // Just ignore empty results
+          return;
+        }
+
         final ImmutableSet<HostAndPort> newAddresses =
             lookupResults
                 .stream()
