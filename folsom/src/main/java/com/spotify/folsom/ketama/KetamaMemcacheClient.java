@@ -52,6 +52,9 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
   public KetamaMemcacheClient(final Collection<AddressAndClient> clients) {
     super(clientsOnly(clients));
+    if (clients.isEmpty()) {
+      throw new IllegalArgumentException("Can not create ketama client from empty list");
+    }
 
     this.continuum = new Continuum(clients);
   }
