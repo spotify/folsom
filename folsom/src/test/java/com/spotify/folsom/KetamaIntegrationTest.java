@@ -228,6 +228,17 @@ public class KetamaIntegrationTest {
     }
   }
 
+  @Test
+  public void testDeleteAll() throws Throwable {
+    for (MemcachedServer server : servers.getServers()) {
+      server.getClient().set("key", "value", 0).toCompletableFuture().get();
+    }
+    client.deleteAll("key").toCompletableFuture().get();
+    for (MemcachedServer server : servers.getServers()) {
+      assertEquals(null, server.getClient().get("key").toCompletableFuture().get());
+    }
+  }
+
   public static class Servers {
     private final List<MemcachedServer> servers;
 

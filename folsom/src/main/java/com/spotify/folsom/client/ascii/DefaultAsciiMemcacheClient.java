@@ -100,6 +100,14 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
+  public CompletionStage<MemcacheStatus> deleteAll(String key) {
+    DeleteAllRequest request = new DeleteAllRequest(encodeKey(key, charset, maxKeyLength));
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
+    metrics.measureDeleteFuture(future);
+    return future;
+  }
+
+  @Override
   public CompletionStage<MemcacheStatus> add(String key, V value, int ttl) {
     checkNotNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);

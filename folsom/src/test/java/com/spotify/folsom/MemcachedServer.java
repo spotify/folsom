@@ -76,4 +76,8 @@ public class MemcachedServer {
       throw new RuntimeException(e);
     }
   }
+
+  public MemcacheClient<String> getClient() {
+    return client;
+  }
 }
