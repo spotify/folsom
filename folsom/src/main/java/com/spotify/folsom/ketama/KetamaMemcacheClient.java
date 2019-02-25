@@ -22,7 +22,7 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
-import com.spotify.folsom.client.FlushRequest;
+import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
 import com.spotify.futures.CompletableFutures;
@@ -70,7 +70,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       if (multiRequest.getKeys().size() > 1) {
         return (CompletionStage<T>) sendSplitRequest(multiRequest);
       }
-    } else if (request instanceof FlushRequest) {
+    } else if (request instanceof AllRequest) {
       return (CompletionStage<T>) sendToAll(request);
     }
     return getClient(request.getKey()).send(request);

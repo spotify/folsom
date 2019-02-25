@@ -16,14 +16,14 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.Utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class FlushRequest extends AsciiRequest<MemcacheStatus>
-    implements com.spotify.folsom.client.FlushRequest {
+public class FlushRequest extends AsciiRequest<MemcacheStatus> implements AllRequest {
 
   private static final byte[] CMD = "flush_all ".getBytes();
   private static final byte[] NO_KEY = new byte[0];

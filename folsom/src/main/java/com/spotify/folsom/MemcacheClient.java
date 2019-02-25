@@ -50,6 +50,15 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<MemcacheStatus> delete(String key);
 
   /**
+   * Delete the provided key on all memcached instances. This is typically only useful for a
+   * multi-instance setup (using Ketama).
+   *
+   * @param key Key, must not be null
+   * @return A future representing completion of the request
+   */
+  CompletionStage<MemcacheStatus> deleteAll(String key);
+
+  /**
    * Add a key in memcache with the provided value, with the specified TTL. Key must not exist in
    * memcache
    *

@@ -15,4 +15,4 @@
  */
 package com.spotify.folsom.client;
 
-public interface FlushRequest {}
+public interface AllRequest {}

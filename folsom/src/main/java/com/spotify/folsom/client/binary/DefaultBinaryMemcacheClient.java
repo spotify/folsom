@@ -250,6 +250,17 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#deleteAll(java.lang.String)
+   */
+  @Override
+  public CompletionStage<MemcacheStatus> deleteAll(String key) {
+    DeleteAllRequest request = new DeleteAllRequest(encodeKey(key, charset, maxKeyLength));
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
+    metrics.measureDeleteFuture(future);
+    return future;
+  }
+
+  /*
    * @see com.spotify.folsom.BinaryMemcacheClient#incr(java.lang.String, long, long, int)
    */
   @Override
