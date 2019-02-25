@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +26,10 @@ import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.SrvKetamaClient;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.jmock.lib.concurrent.DeterministicScheduler;
 import org.junit.Test;
@@ -97,7 +101,70 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameC).isConnected());
     assertTrue(knownClients.get(hostNameD).isConnected());
 
+    // Ignore empty dns results
+    Mockito.when(resolver.resolve(Mockito.anyString())).thenReturn(ImmutableList.of());
+    ketamaClient.updateDNS();
+    executor.tick(1000, TimeUnit.SECONDS);
+
+    assertTrue(ketamaClient.isConnected());
+    assertFalse(knownClients.get(hostNameA).isConnected());
+    assertFalse(knownClients.get(hostNameB).isConnected());
+    assertTrue(knownClients.get(hostNameC).isConnected());
+    assertTrue(knownClients.get(hostNameD).isConnected());
+
     ketamaClient.shutdown();
+  }
+
+  @Test
+  public void testReusingConnections() {
+    DnsSrvResolver resolver = Mockito.mock(DnsSrvResolver.class);
+
+    // Run shutdown code immediately
+    DeterministicScheduler executor = new DeterministicScheduler();
+
+    Set<RawMemcacheClient> allClients = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    final Map<HostAndPort, FakeRawMemcacheClient> knownClients = Maps.newHashMap();
+
+    SrvKetamaClient.Connector connector =
+        input -> {
+          FakeRawMemcacheClient fakeRawMemcacheClient = new FakeRawMemcacheClient();
+          allClients.add(fakeRawMemcacheClient);
+          knownClients.put(input, fakeRawMemcacheClient);
+          return fakeRawMemcacheClient;
+        };
+
+    SrvKetamaClient ketamaClient =
+        new SrvKetamaClient(
+            "the-srv-record",
+            resolver,
+            executor,
+            1000,
+            TimeUnit.MILLISECONDS,
+            connector,
+            1000,
+            TimeUnit.MILLISECONDS);
+    executor.tick(1000, TimeUnit.SECONDS);
+
+    assertFalse(ketamaClient.isConnected());
+
+    Mockito.when(resolver.resolve(Mockito.anyString()))
+        .thenReturn(ImmutableList.of(result("a"), result("b")));
+    ketamaClient.updateDNS();
+    assertEquals(2, allClients.size());
+    executor.tick(1000, TimeUnit.SECONDS);
+
+    Mockito.when(resolver.resolve(Mockito.anyString()))
+        .thenReturn(ImmutableList.of(result("b"), result("c")));
+    ketamaClient.updateDNS();
+    assertEquals(3, allClients.size());
+    executor.tick(1000, TimeUnit.SECONDS);
+
+    Mockito.when(resolver.resolve(Mockito.anyString()))
+        .thenReturn(ImmutableList.of(result("c"), result("d")));
+    ketamaClient.updateDNS();
+    assertEquals(4, allClients.size());
+    executor.tick(1000, TimeUnit.SECONDS);
   }
 
   private LookupResult result(final String hostname) {

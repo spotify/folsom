@@ -15,8 +15,9 @@
  */
 package com.spotify.folsom.ketama;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
@@ -26,13 +27,17 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +49,7 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private final ScheduledExecutorService executor;
   private final String srvRecord;
   private final DnsSrvResolver srvResolver;
-  private final long period;
-  private final TimeUnit periodUnit;
+  private final long ttl;
 
   private final Connector connector;
   private final long shutdownDelay;
@@ -56,7 +60,8 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
   private final Object sync = new Object();
 
-  private volatile List<HostAndPort> addresses = Collections.emptyList();
+  private final Map<HostAndPort, RawMemcacheClient> clients = new HashMap<>();
+  private final Collection<RawMemcacheClient> shutdownQueue = new ArrayList<>();
   private volatile RawMemcacheClient currentClient;
   private volatile RawMemcacheClient pendingClient = null;
   private boolean shutdown = false;
@@ -72,14 +77,12 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       TimeUnit shutdownUnit) {
     this.srvRecord = srvRecord;
     this.srvResolver = srvResolver;
-    this.period = period;
-    this.periodUnit = periodUnit;
     this.connector = connector;
     this.shutdownDelay = shutdownDelay;
     this.shutdownUnit = shutdownUnit;
     this.executor = executor;
     this.currentClient = NotConnectedClient.INSTANCE;
-    this.currentClient.registerForConnectionChanges(listener);
+    this.ttl = TimeUnit.SECONDS.convert(period, periodUnit);
   }
 
   public void start() {
@@ -94,21 +97,50 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
       if (shutdown) {
         return;
       }
-      long ttl = TimeUnit.SECONDS.convert(period, periodUnit);
+      long ttl = this.ttl; // Default ttl to use if resolve fails
       try {
-        List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
-        List<HostAndPort> hosts = Lists.newArrayListWithCapacity(lookupResults.size());
-        for (LookupResult lookupResult : lookupResults) {
-          hosts.add(HostAndPort.fromParts(lookupResult.host(), lookupResult.port()));
-          ttl = Math.min(ttl, lookupResult.ttl());
+        final List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
+        if (lookupResults.isEmpty()) {
+          // Just ignore empty results
+          return;
         }
-        List<HostAndPort> newAddresses =
-            Ordering.from(HostAndPortComparator.INSTANCE).sortedCopy(hosts);
-        if (!newAddresses.equals(addresses)) {
-          addresses = newAddresses;
-          log.info("Connecting to " + newAddresses);
-          List<AddressAndClient> addressAndClients = getAddressesAndClients(newAddresses);
-          setPendingClient(addressAndClients);
+
+        final ImmutableSet<HostAndPort> newAddresses =
+            lookupResults
+                .stream()
+                .map(result -> HostAndPort.fromParts(result.host(), result.port()))
+                .collect(ImmutableSet.toImmutableSet());
+
+        final long resolvedTtl =
+            lookupResults.stream().mapToLong(LookupResult::ttl).min().orElse(Long.MAX_VALUE);
+        ttl = Math.min(ttl, resolvedTtl);
+
+        final Set<HostAndPort> currentAddresses = clients.keySet();
+        if (!newAddresses.equals(currentAddresses)) {
+
+          final ImmutableSet<HostAndPort> toRemove =
+              Sets.difference(currentAddresses, newAddresses).immutableCopy();
+          final Sets.SetView<HostAndPort> toAdd = Sets.difference(newAddresses, currentAddresses);
+
+          if (!toAdd.isEmpty()) {
+            log.info("Connecting to " + toAdd);
+          }
+          if (!toRemove.isEmpty()) {
+            log.info("Scheduling disconnect from " + toRemove);
+          }
+          for (final HostAndPort host : toAdd) {
+            final RawMemcacheClient newClient = connector.connect(host);
+            newClient.registerForConnectionChanges(listener);
+            clients.put(host, newClient);
+          }
+
+          final ImmutableList.Builder<RawMemcacheClient> removedClients = ImmutableList.builder();
+          for (final HostAndPort host : toRemove) {
+            final RawMemcacheClient removed = clients.remove(host);
+            removed.unregisterForConnectionChanges(listener);
+            removedClients.add(removed);
+          }
+          setPendingClient(removedClients);
         }
       } finally {
         long delay = clamp(MIN_DNS_WAIT_TIME, MAX_DNS_WAIT_TIME, ttl);
@@ -121,14 +153,6 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
     return Math.max(min, Math.min(max, value));
   }
 
-  private List<AddressAndClient> getAddressesAndClients(List<HostAndPort> newAddresses) {
-    List<AddressAndClient> res = Lists.newArrayListWithCapacity(newAddresses.size());
-    for (HostAndPort address : newAddresses) {
-      res.add(new AddressAndClient(address, connector.connect(address)));
-    }
-    return res;
-  }
-
   @Override
   public <T> CompletionStage<T> send(Request<T> request) {
     return currentClient.send(request);
@@ -136,20 +160,12 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
 
   @Override
   public void shutdown() {
-    if (refreshJob != null) {
-      refreshJob.cancel(false);
-    }
-
-    final RawMemcacheClient pending;
     synchronized (sync) {
       shutdown = true;
-      pending = pendingClient;
-      pendingClient = null;
-      currentClient.shutdown();
-    }
-    if (pending != null) {
-      pending.unregisterForConnectionChanges(listener);
-      pending.shutdown();
+      if (refreshJob != null) {
+        refreshJob.cancel(false);
+      }
+      clients.values().forEach(RawMemcacheClient::shutdown);
     }
   }
 
@@ -177,65 +193,42 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
     RawMemcacheClient connect(HostAndPort input);
   }
 
-  private void setPendingClient(List<AddressAndClient> addressAndClients) {
-    final RawMemcacheClient newPending = new KetamaMemcacheClient(addressAndClients);
-    newPending.registerForConnectionChanges(listener);
-    final RawMemcacheClient oldPending;
+  private void setPendingClient(final ImmutableList.Builder<RawMemcacheClient> removedClients) {
+    shutdownQueue.addAll(removedClients.build());
 
-    synchronized (sync) {
-      oldPending = pendingClient;
-      pendingClient = newPending;
-    }
+    final List<AddressAndClient> addressAndClients =
+        clients
+            .entrySet()
+            .stream()
+            .map(e -> new AddressAndClient(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
 
-    newPending
+    // This may invalidate an existing pendingClient but should be fine since it doesn't have any
+    // important state of its own.
+    final KetamaMemcacheClient newClient = new KetamaMemcacheClient(addressAndClients);
+    this.pendingClient = newClient;
+
+    newClient
         .connectFuture()
         .thenRun(
             () -> {
-              final RawMemcacheClient oldClient;
+              final ImmutableList<RawMemcacheClient> shutdownJob;
               synchronized (sync) {
-                if (newPending != pendingClient) {
+                if (pendingClient != newClient) {
                   // We don't care about this event if it's not the expected client
                   return;
                 }
-
-                oldClient = currentClient;
-                currentClient = pendingClient;
+                currentClient = newClient;
                 pendingClient = null;
+                shutdownJob = ImmutableList.copyOf(shutdownQueue);
+                shutdownQueue.clear();
               }
+              executor.schedule(
+                  () -> shutdownJob.forEach(RawMemcacheClient::shutdown),
+                  shutdownDelay,
+                  shutdownUnit);
               notifyConnectionChange();
-              executor.schedule(new ShutdownJob(oldClient), shutdownDelay, shutdownUnit);
             });
-    if (oldPending != null) {
-      oldPending.unregisterForConnectionChanges(listener);
-      oldPending.shutdown();
-    }
-  }
-
-  private static class HostAndPortComparator implements Comparator<HostAndPort> {
-    private static final HostAndPortComparator INSTANCE = new HostAndPortComparator();
-
-    @Override
-    public int compare(HostAndPort o1, HostAndPort o2) {
-      int cmp = o1.getHostText().compareTo(o2.getHostText());
-      if (cmp != 0) {
-        return cmp;
-      }
-      return Integer.compare(o1.getPort(), o2.getPort());
-    }
-  }
-
-  private class ShutdownJob implements Runnable {
-    private final RawMemcacheClient oldClient;
-
-    public ShutdownJob(RawMemcacheClient oldClient) {
-      this.oldClient = oldClient;
-    }
-
-    @Override
-    public void run() {
-      oldClient.unregisterForConnectionChanges(listener);
-      oldClient.shutdown();
-    }
   }
 
   private class MyConnectionChangeListener implements ConnectionChangeListener {
