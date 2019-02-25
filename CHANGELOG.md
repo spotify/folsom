@@ -1,3 +1,7 @@
+### 1.4.0
+* Added MemcachedClient.deleteAll() method
+* Reuse existing connections on DNS updates.
+
 ### 1.3.1
 * Fixed bug with the outstanding-requests metric.
 
