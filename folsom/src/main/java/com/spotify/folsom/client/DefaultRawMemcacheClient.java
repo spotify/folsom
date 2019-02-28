@@ -152,12 +152,17 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     connectFuture.addListener(
         (ChannelFutureListener)
             future -> {
+              final Channel channel = future.channel();
+              if (channel == null) {
+                clientFuture.completeExceptionally(new IOException("Channel is closed"));
+                return;
+              }
               if (future.isSuccess()) {
                 // Create client
                 final RawMemcacheClient client =
                     new DefaultRawMemcacheClient(
                         address,
-                        future.channel(),
+                        channel,
                         outstandingRequestLimit,
                         batchSize,
                         executor,
@@ -166,12 +171,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                         maxSetLength);
                 clientFuture.complete(client);
               } else {
-                future.channel().close();
+                channel.close();
                 clientFuture.completeExceptionally(future.cause());
               }
             });
 
-    return Utils.onExecutor(clientFuture, executor);
+    return clientFuture;
   }
 
   private static Class<? extends Channel> defaultChannelClass(EventLoopGroup elg) {

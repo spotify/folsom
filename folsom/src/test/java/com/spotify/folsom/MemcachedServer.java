@@ -15,14 +15,15 @@
  */
 package com.spotify.folsom;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
 
 public class MemcachedServer {
 
-  private final GenericContainer container;
+  private final FixedHostPortGenericContainer container;
   private final MemcacheClient<String> client;
 
   public MemcachedServer() {
@@ -30,8 +31,16 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(String username, String password) {
-    container = new GenericContainer("bitnami/memcached:1.5.12");
-    container.addExposedPort(11211);
+    this(username, password, Optional.empty());
+  }
+
+  public MemcachedServer(String username, String password, Optional<Integer> fixedPort) {
+    container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
+    if (fixedPort.isPresent()) {
+      container.withFixedExposedPort(11211, fixedPort.get());
+    } else {
+      container.withExposedPorts(11211);
+    }
     if (username != null && password != null) {
       container.withEnv("MEMCACHED_USERNAME", username);
       container.withEnv("MEMCACHED_PASSWORD", password);

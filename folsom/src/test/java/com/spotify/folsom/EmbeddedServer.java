@@ -32,15 +32,24 @@ public class EmbeddedServer {
   private final MemCacheDaemon<? extends CacheElement> daemon;
   private final int port;
 
-  public <E extends CacheElement> EmbeddedServer(final boolean binary, final Cache<E> cache) {
+  public <E extends CacheElement> EmbeddedServer(
+      final boolean binary, final Cache<E> cache, final int port) {
     MemCacheDaemon<E> daemon = new MemCacheDaemon<>();
     daemon.setCache(cache);
     daemon.setBinary(binary);
     daemon.setVerbose(false);
-    port = findFreePort();
-    daemon.setAddr(new InetSocketAddress(this.port));
+    this.port = port;
+    daemon.setAddr(new InetSocketAddress(port));
     daemon.start();
     this.daemon = daemon;
+  }
+
+  public <E extends CacheElement> EmbeddedServer(final boolean binary, final Cache<E> cache) {
+    this(binary, cache, findFreePort());
+  }
+
+  public <E extends CacheElement> EmbeddedServer(final boolean binary, int port) {
+    this(binary, defaultCache(), port);
   }
 
   public <E extends CacheElement> EmbeddedServer(final boolean binary) {
