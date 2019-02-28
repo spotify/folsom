@@ -10,6 +10,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <skip-enforce-jdk8>true</skip-enforce-jdk8>
   </properties>
 
   <parent>
@@ -88,6 +89,15 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>sonatype-oss-release</id>
+      <properties>
+        <skip-enforce-jdk8>false</skip-enforce-jdk8>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <pluginManagement>
@@ -178,6 +188,33 @@
       <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
+      </plugin>
+
+
+      <!-- Require releases to be done with java 8-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M2</version>
+        <executions>
+          <execution>
+            <id>enforce-java</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <phase>clean</phase>
+            <configuration>
+              <fail>true</fail>
+              <failFast>true</failFast>
+              <rules>
+                <requireJavaVersion>
+                  <version>[1.8.0,1.9.0)</version>
+                </requireJavaVersion>
+              </rules>
+              <skip>${skip-enforce-jdk8}</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
