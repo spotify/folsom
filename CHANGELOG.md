@@ -1,3 +1,6 @@
+### 1.4.2
+* Fixed problem with release being built using a too new JDK, causing runtime errors
+
 ### 1.4.1
 * Fixed bug with reconnections during high request loads
 

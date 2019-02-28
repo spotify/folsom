@@ -34,22 +34,24 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom</artifactId>
-      <version>1.4.1</version>
+      <version>1.4.2</version>
     </dependency>
 
     <!-- optional if you want to expose folsom metrics with spotify-semantic-metrics -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-semantic-metrics</artifactId>
-      <version>1.4.1</version>
+      <version>1.4.2</version>
     </dependency>
 
     <!-- optional if you want to expose folsom metrics with yammer -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-yammer-metrics</artifactId>
-      <version>1.4.1</version>
+      <version>1.4.2</version>
     </dependency>
+
+If you want to use one of the metric libraries, make sure you use the same version as the main artifact.
 
 We are using [semantic versioning](http://semver.org)
 
