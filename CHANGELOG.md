@@ -1,3 +1,6 @@
+### 1.4.1
+* Fixed bug with reconnections during high request loads
+
 ### 1.4.0
 * Added MemcachedClient.deleteAll() method
 * Reuse existing connections on DNS updates.
