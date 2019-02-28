@@ -4,9 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.thimbleware.jmemcached.protocol.text.MemcachedResponseEncoder;
 import io.netty.channel.nio.NioEventLoop;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.CompletionException;
@@ -18,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class ReconnectStressTest {
 
@@ -34,7 +33,8 @@ public class ReconnectStressTest {
     int port = EmbeddedServer.findFreePort();
     EmbeddedServer server = new EmbeddedServer(false, port);
 
-    AsciiMemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
+    AsciiMemcacheClient<String> client =
+        MemcacheClientBuilder.newStringClient()
             .withAddress("localhost", port)
             .withConnections(16)
             .withRetry(true)
@@ -45,40 +45,43 @@ public class ReconnectStressTest {
 
     AtomicInteger success = new AtomicInteger(0);
     ConcurrentMap<Class<?>, AtomicInteger> failures = new ConcurrentHashMap<>();
-    ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS,
-            new ThreadFactoryBuilder()
-                    .setDaemon(true)
-                    .build());
+    ExecutorService executorService =
+        Executors.newFixedThreadPool(
+            NUM_THREADS, new ThreadFactoryBuilder().setDaemon(true).build());
 
     AtomicLong lastSuccess = new AtomicLong(System.currentTimeMillis());
 
     for (int i = 0; i < NUM_THREADS; i++) {
-      executorService.submit(() -> {
-        while (true) {
-          client.get("key").handle((s, throwable) -> {
-            if (throwable == null) {
-              lastSuccess.set(System.currentTimeMillis());
-              success.incrementAndGet();
-            } else {
-              if (throwable instanceof CompletionException) {
-                throwable = throwable.getCause();
-              }
-              AtomicInteger failure = failures.get(throwable.getClass());
-              if (failure == null) {
-                failures.putIfAbsent(throwable.getClass(), new AtomicInteger());
-                failure = failures.get(throwable.getClass());
-              }
-              failure.incrementAndGet();
+      executorService.submit(
+          () -> {
+            while (true) {
+              client
+                  .get("key")
+                  .handle(
+                      (s, throwable) -> {
+                        if (throwable == null) {
+                          lastSuccess.set(System.currentTimeMillis());
+                          success.incrementAndGet();
+                        } else {
+                          if (throwable instanceof CompletionException) {
+                            throwable = throwable.getCause();
+                          }
+                          AtomicInteger failure = failures.get(throwable.getClass());
+                          if (failure == null) {
+                            failures.putIfAbsent(throwable.getClass(), new AtomicInteger());
+                            failure = failures.get(throwable.getClass());
+                          }
+                          failure.incrementAndGet();
+                        }
+                        try {
+                          Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                          e.printStackTrace();
+                        }
+                        return null;
+                      });
             }
-            try {
-              Thread.sleep(1);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-            return null;
           });
-        }
-      });
     }
 
     while (true) {
@@ -89,7 +92,6 @@ public class ReconnectStressTest {
         int numFailures = failures.get(key).get();
         failures.get(key).addAndGet(-numFailures);
         sb.append(", " + key.getSimpleName() + ": " + numFailures + "");
-
       }
       log.info("Success: " + numSuccesses + sb.toString());
       log.info("Stopping server");

@@ -32,7 +32,8 @@ public class EmbeddedServer {
   private final MemCacheDaemon<? extends CacheElement> daemon;
   private final int port;
 
-  public <E extends CacheElement> EmbeddedServer(final boolean binary, final Cache<E> cache, final int port) {
+  public <E extends CacheElement> EmbeddedServer(
+      final boolean binary, final Cache<E> cache, final int port) {
     MemCacheDaemon<E> daemon = new MemCacheDaemon<>();
     daemon.setCache(cache);
     daemon.setBinary(binary);

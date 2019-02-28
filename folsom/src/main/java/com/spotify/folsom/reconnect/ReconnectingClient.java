@@ -158,7 +158,8 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       future.whenComplete(
           (newClient, t) -> {
             if (t != null) {
-              if (t instanceof CompletionException && t.getCause() instanceof MemcacheAuthenticationException) {
+              if (t instanceof CompletionException
+                  && t.getCause() instanceof MemcacheAuthenticationException) {
                 connectionFailure = t.getCause();
                 shutdown();
                 return;
@@ -202,21 +203,18 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
 
     final long backOff = backoffFunction.getBackoffTimeMillis(reconnectCount);
     log.warn(
-        "Attempting reconnect to {} in {} ms (retry number {})",
-        address,
-        backOff,
-        reconnectCount);
+        "Attempting reconnect to {} in {} ms (retry number {})", address, backOff, reconnectCount);
 
     reconnectCount++;
 
     scheduledExecutorService.schedule(
-            () -> {
-              if (stayConnected) {
-                retry();
-              }
-            },
-            backOff,
-            TimeUnit.MILLISECONDS);
+        () -> {
+          if (stayConnected) {
+            retry();
+          }
+        },
+        backOff,
+        TimeUnit.MILLISECONDS);
   }
 
   public static ScheduledExecutorService singletonExecutor() {
