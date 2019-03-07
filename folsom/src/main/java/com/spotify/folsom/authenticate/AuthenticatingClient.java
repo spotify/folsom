@@ -26,7 +26,6 @@ public class AuthenticatingClient {
       Connector connector, final Authenticator authenticator) {
 
     CompletionStage<RawMemcacheClient> client = connector.connect();
-
-    return authenticator.authenticate(client);
+    return client.thenCompose(authenticator::authenticate);
   }
 }

@@ -42,27 +42,24 @@ public class AsciiAuthenticationValidator implements Authenticator {
   private AsciiAuthenticationValidator() {}
 
   @Override
-  public CompletionStage<RawMemcacheClient> authenticate(
-      CompletionStage<RawMemcacheClient> clientFuture) {
+  public CompletionStage<RawMemcacheClient> authenticate(RawMemcacheClient client) {
 
     final GetRequest request = new GetRequest(EXAMPLE_KEY, false);
 
-    return clientFuture.thenCompose(
-        client ->
-            client
-                .connectFuture()
-                .thenCompose(
-                    ignored ->
-                        client
-                            .send(request)
-                            .handle(
-                                (status, throwable) -> {
-                                  if (throwable == null) {
-                                    return client;
-                                  } else {
-                                    throw new CompletionException(unwrap(throwable));
-                                  }
-                                })));
+    return client
+        .connectFuture()
+        .thenCompose(
+            ignored ->
+                client
+                    .send(request)
+                    .handle(
+                        (status, throwable) -> {
+                          if (throwable == null) {
+                            return client;
+                          } else {
+                            throw new CompletionException(unwrap(throwable));
+                          }
+                        }));
   }
 
   @Override

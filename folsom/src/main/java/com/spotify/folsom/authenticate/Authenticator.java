@@ -20,7 +20,7 @@ import com.spotify.folsom.RawMemcacheClient;
 import java.util.concurrent.CompletionStage;
 
 public interface Authenticator {
-  CompletionStage<RawMemcacheClient> authenticate(CompletionStage<RawMemcacheClient> client);
+  CompletionStage<RawMemcacheClient> authenticate(RawMemcacheClient client);
 
   void validate(boolean binary);
 }

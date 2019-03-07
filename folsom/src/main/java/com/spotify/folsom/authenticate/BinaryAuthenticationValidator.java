@@ -31,16 +31,13 @@ public class BinaryAuthenticationValidator implements Authenticator {
   private BinaryAuthenticationValidator() {}
 
   @Override
-  public CompletionStage<RawMemcacheClient> authenticate(
-      CompletionStage<RawMemcacheClient> clientFuture) {
+  public CompletionStage<RawMemcacheClient> authenticate(RawMemcacheClient client) {
 
     final NoopRequest request = new NoopRequest();
 
-    return clientFuture.thenCompose(
-        client ->
-            client
-                .connectFuture()
-                .thenCompose(ignored -> client.send(request).thenApply(status -> client)));
+    return client
+        .connectFuture()
+        .thenCompose(ignored -> client.send(request).thenApply(status -> client));
   }
 
   @Override
