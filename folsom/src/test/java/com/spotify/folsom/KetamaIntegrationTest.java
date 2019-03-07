@@ -95,7 +95,6 @@ public class KetamaIntegrationTest {
       client = builder.connectBinary();
     }
     client.awaitFullyConnected(10, TimeUnit.SECONDS);
-    System.out.println("Using client: " + client + ", protocol: " + protocol);
     servers.flush();
   }
 

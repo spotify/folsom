@@ -112,8 +112,6 @@ public class IntegrationTest {
       client = binaryClient;
     }
     client.awaitConnected(10, TimeUnit.SECONDS);
-    System.out.printf(
-        "Using client: %s protocol: %s and port: %d\n", client, protocol, server.getPort());
     cleanup();
   }
 
