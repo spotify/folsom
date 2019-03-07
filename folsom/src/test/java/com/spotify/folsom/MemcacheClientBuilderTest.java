@@ -114,7 +114,7 @@ public class MemcacheClientBuilderTest {
 
     try {
       List<CompletionStage<String>> futures = Lists.newArrayList();
-      for (int i = 0; i < 400; i++) {
+      for (int i = 0; i < 4000; i++) {
         futures.add(client.get("key"));
       }
       for (CompletionStage<String> future : futures) {
