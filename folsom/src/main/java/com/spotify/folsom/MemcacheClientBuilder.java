@@ -31,6 +31,7 @@ import com.spotify.dns.DnsSrvResolvers;
 import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
 import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
+import com.spotify.folsom.authenticate.MultiAuthenticator;
 import com.spotify.folsom.authenticate.NoAuthenticationValidation;
 import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.client.NoopMetrics;
@@ -52,7 +53,6 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -120,7 +120,9 @@ public class MemcacheClientBuilder<V> {
   private int maxKeyLength = MAX_KEY_LEN;
   private EventLoopGroup eventLoopGroup;
   private Class<? extends Channel> channelClass;
-  private Optional<Authenticator> authenticator = Optional.empty();
+
+  private final List<PlaintextAuthenticator> passwords = new ArrayList<>();
+  private boolean skipAuth = false;
 
   /**
    * Create a client builder for byte array values.
@@ -440,13 +442,16 @@ public class MemcacheClientBuilder<V> {
    * Authenticate with memcached using plaintext SASL. This only works for binary connections, not
    * ascii.
    *
+   * <p>You may call this multiple times, to set multiple authentication attempts. This is typically
+   * only useful during a password rotation to avoid downtime.
+   *
    * @param username
    * @param password
    * @return itself
    */
   public MemcacheClientBuilder<V> withUsernamePassword(
       final String username, final String password) {
-    this.authenticator = Optional.of(new PlaintextAuthenticator(username, password));
+    passwords.add(new PlaintextAuthenticator(username, password));
     return this;
   }
 
@@ -457,7 +462,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   MemcacheClientBuilder<V> withoutAuthenticationValidation() {
-    this.authenticator = Optional.of(NoAuthenticationValidation.getInstance());
+    skipAuth = true;
     return this;
   }
 
@@ -468,10 +473,24 @@ public class MemcacheClientBuilder<V> {
    */
   public BinaryMemcacheClient<V> connectBinary() {
     final Authenticator authenticator =
-        this.authenticator.orElse(BinaryAuthenticationValidator.getInstance());
+        getAuthenticator(BinaryAuthenticationValidator.getInstance());
     authenticator.validate(true);
     return new DefaultBinaryMemcacheClient<>(
         connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
+  }
+
+  private Authenticator getAuthenticator(Authenticator defaultValue) {
+    if (skipAuth) {
+      if (!passwords.isEmpty()) {
+        throw new IllegalStateException(
+            "You may not specify both withoutAuthenticationValidation() and withUsernamePassword()");
+      }
+      return NoAuthenticationValidation.getInstance();
+    }
+    if (passwords.isEmpty()) {
+      return defaultValue;
+    }
+    return new MultiAuthenticator(passwords);
   }
 
   /**
@@ -481,7 +500,7 @@ public class MemcacheClientBuilder<V> {
    */
   public AsciiMemcacheClient<V> connectAscii() {
     final Authenticator authenticator =
-        this.authenticator.orElse(AsciiAuthenticationValidator.getInstance());
+        getAuthenticator(AsciiAuthenticationValidator.getInstance());
     authenticator.validate(false);
     return new DefaultAsciiMemcacheClient<>(
         connectRaw(false, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
