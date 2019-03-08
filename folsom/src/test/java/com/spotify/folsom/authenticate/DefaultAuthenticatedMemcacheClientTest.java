@@ -46,16 +46,13 @@ public class DefaultAuthenticatedMemcacheClientTest {
   @BeforeClass
   public static void setUpClass() {
     server = new MemcachedServer(USERNAME, PASSWORD);
-    noauthserver = new MemcachedServer();
+    noauthserver = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @AfterClass
   public static void tearDownClass() {
     if (server != null) {
       server.stop();
-    }
-    if (noauthserver != null) {
-      noauthserver.stop();
     }
   }
 

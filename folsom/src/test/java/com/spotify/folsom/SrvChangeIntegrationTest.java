@@ -32,14 +32,12 @@ import com.spotify.folsom.ketama.SrvKetamaClient;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SrvChangeIntegrationTest {
 
-  private static KetamaIntegrationTest.Servers servers;
+  private static KetamaServers servers = KetamaServers.SIMPLE_INSTANCE.get();
 
   private MemcacheClient<String> client;
   private DnsSrvResolver dnsSrvResolver;
@@ -49,18 +47,9 @@ public class SrvChangeIntegrationTest {
 
   private int connections;
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    servers = new KetamaIntegrationTest.Servers(3);
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-    servers.stop();
-  }
-
   @Before
   public void setUp() throws Exception {
+    servers.setup();
     connections = Utils.getGlobalConnectionCount();
 
     fullResults = toResult(servers.getServers());
@@ -90,8 +79,10 @@ public class SrvChangeIntegrationTest {
 
   @After
   public void tearDown() throws Exception {
-    client.shutdown();
-    client.awaitDisconnected(10, TimeUnit.SECONDS);
+    if (client != null) {
+      client.shutdown();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
 
     waitUntilSuccess(1000, () -> assertEquals(connections, Utils.getGlobalConnectionCount()));
   }
