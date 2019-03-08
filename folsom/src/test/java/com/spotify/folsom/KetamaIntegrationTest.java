@@ -30,9 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -51,23 +49,14 @@ public class KetamaIntegrationTest {
   @Parameterized.Parameter(0)
   public String protocol;
 
-  private static Servers servers;
+  private static KetamaServers servers = KetamaServers.SIMPLE_INSTANCE.get();
 
   private MemcacheClient<String> client;
   private int connections;
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    servers = new Servers(3);
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-    servers.stop();
-  }
-
   @Before
   public void setUp() throws Exception {
+    servers.setup();
     connections = Utils.getGlobalConnectionCount();
 
     boolean ascii;
@@ -85,7 +74,7 @@ public class KetamaIntegrationTest {
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withRequestTimeoutMillis(10 * 1000);
-    for (MemcachedServer server : servers.servers) {
+    for (MemcachedServer server : servers.getServers()) {
       builder.withAddress(server.getHost(), server.getPort());
     }
 
@@ -95,14 +84,15 @@ public class KetamaIntegrationTest {
       client = builder.connectBinary();
     }
     client.awaitFullyConnected(10, TimeUnit.SECONDS);
-    System.out.println("Using client: " + client + ", protocol: " + protocol);
     servers.flush();
   }
 
   @After
   public void tearDown() throws Exception {
-    client.shutdown();
-    client.awaitDisconnected(10, TimeUnit.SECONDS);
+    if (client != null) {
+      client.shutdown();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
     assertEquals(connections, Utils.getGlobalConnectionCount());
   }
 
@@ -236,35 +226,6 @@ public class KetamaIntegrationTest {
     client.deleteAll("key").toCompletableFuture().get();
     for (MemcachedServer server : servers.getServers()) {
       assertEquals(null, server.getClient().get("key").toCompletableFuture().get());
-    }
-  }
-
-  public static class Servers {
-    private final List<MemcachedServer> servers;
-
-    public Servers(int instances) {
-      servers = Lists.newArrayList();
-      for (int i = 0; i < instances; i++) {
-        servers.add(new MemcachedServer());
-      }
-    }
-
-    public void stop() {
-      for (MemcachedServer server : servers) {
-        server.stop();
-      }
-    }
-
-    public MemcachedServer getInstance(int i) {
-      return servers.get(i);
-    }
-
-    List<MemcachedServer> getServers() {
-      return servers;
-    }
-
-    void flush() {
-      servers.forEach(MemcachedServer::flush);
     }
   }
 }

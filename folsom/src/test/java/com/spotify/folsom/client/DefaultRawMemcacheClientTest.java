@@ -51,7 +51,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class DefaultRawMemcacheClientTest {
 
@@ -61,12 +62,7 @@ public class DefaultRawMemcacheClientTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    server = new MemcachedServer();
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    server.stop();
+    server = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @Test

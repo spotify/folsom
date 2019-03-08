@@ -31,7 +31,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,12 +41,7 @@ public class MemcacheClientBuilderTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    server = new MemcachedServer();
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    server.stop();
+    server = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @Before
@@ -114,7 +108,7 @@ public class MemcacheClientBuilderTest {
 
     try {
       List<CompletionStage<String>> futures = Lists.newArrayList();
-      for (int i = 0; i < 400; i++) {
+      for (int i = 0; i < 4000; i++) {
         futures.add(client.get("key"));
       }
       for (CompletionStage<String> future : futures) {

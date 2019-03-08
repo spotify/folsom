@@ -17,6 +17,7 @@
 package com.spotify.folsom.authenticate;
 
 import com.spotify.folsom.RawMemcacheClient;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 public class NoAuthenticationValidation implements Authenticator {
@@ -29,10 +30,8 @@ public class NoAuthenticationValidation implements Authenticator {
 
   private NoAuthenticationValidation() {}
 
-  public CompletionStage<RawMemcacheClient> authenticate(
-      CompletionStage<RawMemcacheClient> clientFuture) {
-
-    return clientFuture;
+  public CompletionStage<RawMemcacheClient> authenticate(RawMemcacheClient client) {
+    return CompletableFuture.completedFuture(client);
   }
 
   @Override

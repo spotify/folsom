@@ -55,7 +55,7 @@ public class MemcacheClientStressTest {
 
   @Before
   public void setUp() throws Exception {
-    server = new MemcachedServer();
+    server = MemcachedServer.SIMPLE_INSTANCE.get();
     connections = Utils.getGlobalConnectionCount();
 
     final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -143,7 +143,6 @@ public class MemcacheClientStressTest {
   @After
   public void tearDown() throws InterruptedException, TimeoutException {
     client.shutdown();
-    server.stop();
     workerExecutor.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
     assertEquals(connections, Utils.getGlobalConnectionCount());

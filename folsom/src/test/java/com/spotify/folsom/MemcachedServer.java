@@ -15,16 +15,23 @@
  */
 package com.spotify.folsom;
 
+import com.google.common.base.Suppliers;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 
 public class MemcachedServer {
 
   private final FixedHostPortGenericContainer container;
-  private final MemcacheClient<String> client;
+  private MemcacheClient<String> client;
+
+  public static final Supplier<MemcachedServer> SIMPLE_INSTANCE =
+      Suppliers.memoize(MemcachedServer::new);
+  private final String username;
+  private final String password;
 
   public MemcachedServer() {
     this(null, null);
@@ -35,6 +42,8 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(String username, String password, Optional<Integer> fixedPort) {
+    this.username = username;
+    this.password = password;
     container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
     if (fixedPort.isPresent()) {
       container.withFixedExposedPort(11211, fixedPort.get());
@@ -45,19 +54,8 @@ public class MemcachedServer {
       container.withEnv("MEMCACHED_USERNAME", username);
       container.withEnv("MEMCACHED_PASSWORD", password);
     }
-    container.start();
-
-    final MemcacheClientBuilder<String> builder =
-        MemcacheClientBuilder.newStringClient().withAddress(getHost(), getPort());
-    if (username != null && password != null) {
-      builder.withUsernamePassword(username, password);
-    }
-    client = builder.connectBinary();
-    try {
-      client.awaitConnected(10, TimeUnit.SECONDS);
-    } catch (InterruptedException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
+    start();
+    new RuntimeException("Called from").printStackTrace();
   }
 
   public void stop() {
@@ -67,7 +65,27 @@ public class MemcachedServer {
     } catch (InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }
+    client = null;
     container.stop();
+  }
+
+  public void start() {
+    if (!container.isRunning()) {
+      container.start();
+    }
+    if (client == null) {
+      final MemcacheClientBuilder<String> builder =
+          MemcacheClientBuilder.newStringClient().withAddress(getHost(), getPort());
+      if (username != null && password != null) {
+        builder.withUsernamePassword(username, password);
+      }
+      client = builder.connectBinary();
+      try {
+        client.awaitConnected(10, TimeUnit.SECONDS);
+      } catch (InterruptedException | TimeoutException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   public int getPort() {

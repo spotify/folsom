@@ -34,32 +34,27 @@ public class PlaintextAuthenticator implements Authenticator {
     this.password = checkNotNull(password);
   }
 
-  public CompletionStage<RawMemcacheClient> authenticate(
-      final CompletionStage<RawMemcacheClient> clientFuture) {
+  public CompletionStage<RawMemcacheClient> authenticate(final RawMemcacheClient client) {
 
     final PlaintextAuthenticateRequest authenticateRequest =
         new PlaintextAuthenticateRequest(username, password);
 
-    return clientFuture.thenCompose(
-        client ->
-            client
-                .connectFuture()
-                .thenCompose(
-                    ignored ->
-                        client
-                            .send(authenticateRequest)
-                            .thenApply(
-                                status -> {
-                                  if (status == MemcacheStatus.OK) {
-                                    return client;
-                                  } else if (status == MemcacheStatus.UNAUTHORIZED) {
-                                    throw new MemcacheAuthenticationException(
-                                        "Authentication failed");
-                                  } else {
-                                    throw new RuntimeException(
-                                        "Unexpected status: " + status.name());
-                                  }
-                                })));
+    return client
+        .connectFuture()
+        .thenCompose(
+            ignored ->
+                client
+                    .send(authenticateRequest)
+                    .thenApply(
+                        status -> {
+                          if (status == MemcacheStatus.OK) {
+                            return client;
+                          } else if (status == MemcacheStatus.UNAUTHORIZED) {
+                            throw new MemcacheAuthenticationException("Authentication failed");
+                          } else {
+                            throw new RuntimeException("Unexpected status: " + status.name());
+                          }
+                        }));
   }
 
   @Override

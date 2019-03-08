@@ -1,0 +1,16 @@
+<configuration debug="true">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.spotify.folsom.client.DefaultRawMemcacheClient" level="OFF"/>
+    <logger name="com.spotify.folsom.reconnect.ReconnectingClient" level="OFF"/>
+    <logger name="com.thimbleware.jmemcached.protocol.binary.MemcachedBinaryResponseEncoder" level="OFF"/>
+    <logger name="com.thimbleware.jmemcached.MemCacheDaemon" level="OFF"/>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

@@ -34,15 +34,15 @@ import org.junit.Test;
 
 public class SrvKetamaIntegrationTest {
 
-  private KetamaIntegrationTest.Servers servers;
+  private KetamaServers servers = KetamaServers.SIMPLE_INSTANCE.get();
 
   private MemcacheClient<String> client;
   private int connections;
 
   @Before
   public void setUp() throws Exception {
+    servers.setup();
     connections = Utils.getGlobalConnectionCount();
-    servers = new KetamaIntegrationTest.Servers(3);
 
     MemcacheClientBuilder<String> builder =
         MemcacheClientBuilder.newStringClient()
@@ -70,7 +70,7 @@ public class SrvKetamaIntegrationTest {
   public void tearDown() throws Exception {
     client.shutdown();
     client.awaitDisconnected(10, TimeUnit.SECONDS);
-    servers.stop();
+    servers.setup();
     assertEquals(connections, Utils.getGlobalConnectionCount());
   }
 

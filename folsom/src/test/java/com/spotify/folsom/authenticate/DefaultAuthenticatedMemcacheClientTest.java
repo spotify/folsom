@@ -38,6 +38,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
 
   private static final String USERNAME = "theuser";
   private static final String PASSWORD = "a_nice_password";
+  private static final String WRONG_PASSWORD = "wrong_password";
 
   private static MemcachedServer server;
   private static MemcachedServer noauthserver;
@@ -45,16 +46,13 @@ public class DefaultAuthenticatedMemcacheClientTest {
   @BeforeClass
   public static void setUpClass() {
     server = new MemcachedServer(USERNAME, PASSWORD);
-    noauthserver = new MemcachedServer();
+    noauthserver = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @AfterClass
   public static void tearDownClass() {
     if (server != null) {
       server.stop();
-    }
-    if (noauthserver != null) {
-      noauthserver.stop();
     }
   }
 
@@ -73,6 +71,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
     MemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
+            .withUsernamePassword(USERNAME, WRONG_PASSWORD)
             .withUsernamePassword(USERNAME, PASSWORD)
             .connectBinary();
 
@@ -88,7 +87,8 @@ public class DefaultAuthenticatedMemcacheClientTest {
     MemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
-            .withUsernamePassword(USERNAME, "wrong_password")
+            .withUsernamePassword(USERNAME, WRONG_PASSWORD)
+            .withUsernamePassword(USERNAME, WRONG_PASSWORD)
             .connectBinary();
 
     thrown.expect(MemcacheAuthenticationException.class);
@@ -124,6 +124,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
     MemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
+            .withUsernamePassword(USERNAME, WRONG_PASSWORD)
             .withUsernamePassword(USERNAME, PASSWORD)
             .connectAscii();
   }
@@ -146,6 +147,7 @@ public class DefaultAuthenticatedMemcacheClientTest {
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
             .withAddress(noauthserver.getHost(), noauthserver.getPort())
+            .withUsernamePassword(USERNAME, WRONG_PASSWORD)
             .withUsernamePassword(USERNAME, PASSWORD)
             .connectBinary();
 

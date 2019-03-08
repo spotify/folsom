@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -71,12 +70,7 @@ public class IntegrationTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    server = new MemcachedServer();
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws Exception {
-    server.stop();
+    server = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @Before
@@ -112,8 +106,6 @@ public class IntegrationTest {
       client = binaryClient;
     }
     client.awaitConnected(10, TimeUnit.SECONDS);
-    System.out.printf(
-        "Using client: %s protocol: %s and port: %d\n", client, protocol, server.getPort());
     cleanup();
   }
 
