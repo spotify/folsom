@@ -55,7 +55,6 @@ public class MemcachedServer {
       container.withEnv("MEMCACHED_PASSWORD", password);
     }
     start();
-    new RuntimeException("Called from").printStackTrace();
   }
 
   public void stop() {
