@@ -1,3 +1,6 @@
+### 1.5.0
+* Added support for setting multiple usernames/passwords for SASL authentications
+
 ### 1.4.2
 * Fixed problem with release being built using a too new JDK, causing runtime errors
 
