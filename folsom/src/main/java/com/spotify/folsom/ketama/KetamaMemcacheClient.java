@@ -82,11 +82,11 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     final List<CompletionStage<T>> futures =
         clients
             .stream()
-            .map(client -> client.send(request))
+            .map(client -> client.send(request.duplicate()))
             .map(request::preMerge)
             .collect(Collectors.toList());
 
-    return CompletableFutures.allAsList(futures).thenApply(results -> request.merge(results));
+    return CompletableFutures.allAsList(futures).thenApply(request::merge);
   }
 
   private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {

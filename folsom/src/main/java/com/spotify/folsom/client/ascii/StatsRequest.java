@@ -3,6 +3,7 @@ package com.spotify.folsom.client.ascii;
 import com.google.common.collect.ImmutableMap;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.client.AllRequest;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -45,5 +46,10 @@ public class StatsRequest extends AsciiRequest<Map<String, MemcachedStats>>
   @Override
   public Map<String, MemcachedStats> merge(final List<Map<String, MemcachedStats>> results) {
     return AllRequest.mergeStats(results);
+  }
+
+  @Override
+  public Request<Map<String, MemcachedStats>> duplicate() {
+    return new StatsRequest();
   }
 }

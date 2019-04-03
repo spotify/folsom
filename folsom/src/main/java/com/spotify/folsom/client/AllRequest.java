@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.client;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.MemcachedStats;
 import java.util.List;
@@ -38,13 +39,10 @@ public interface AllRequest<T> extends Request<T> {
   }
 
   static Map<String, MemcachedStats> mergeStats(List<Map<String, MemcachedStats>> results) {
-    return results
-        .stream()
-        .reduce(
-            (dest, other) -> {
-              dest.putAll(other);
-              return dest;
-            })
-        .get();
+    ImmutableMap.Builder<String, MemcachedStats> builder = ImmutableMap.builder();
+    results.forEach(builder::putAll);
+    return builder.build();
   }
+
+  Request<T> duplicate();
 }

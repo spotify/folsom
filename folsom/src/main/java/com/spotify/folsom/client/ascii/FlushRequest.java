@@ -17,6 +17,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.AllRequest;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -58,5 +59,10 @@ public class FlushRequest extends AsciiRequest<MemcacheStatus>
   @Override
   public MemcacheStatus merge(List<MemcacheStatus> results) {
     return AllRequest.mergeMemcacheStatus(results);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new FlushRequest(delay);
   }
 }

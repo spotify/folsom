@@ -18,6 +18,7 @@ package com.spotify.folsom;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -28,7 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -226,6 +230,18 @@ public class KetamaIntegrationTest {
     client.deleteAll("key").toCompletableFuture().get();
     for (MemcachedServer server : servers.getServers()) {
       assertEquals(null, server.getClient().get("key").toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void testGetStats() throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> allStats =
+        client.getStats().toCompletableFuture().get(1, TimeUnit.SECONDS);
+    assertEquals(servers.getServers().size(), allStats.size());
+    for (MemcachedServer server : servers.getServers()) {
+      MemcachedStats stats = allStats.get(server.getHost() + ":" + server.getPort());
+      assertNotNull(stats);
+      assertNotNull(stats.getStats().get("uptime"));
     }
   }
 }
