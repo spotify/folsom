@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 Spotify AB
+ * Copyright (c) 2015-2019 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,6 +138,30 @@ public interface MemcacheClient<V> extends ObservableClient {
    */
   CompletionStage<MemcacheStatus> flushAll(int delay);
 
+  /**
+   * Get raw statistics from the memcached instances. The return type is a map from hostname:port to
+   * a statistics container.
+   *
+   * <p>The reason for including potentially multiple statistics containers is to support the ketama
+   * use-case where there may be multiple memcached instances.
+   *
+   * <p>If any of the instances fail to return statistics, the exception will be propagated.
+   *
+   * <p>Valid keys are:
+   *
+   * <ul>
+   *   <li>Empty string: ""
+   *   <li>"slabs"
+   *   <li>"sizes"
+   *   <li>"items"
+   *   <li>"settings"
+   * </ul>
+   *
+   * @return a map of hostname:port to a statistics container
+   * @param key - statistics key.
+   */
+  CompletionStage<Map<String, MemcachedStats>> getStats(String key);
+
   /** Shut down the client. */
   void shutdown();
 
@@ -147,6 +171,4 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return the underlying raw memcache client.
    */
   RawMemcacheClient getRawMemcacheClient();
-
-  CompletionStage<Map<String, MemcachedStats>> getStats();
 }

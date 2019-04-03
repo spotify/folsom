@@ -160,7 +160,7 @@ public class DefaultRawMemcacheClientTest {
           .get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals("Unexpected line: ERROR", e.getCause().getMessage());
+      assertEquals(exceptionString, e.getCause().getMessage());
     }
   }
 

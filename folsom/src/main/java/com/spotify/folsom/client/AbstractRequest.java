@@ -44,7 +44,7 @@ public abstract class AbstractRequest<V> extends CompletableFuture<V> implements
   }
 
   @Override
-  public void fail(final Throwable e, HostAndPort address) {
+  public void fail(final Throwable e, final HostAndPort address) {
     completeExceptionally(e);
   }
 

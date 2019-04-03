@@ -563,13 +563,36 @@ public class IntegrationTest {
 
   @Test
   public void testStats() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("version", "time", "uptime", "evictions");
+    verifyStats("", expectedKeys);
+  }
+
+  @Test
+  public void testStatsSlabs() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("total_malloced", "active_slabs");
+    verifyStats("slabs", expectedKeys);
+  }
+
+  @Test
+  public void testStatsInvalidKey()
+      throws InterruptedException, ExecutionException, TimeoutException {
     Map<String, MemcachedStats> statsMap =
-        client.getStats().toCompletableFuture().get(1, TimeUnit.SECONDS);
+        client.getStats("invalidkey").toCompletableFuture().get(1, TimeUnit.SECONDS);
 
     assertEquals(1, statsMap.size());
     MemcachedStats stats = statsMap.values().iterator().next();
 
-    ImmutableSet<String> expectedKeys = ImmutableSet.of("version", "time", "uptime", "evictions");
+    assertEquals(ImmutableSet.of(), stats.getStats().keySet());
+  }
+
+  private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> statsMap =
+        client.getStats(statsKey).toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+    assertEquals(1, statsMap.size());
+    MemcachedStats stats = statsMap.values().iterator().next();
+
     ImmutableSet<String> diff =
         ImmutableSet.copyOf(Sets.difference(expectedKeys, stats.getStats().keySet()));
     assertEquals(ImmutableSet.of(), diff);

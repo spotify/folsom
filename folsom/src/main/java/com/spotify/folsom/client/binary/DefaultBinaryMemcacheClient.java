@@ -377,8 +377,8 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   }
 
   @Override
-  public CompletionStage<Map<String, MemcachedStats>> getStats() {
-    return rawMemcacheClient.send(new StatsRequest());
+  public CompletionStage<Map<String, MemcachedStats>> getStats(String key) {
+    return rawMemcacheClient.send(new StatsRequest(key));
   }
 
   @Override

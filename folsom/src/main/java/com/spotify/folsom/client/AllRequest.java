@@ -30,7 +30,7 @@ public interface AllRequest<T> extends Request<T> {
 
   T merge(List<T> results);
 
-  static MemcacheStatus mergeMemcacheStatus(List<MemcacheStatus> results) {
+  static MemcacheStatus mergeMemcacheStatus(final List<MemcacheStatus> results) {
     return results
         .stream()
         .filter(status -> status != MemcacheStatus.OK)
@@ -38,8 +38,8 @@ public interface AllRequest<T> extends Request<T> {
         .orElse(MemcacheStatus.OK);
   }
 
-  static Map<String, MemcachedStats> mergeStats(List<Map<String, MemcachedStats>> results) {
-    ImmutableMap.Builder<String, MemcachedStats> builder = ImmutableMap.builder();
+  static Map<String, MemcachedStats> mergeStats(final List<Map<String, MemcachedStats>> results) {
+    final ImmutableMap.Builder<String, MemcachedStats> builder = ImmutableMap.builder();
     results.forEach(builder::putAll);
     return builder.build();
   }

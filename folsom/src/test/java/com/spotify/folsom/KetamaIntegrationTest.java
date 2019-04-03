@@ -236,7 +236,7 @@ public class KetamaIntegrationTest {
   @Test
   public void testGetStats() throws InterruptedException, ExecutionException, TimeoutException {
     Map<String, MemcachedStats> allStats =
-        client.getStats().toCompletableFuture().get(1, TimeUnit.SECONDS);
+        client.getStats("").toCompletableFuture().get(1, TimeUnit.SECONDS);
     assertEquals(servers.getServers().size(), allStats.size());
     for (MemcachedServer server : servers.getServers()) {
       MemcachedStats stats = allStats.get(server.getHost() + ":" + server.getPort());

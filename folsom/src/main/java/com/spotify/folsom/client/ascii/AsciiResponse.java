@@ -24,6 +24,7 @@ public class AsciiResponse {
   public static final AsciiResponse TOUCHED = new AsciiResponse(Type.TOUCHED);
   public static final AsciiResponse OK = new AsciiResponse(Type.OK);
   public static final AsciiResponse EMPTY_LIST = new AsciiResponse(Type.EMPTY_LIST);
+  public static final AsciiResponse ERROR = new AsciiResponse(Type.ERROR);
 
   public final Type type;
 
@@ -42,6 +43,7 @@ public class AsciiResponse {
     TOUCHED,
     OK,
     STATS,
-    EMPTY_LIST
+    EMPTY_LIST,
+    ERROR
   }
 }

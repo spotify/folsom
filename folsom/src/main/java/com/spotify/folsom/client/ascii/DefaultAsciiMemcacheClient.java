@@ -293,7 +293,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
-  public CompletionStage<Map<String, MemcachedStats>> getStats() {
-    return rawMemcacheClient.send(new StatsRequest());
+  public CompletionStage<Map<String, MemcachedStats>> getStats(final String key) {
+    return rawMemcacheClient.send(new StatsRequest(key));
   }
 }

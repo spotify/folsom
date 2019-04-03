@@ -134,46 +134,52 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
 
           statsAsciiResponse.addStat(statName, statValue);
         } else if (tokenLength == 5) {
-          expect(firstChar, "VALUE");
-          valueMode = true;
-          // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
+          if (firstChar == 'E') {
+            expect(firstChar, "ERROR");
+            out.add(AsciiResponse.ERROR);
+            return;
+          } else {
+            expect(firstChar, "VALUE");
+            valueMode = true;
+            // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
 
-          // key
-          readNextToken();
-          int keyLen = token.remaining();
-          if (keyLen <= 0) {
-            throw fail();
+            // key
+            readNextToken();
+            int keyLen = token.remaining();
+            if (keyLen <= 0) {
+              throw fail();
+            }
+            byte[] key = new byte[token.remaining()];
+            token.get(key);
+
+            // flags
+            readNextToken();
+            int flagLen = token.remaining();
+            if (flagLen <= 0) {
+              throw fail();
+            }
+
+            // size
+            readNextToken();
+            int sizeLen = token.remaining();
+            if (sizeLen <= 0) {
+              throw fail();
+            }
+            final int size = (int) parseLong(token.get(), token);
+
+            // cas
+            readNextToken();
+            int casLen = token.remaining();
+            long cas = 0;
+            if (casLen > 0) {
+              cas = parseLong(token.get(), token);
+            }
+
+            this.key = key;
+            this.value = new byte[size];
+            this.valueOffset = 0;
+            this.cas = cas;
           }
-          byte[] key = new byte[token.remaining()];
-          token.get(key);
-
-          // flags
-          readNextToken();
-          int flagLen = token.remaining();
-          if (flagLen <= 0) {
-            throw fail();
-          }
-
-          // size
-          readNextToken();
-          int sizeLen = token.remaining();
-          if (sizeLen <= 0) {
-            throw fail();
-          }
-          final int size = (int) parseLong(token.get(), token);
-
-          // cas
-          readNextToken();
-          int casLen = token.remaining();
-          long cas = 0;
-          if (casLen > 0) {
-            cas = parseLong(token.get(), token);
-          }
-
-          this.key = key;
-          this.value = new byte[size];
-          this.valueOffset = 0;
-          this.cas = cas;
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"
           throw fail();
