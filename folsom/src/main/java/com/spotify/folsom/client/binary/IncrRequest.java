@@ -19,6 +19,7 @@ package com.spotify.folsom.client.binary;
 import com.google.common.primitives.Longs;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class IncrRequest extends BinaryRequest<Long> {
   }
 
   @Override
-  public void handle(final BinaryResponse replies) throws IOException {
+  public void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
     final ResponsePacket reply = handleSingleReply(replies);
 
     if (reply.status == MemcacheStatus.OK) {

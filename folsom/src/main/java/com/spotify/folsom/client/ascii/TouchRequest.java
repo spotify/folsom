@@ -17,6 +17,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
   }
 
   @Override
-  protected void handle(AsciiResponse response) throws IOException {
+  protected void handle(final AsciiResponse response, final HostAndPort server) throws IOException {
     AsciiResponse.Type type = response.type;
     if (type == AsciiResponse.Type.TOUCHED) {
       succeed(MemcacheStatus.OK);

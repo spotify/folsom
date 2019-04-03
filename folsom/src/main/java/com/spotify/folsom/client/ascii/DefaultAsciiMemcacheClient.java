@@ -17,14 +17,15 @@
 package com.spotify.folsom.client.ascii;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.spotify.folsom.client.Request.encodeKey;
-import static com.spotify.folsom.client.Request.encodeKeys;
+import static com.spotify.folsom.client.AbstractRequest.encodeKey;
+import static com.spotify.folsom.client.AbstractRequest.encodeKeys;
 
 import com.google.common.collect.Lists;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.Transcoder;
@@ -36,6 +37,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -288,5 +290,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   @Override
   public RawMemcacheClient getRawMemcacheClient() {
     return rawMemcacheClient;
+  }
+
+  @Override
+  public CompletionStage<Map<String, MemcachedStats>> getStats() {
+    return rawMemcacheClient.send(new StatsRequest());
   }
 }

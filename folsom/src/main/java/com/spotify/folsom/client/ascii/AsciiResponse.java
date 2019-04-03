@@ -23,6 +23,7 @@ public class AsciiResponse {
   public static final AsciiResponse NOT_STORED = new AsciiResponse(Type.NOT_STORED);
   public static final AsciiResponse TOUCHED = new AsciiResponse(Type.TOUCHED);
   public static final AsciiResponse OK = new AsciiResponse(Type.OK);
+  public static final AsciiResponse EMPTY_LIST = new AsciiResponse(Type.EMPTY_LIST);
 
   public final Type type;
 
@@ -39,6 +40,8 @@ public class AsciiResponse {
     NOT_FOUND,
     NOT_STORED,
     TOUCHED,
-    OK
+    OK,
+    STATS,
+    EMPTY_LIST
   }
 }

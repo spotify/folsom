@@ -22,6 +22,7 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -66,23 +67,28 @@ public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
   }
 
   @Override
-  public void handle(AsciiResponse response) throws IOException {
+  public void handle(AsciiResponse response, final HostAndPort server) throws IOException {
+    final int size = keys.size();
+    final List<GetResult<byte[]>> result = Lists.newArrayListWithCapacity(size);
+    for (int i = 0; i < size; i++) {
+      result.add(null);
+    }
+
+    if (response.type == AsciiResponse.Type.EMPTY_LIST) {
+      succeed(result);
+      return;
+    }
+
     if (!(response instanceof ValueAsciiResponse)) {
       throw new IOException("Unexpected response type: " + response.type);
     }
 
     List<ValueResponse> values = ((ValueAsciiResponse) response).values;
 
-    final int size = keys.size();
-
     if (values.size() > size) {
       throw new IOException("Too many responses, expected " + size + " but got " + values.size());
     }
 
-    final List<GetResult<byte[]>> result = Lists.newArrayListWithCapacity(size);
-    for (int i = 0; i < size; i++) {
-      result.add(null);
-    }
     int index = -1;
     for (final ValueResponse value : values) {
       index = findKey(index + 1, value.key);

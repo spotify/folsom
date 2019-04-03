@@ -18,6 +18,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class DeleteRequest extends AsciiRequest<MemcacheStatus> {
   }
 
   @Override
-  public void handle(AsciiResponse response) throws IOException {
+  public void handle(final AsciiResponse response, final HostAndPort server) throws IOException {
     switch (response.type) {
       case DELETED:
         succeed(MemcacheStatus.OK);

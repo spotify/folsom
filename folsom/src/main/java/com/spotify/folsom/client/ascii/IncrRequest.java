@@ -18,6 +18,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class IncrRequest extends AsciiRequest<Long> {
   }
 
   @Override
-  public void handle(final AsciiResponse response) throws IOException {
+  public void handle(final AsciiResponse response, final HostAndPort server) throws IOException {
     if (response instanceof NumericAsciiResponse) {
       succeed(((NumericAsciiResponse) response).numericValue);
     } else if (response.type == Type.NOT_FOUND) {

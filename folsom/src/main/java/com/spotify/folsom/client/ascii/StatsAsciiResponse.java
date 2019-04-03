@@ -16,19 +16,19 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.collect.Lists;
-import java.util.List;
+import com.google.common.collect.Maps;
+import java.util.Map;
 
-public class ValueAsciiResponse extends AsciiResponse {
+public class StatsAsciiResponse extends AsciiResponse {
 
-  public final List<ValueResponse> values = Lists.newArrayListWithCapacity(50);
+  public final Map<String, String> values = Maps.newHashMap();
 
-  public ValueAsciiResponse() {
-    super(Type.VALUE);
+  public StatsAsciiResponse() {
+    super(Type.STATS);
   }
 
-  public void addGetResult(byte[] key, byte[] value, long cas) {
-    values.add(new ValueResponse(key, value, cas));
+  public void addStat(String name, String value) {
+    values.put(name, value);
   }
 
   public boolean isEmpty() {

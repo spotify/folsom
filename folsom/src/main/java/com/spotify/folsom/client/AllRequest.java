@@ -15,4 +15,36 @@
  */
 package com.spotify.folsom.client;
 
-public interface AllRequest {}
+import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.MemcachedStats;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+
+public interface AllRequest<T> extends Request<T> {
+
+  default CompletionStage<T> preMerge(CompletionStage<T> stage) {
+    return stage;
+  }
+
+  T merge(List<T> results);
+
+  static MemcacheStatus mergeMemcacheStatus(List<MemcacheStatus> results) {
+    return results
+        .stream()
+        .filter(status -> status != MemcacheStatus.OK)
+        .findFirst()
+        .orElse(MemcacheStatus.OK);
+  }
+
+  static Map<String, MemcachedStats> mergeStats(List<Map<String, MemcachedStats>> results) {
+    return results
+        .stream()
+        .reduce(
+            (dest, other) -> {
+              dest.putAll(other);
+              return dest;
+            })
+        .get();
+  }
+}

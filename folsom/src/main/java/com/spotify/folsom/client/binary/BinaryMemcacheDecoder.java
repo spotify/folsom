@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -67,7 +68,13 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
 
       buf.skipBytes(extrasLength);
 
-      buf.skipBytes(keyLength);
+      byte[] keyBytes;
+      if (keyLength == 0) {
+        keyBytes = NO_BYTES;
+      } else {
+        keyBytes = new byte[keyLength];
+      }
+      buf.readBytes(keyBytes);
 
       final int valueLength = totalLength - keyLength - extrasLength;
       byte[] valueBytes;
@@ -79,10 +86,21 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
 
       buf.readBytes(valueBytes);
 
-      replies.add(new ResponsePacket((byte) opcode, status, opaque, cas, valueBytes));
-      if ((opaque & 0xFF) == 0) {
-        out.add(replies);
-        replies = new BinaryResponse();
+      if (opcode == OpCode.STAT) {
+        boolean endPacket = keyLength == 0;
+        if (endPacket) {
+          out.add(replies);
+          replies = new BinaryResponse();
+        } else {
+          // Skip end packet
+          replies.add(new ResponsePacket((byte) opcode, status, opaque, cas, keyBytes, valueBytes));
+        }
+      } else {
+        replies.add(new ResponsePacket((byte) opcode, status, opaque, cas, keyBytes, valueBytes));
+        if ((opaque & 0xFF) == 0) {
+          out.add(replies);
+          replies = new BinaryResponse();
+        }
       }
     }
   }

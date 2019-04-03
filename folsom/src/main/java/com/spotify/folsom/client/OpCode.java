@@ -37,7 +37,7 @@ public final class OpCode {
   public static final int GETKQ = 0x0d;
   public static final byte APPEND = 0x0e;
   public static final byte PREPEND = 0x0f;
-  public static final int STAT = 0x10;
+  public static final byte STAT = 0x10;
   public static final int SETQ = 0x11;
   public static final int ADDQ = 0x12;
   public static final int REPLACEQ = 0x13;

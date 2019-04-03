@@ -24,6 +24,7 @@ import static com.spotify.folsom.MemcacheStatus.UNKNOWN_COMMAND;
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -63,7 +64,7 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
   }
 
   @Override
-  protected void handle(BinaryResponse replies) throws IOException {
+  protected void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
     ResponsePacket reply = handleSingleReply(replies);
 
     if (OpCode.getKind(reply.opcode) != OpCode.SASL_AUTH) {
@@ -77,9 +78,10 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     } else if (status == OK || status == UNAUTHORIZED) {
       succeed(status);
     } else {
-      fail(
+      final IOException exception =
           new IOException(
-              String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString())));
+              String.format("Invalid status %s, expected OK or UNAUTHORIZED.", status.toString()));
+      fail(exception, server);
     }
   }
 }

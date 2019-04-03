@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
@@ -35,14 +36,14 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testResponse() throws IOException, InterruptedException, ExecutionException {
-    req.handle(AsciiResponse.TOUCHED);
+    req.handle(AsciiResponse.TOUCHED, HostAndPort.fromHost("host"));
 
     assertEquals(MemcacheStatus.OK, req.get());
   }
 
   @Test
   public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
-    req.handle(AsciiResponse.NOT_FOUND);
+    req.handle(AsciiResponse.NOT_FOUND, HostAndPort.fromHost("host"));
     assertEquals(MemcacheStatus.KEY_NOT_FOUND, req.get());
   }
 }

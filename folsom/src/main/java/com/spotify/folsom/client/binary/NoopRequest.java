@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -50,13 +51,13 @@ public class NoopRequest extends BinaryRequest<Void> {
   }
 
   @Override
-  public void handle(final BinaryResponse replies) throws IOException {
+  public void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
     ResponsePacket reply = handleSingleReply(replies);
 
     if (reply.status == MemcacheStatus.OK) {
       succeed(null);
     } else if (reply.status == MemcacheStatus.UNAUTHORIZED) {
-      fail(new MemcacheAuthenticationException("Authentication required"));
+      fail(new MemcacheAuthenticationException("Authentication required"), server);
     } else {
       throw new IOException("Unexpected response: " + reply.status);
     }

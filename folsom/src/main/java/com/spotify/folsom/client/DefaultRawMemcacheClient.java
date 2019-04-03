@@ -243,7 +243,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     }
     channel.write(request, new RequestWritePromise(channel, request));
     flusher.flush();
-    return onExecutor(request);
+    return onExecutor(request.asFuture());
   }
 
   private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
@@ -345,7 +345,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         if (request == null) {
           break;
         }
-        request.fail(new MemcacheClosedException(disconnectReason.get()));
+        request.fail(new MemcacheClosedException(disconnectReason.get()), address);
       }
     }
 
@@ -357,11 +357,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       }
       pendingCounter.decrementAndGet();
       try {
-        request.handle(msg);
+        request.handle(msg, address);
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
         DefaultRawMemcacheClient.this.setDisconnected(exception);
-        request.fail(new MemcacheClosedException(disconnectReason.get()));
+        request.fail(new MemcacheClosedException(disconnectReason.get()), address);
         ctx.channel().close();
       }
     }
@@ -430,7 +430,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     private void fail(Throwable cause) {
       setDisconnected(cause);
-      request.fail(new MemcacheClosedException(disconnectReason.get()));
+      request.fail(new MemcacheClosedException(disconnectReason.get()), address);
     }
   }
 

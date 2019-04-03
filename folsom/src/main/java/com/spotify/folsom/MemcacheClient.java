@@ -16,6 +16,7 @@
 package com.spotify.folsom;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 public interface MemcacheClient<V> extends ObservableClient {
@@ -146,4 +147,6 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return the underlying raw memcache client.
    */
   RawMemcacheClient getRawMemcacheClient();
+
+  CompletionStage<Map<String, MemcachedStats>> getStats();
 }
