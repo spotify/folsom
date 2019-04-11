@@ -1,3 +1,6 @@
+### 1.6.0
+* Implemented support for reading memcached statistics
+
 ### 1.5.0
 * Added support for setting multiple usernames/passwords for SASL authentications
 
