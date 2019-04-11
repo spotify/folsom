@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Spotify AB
+ * Copyright (c) 2019 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,32 +18,26 @@ package com.spotify.folsom.client.ascii;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
-import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
-public class TouchRequestTest extends RequestTestTemplate {
+public class StatsRequestTest extends RequestTestTemplate {
 
-  private TouchRequest req = new TouchRequest("foo".getBytes(Charsets.UTF_8), 123);
+  private StatsRequest req = new StatsRequest("slabs");
 
   @Test
   public void testRequest() throws Exception {
-    assertRequest(req, "touch foo 123\r\n");
+    assertRequest(req, "stats slabs\r\n");
   }
 
   @Test
   public void testResponse() throws IOException, InterruptedException, ExecutionException {
-    req.handle(AsciiResponse.TOUCHED, HostAndPort.fromHost("host"));
+    req.handle(new StatsAsciiResponse(), HostAndPort.fromParts("host", 123));
 
-    assertEquals(MemcacheStatus.OK, req.get());
-  }
-
-  @Test
-  public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
-    req.handle(AsciiResponse.NOT_FOUND, HostAndPort.fromHost("host"));
-    assertEquals(MemcacheStatus.KEY_NOT_FOUND, req.get());
+    assertEquals(ImmutableMap.of("host:123", new MemcachedStats(ImmutableMap.of())), req.get());
   }
 }

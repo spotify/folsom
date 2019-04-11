@@ -144,7 +144,8 @@ public class DefaultRawMemcacheClientTest {
           .send(
               new AsciiRequest<String>("key".getBytes(Charsets.UTF_8)) {
                 @Override
-                protected void handle(AsciiResponse response) throws IOException {
+                protected void handle(final AsciiResponse response, final HostAndPort server)
+                    throws IOException {
                   throw new IOException(exceptionString);
                 }
 
@@ -159,7 +160,7 @@ public class DefaultRawMemcacheClientTest {
           .get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals("Unexpected line: ERROR", e.getCause().getMessage());
+      assertEquals(exceptionString, e.getCause().getMessage());
     }
   }
 

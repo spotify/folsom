@@ -19,13 +19,17 @@ package com.spotify.folsom.client.binary;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
-public class FlushRequest extends BinaryRequest<MemcacheStatus> implements AllRequest {
+public class FlushRequest extends BinaryRequest<MemcacheStatus>
+    implements AllRequest<MemcacheStatus> {
 
   public static final byte[] NO_KEY = new byte[0];
   private final int delay;
@@ -47,8 +51,18 @@ public class FlushRequest extends BinaryRequest<MemcacheStatus> implements AllRe
   }
 
   @Override
-  public void handle(final BinaryResponse replies) throws IOException {
+  public void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
     ResponsePacket reply = handleSingleReply(replies);
     succeed(reply.status);
+  }
+
+  @Override
+  public MemcacheStatus merge(List<MemcacheStatus> results) {
+    return AllRequest.mergeMemcacheStatus(results);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new FlushRequest(delay);
   }
 }

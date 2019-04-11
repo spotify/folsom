@@ -16,12 +16,13 @@
 
 package com.spotify.folsom.client.binary;
 
-import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.AbstractRequest;
+import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class BinaryRequest<V> extends Request<V> {
+public abstract class BinaryRequest<V> extends AbstractRequest<V> {
 
   protected static final int HEADER_SIZE = 24;
   protected static final byte MAGIC_NUMBER = (byte) 0x80;
@@ -67,9 +68,9 @@ public abstract class BinaryRequest<V> extends Request<V> {
   }
 
   @Override
-  public void handle(Object response) throws IOException {
-    handle((BinaryResponse) response);
+  public void handle(final Object response, final HostAndPort server) throws IOException {
+    handle((BinaryResponse) response, server);
   }
 
-  protected abstract void handle(BinaryResponse response) throws IOException;
+  protected abstract void handle(BinaryResponse response, HostAndPort server) throws IOException;
 }

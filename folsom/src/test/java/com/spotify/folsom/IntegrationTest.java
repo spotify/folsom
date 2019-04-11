@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.spotify.folsom.client.NoopMetrics;
@@ -35,10 +36,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import junit.framework.AssertionFailedError;
 import org.junit.After;
 import org.junit.Before;
@@ -556,6 +559,43 @@ public class IntegrationTest {
     assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
     Thread.sleep(2000);
     assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testStats() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("version", "time", "uptime", "evictions");
+    verifyStats("", expectedKeys);
+  }
+
+  @Test
+  public void testStatsSlabs() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("total_malloced", "active_slabs");
+    verifyStats("slabs", expectedKeys);
+  }
+
+  @Test
+  public void testStatsInvalidKey()
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> statsMap =
+        client.getStats("invalidkey").toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+    assertEquals(1, statsMap.size());
+    MemcachedStats stats = statsMap.values().iterator().next();
+
+    assertEquals(ImmutableSet.of(), stats.getStats().keySet());
+  }
+
+  private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> statsMap =
+        client.getStats(statsKey).toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+    assertEquals(1, statsMap.size());
+    MemcachedStats stats = statsMap.values().iterator().next();
+
+    ImmutableSet<String> diff =
+        ImmutableSet.copyOf(Sets.difference(expectedKeys, stats.getStats().keySet()));
+    assertEquals(ImmutableSet.of(), diff);
   }
 
   private String createValue(int size) {

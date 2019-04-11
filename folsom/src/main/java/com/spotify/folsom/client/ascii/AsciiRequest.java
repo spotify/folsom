@@ -17,10 +17,11 @@
 package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
-import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.AbstractRequest;
+import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 
-public abstract class AsciiRequest<T> extends Request<T> {
+public abstract class AsciiRequest<T> extends AbstractRequest<T> {
   protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(Charsets.US_ASCII);
   protected static final byte SPACE_BYTES = ' ';
 
@@ -29,9 +30,9 @@ public abstract class AsciiRequest<T> extends Request<T> {
   }
 
   @Override
-  public void handle(Object response) throws IOException {
-    handle((AsciiResponse) response);
+  public void handle(final Object response, final HostAndPort server) throws IOException {
+    handle((AsciiResponse) response, server);
   }
 
-  protected abstract void handle(AsciiResponse response) throws IOException;
+  protected abstract void handle(AsciiResponse response, HostAndPort server) throws IOException;
 }

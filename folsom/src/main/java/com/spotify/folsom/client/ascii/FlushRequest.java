@@ -17,13 +17,17 @@ package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.AllRequest;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
-public class FlushRequest extends AsciiRequest<MemcacheStatus> implements AllRequest {
+public class FlushRequest extends AsciiRequest<MemcacheStatus>
+    implements AllRequest<MemcacheStatus> {
 
   private static final byte[] CMD = "flush_all ".getBytes();
   private static final byte[] NO_KEY = new byte[0];
@@ -43,12 +47,22 @@ public class FlushRequest extends AsciiRequest<MemcacheStatus> implements AllReq
   }
 
   @Override
-  protected void handle(AsciiResponse response) throws IOException {
+  protected void handle(AsciiResponse response, final HostAndPort server) throws IOException {
     AsciiResponse.Type type = response.type;
     if (type == AsciiResponse.Type.OK) {
       succeed(MemcacheStatus.OK);
     } else {
       throw new IOException("Unexpected line: " + type);
     }
+  }
+
+  @Override
+  public MemcacheStatus merge(List<MemcacheStatus> results) {
+    return AllRequest.mergeMemcacheStatus(results);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new FlushRequest(delay);
   }
 }

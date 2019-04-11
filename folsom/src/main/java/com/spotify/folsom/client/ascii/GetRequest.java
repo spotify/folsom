@@ -18,6 +18,7 @@ package com.spotify.folsom.client.ascii;
 
 import com.google.common.base.Charsets;
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -47,17 +48,17 @@ public class GetRequest extends AsciiRequest<GetResult<byte[]>>
   }
 
   @Override
-  public void handle(final AsciiResponse response) throws IOException {
+  public void handle(final AsciiResponse response, final HostAndPort server) throws IOException {
+    if (response.type == AsciiResponse.Type.EMPTY_LIST) {
+      succeed(null);
+      return;
+    }
+
     if (!(response instanceof ValueAsciiResponse)) {
       throw new IOException("Unexpected response type: " + response.type);
     }
 
     List<ValueResponse> values = ((ValueAsciiResponse) response).values;
-
-    if (values.isEmpty()) {
-      succeed(null);
-      return;
-    }
 
     if (values.size() > 1) {
       throw new IOException("Too many responses, expected 1 but got " + values.size());

@@ -19,7 +19,6 @@ package com.spotify.folsom.ketama;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.spotify.folsom.GetResult;
-import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
 import com.spotify.folsom.client.AllRequest;
@@ -74,24 +73,20 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
         return (CompletionStage<T>) sendSplitRequest(multiRequest);
       }
     } else if (request instanceof AllRequest) {
-      return (CompletionStage<T>) sendToAll(request);
+      return sendToAll((AllRequest<T>) request);
     }
     return getClient(request.getKey()).send(request);
   }
 
-  private <T> CompletionStage<MemcacheStatus> sendToAll(final Request<T> request) {
-    List<CompletionStage<MemcacheStatus>> futures =
+  private <T> CompletionStage<T> sendToAll(final AllRequest<T> request) {
+    final List<CompletionStage<T>> futures =
         clients
             .stream()
-            .map(client -> (CompletionStage<MemcacheStatus>) client.send(request))
+            .map(client -> client.send(request.duplicate()))
+            .map(request::preMerge)
             .collect(Collectors.toList());
-    return CompletableFutures.allAsList(futures)
-        .thenApply(
-            ts ->
-                ts.stream()
-                    .filter(status -> status != MemcacheStatus.OK)
-                    .findFirst()
-                    .orElse(MemcacheStatus.OK));
+
+    return CompletableFutures.allAsList(futures).thenApply(request::merge);
   }
 
   private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {

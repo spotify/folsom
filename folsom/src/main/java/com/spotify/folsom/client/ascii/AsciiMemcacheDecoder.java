@@ -35,6 +35,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   private boolean valueMode = false;
 
   private ValueAsciiResponse valueResponse = new ValueAsciiResponse();
+  private StatsAsciiResponse statsAsciiResponse = new StatsAsciiResponse();
 
   private boolean consumed;
 
@@ -71,7 +72,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           return;
         }
         if (line.remaining() > 0) {
-          throw new IOException(String.format("Unexpected end of data block: %s", lineToString()));
+          throw new IOException(String.format("Unexpected end of data block: %s", toString(line)));
         }
         valueResponse.addGetResult(key, value, cas);
         key = null;
@@ -103,51 +104,82 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           return;
         } else if (tokenLength == 3) {
           expect(firstChar, "END");
-          out.add(valueResponse);
-          valueResponse = new ValueAsciiResponse();
-          valueMode = false;
-          return;
+          if (!valueResponse.isEmpty()) {
+            out.add(valueResponse);
+            valueResponse = new ValueAsciiResponse();
+            valueMode = false;
+            return;
+          } else if (!statsAsciiResponse.isEmpty()) {
+            out.add(statsAsciiResponse);
+            statsAsciiResponse = new StatsAsciiResponse();
+            return;
+          } else {
+            out.add(AsciiResponse.EMPTY_LIST);
+            return;
+          }
+        } else if (tokenLength == 4) {
+          expect(firstChar, "STAT");
+
+          readNextToken();
+          if (token.remaining() < 1) {
+            throw fail();
+          }
+          final String statName = toString(token);
+
+          readNextToken();
+          if (token.remaining() < 1) {
+            throw fail();
+          }
+          final String statValue = toString(token);
+
+          statsAsciiResponse.addStat(statName, statValue);
         } else if (tokenLength == 5) {
-          expect(firstChar, "VALUE");
-          valueMode = true;
-          // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
+          if (firstChar == 'E') {
+            expect(firstChar, "ERROR");
+            out.add(AsciiResponse.ERROR);
+            return;
+          } else {
+            expect(firstChar, "VALUE");
+            valueMode = true;
+            // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
 
-          // key
-          readNextToken();
-          int keyLen = token.remaining();
-          if (keyLen <= 0) {
-            throw fail();
+            // key
+            readNextToken();
+            int keyLen = token.remaining();
+            if (keyLen <= 0) {
+              throw fail();
+            }
+            byte[] key = new byte[token.remaining()];
+            token.get(key);
+
+            // flags
+            readNextToken();
+            int flagLen = token.remaining();
+            if (flagLen <= 0) {
+              throw fail();
+            }
+
+            // size
+            readNextToken();
+            int sizeLen = token.remaining();
+            if (sizeLen <= 0) {
+              throw fail();
+            }
+            final int size = (int) parseLong(token.get(), token);
+
+            // cas
+            readNextToken();
+            int casLen = token.remaining();
+            long cas = 0;
+            if (casLen > 0) {
+              cas = parseLong(token.get(), token);
+            }
+
+            this.key = key;
+            this.value = new byte[size];
+            this.valueOffset = 0;
+            this.cas = cas;
           }
-          byte[] key = new byte[token.remaining()];
-          token.get(key);
-
-          // flags
-          readNextToken();
-          int flagLen = token.remaining();
-          if (flagLen <= 0) {
-            throw fail();
-          }
-
-          // size
-          readNextToken();
-          int sizeLen = token.remaining();
-          if (sizeLen <= 0) {
-            throw fail();
-          }
-          final int size = (int) parseLong(token.get(), token);
-
-          // cas
-          readNextToken();
-          int casLen = token.remaining();
-          long cas = 0;
-          if (casLen > 0) {
-            cas = parseLong(token.get(), token);
-          }
-
-          this.key = key;
-          this.value = new byte[size];
-          this.valueOffset = 0;
-          this.cas = cas;
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"
           throw fail();
@@ -199,12 +231,12 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   }
 
   private IOException fail() {
-    return new IOException("Unexpected line: " + lineToString());
+    return new IOException("Unexpected line: " + toString(line));
   }
 
-  private String lineToString() {
-    line.rewind();
-    return new String(line.array(), 0, line.remaining(), charset);
+  private String toString(final ByteBuffer buf) {
+    buf.rewind();
+    return new String(buf.array(), 0, buf.remaining(), charset);
   }
 
   private void expect(byte firstChar, final String compareTo) throws IOException {

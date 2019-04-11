@@ -18,6 +18,7 @@ package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
@@ -37,7 +38,7 @@ public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
   }
 
   @Override
-  public void handle(final BinaryResponse replies) throws IOException {
+  public void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
     final ResponsePacket reply = handleSingleReply(replies);
 
     succeed(reply.status);

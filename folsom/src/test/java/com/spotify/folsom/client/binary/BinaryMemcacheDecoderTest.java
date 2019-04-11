@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -61,7 +62,7 @@ public class BinaryMemcacheDecoderTest {
     decoder.decode(null, cb, out);
     @SuppressWarnings("unchecked")
     List<ResponsePacket> replies = (List<ResponsePacket>) out.get(0);
-    request.handle(replies);
+    request.handle(replies, HostAndPort.fromHost("server"));
 
     GetResult<byte[]> getResult = request.get();
     assertEquals(258, getResult.getCas());
