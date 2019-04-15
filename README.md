@@ -160,7 +160,7 @@ This project adheres to the [Open Code of Conduct][code-of-conduct]. By particip
 
 ### Authors
 
-Folsom was initially built at [Spotify](<https://github.com/spotify) by
+Folsom was initially built at [Spotify](https://github.com/spotify) by
 [Kristofer Karlsson](https://github.com/krka), [Niklas Gustavsson](https://github.com/protocol7) and
 [Daniel Norberg](https://github.com/danielnorberg).
 Many thanks also go out to [Noa Resare](https://github.com/noaresare).
