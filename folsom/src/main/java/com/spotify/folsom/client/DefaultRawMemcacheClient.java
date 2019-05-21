@@ -303,7 +303,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                       return;
                     }
                     if (timeoutChecker.check(head)) {
-                      log.error("Request timeout: {} {}", channel, head);
+                      log.warn("Request timeout: {} {}", channel, head);
                       DefaultRawMemcacheClient.this.setDisconnected("Timeout");
                     }
                   },
