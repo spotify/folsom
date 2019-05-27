@@ -18,6 +18,7 @@ API.
 
 * Java 8 or higher
 * Maven
+* Docker - to run integration tests.
 
 ### Runtime dependencies
 
