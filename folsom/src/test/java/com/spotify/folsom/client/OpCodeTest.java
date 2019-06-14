@@ -22,7 +22,7 @@ import org.junit.Test;
 public class OpCodeTest {
 
   @Test
-  public void testGetKind() throws Exception {
+  public void testGetKind() {
     assertEquals(OpCode.SET, OpCode.getKind(OpCode.SET));
     assertEquals(OpCode.SET, OpCode.getKind(OpCode.APPEND));
     assertEquals(OpCode.SET, OpCode.getKind(OpCode.REPLACE));
@@ -33,5 +33,27 @@ public class OpCodeTest {
     assertEquals(OpCode.GET, OpCode.getKind(OpCode.GETQ));
 
     assertEquals(OpCode.TOUCH, OpCode.getKind(OpCode.TOUCH));
+  }
+
+  @Test
+  public void testOf() {
+    assertEquals(OpCode.GET, OpCode.of(OpCode.GET.value()));
+    assertEquals(OpCode.SET, OpCode.of(OpCode.SET.value()));
+    assertEquals(OpCode.TAP_CHECKPOINT_END, OpCode.of(OpCode.TAP_CHECKPOINT_END.value()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithNegative() {
+    OpCode.of((byte) -1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithOverflow() {
+    OpCode.of((byte) 0x48);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithUnknown() {
+    OpCode.of((byte) 0x23);
   }
 }

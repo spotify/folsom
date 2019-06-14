@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.client.AbstractRequest;
+import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,14 +37,14 @@ public abstract class BinaryRequest<V> extends AbstractRequest<V> {
 
   public void writeHeader(
       final ByteBuffer dst,
-      final byte opCode,
+      final OpCode opCode,
       final int extraLength,
       final int valueLength,
       final long cas) {
     int keyLength = key.length;
 
     dst.put(MAGIC_NUMBER);
-    dst.put(opCode);
+    dst.put(opCode.value());
     dst.putShort((short) keyLength); // byte 2-3
     dst.put((byte) extraLength); // byte 4
     dst.put((byte) 0);

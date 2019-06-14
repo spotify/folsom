@@ -48,7 +48,7 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
         throw fail(buf, String.format("Invalid magic number: 0x%2x", magicNumber));
       }
 
-      final int opcode = buf.readByte(); // byte 1
+      final OpCode opcode = OpCode.of(buf.readByte()); // byte 1
       final int keyLength = buf.readUnsignedShort(); // byte 2-3
       final int extrasLength = buf.readUnsignedByte(); // byte 4
       buf.skipBytes(1);
@@ -93,10 +93,10 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
           replies = new BinaryResponse();
         } else {
           // Skip end packet
-          replies.add(new ResponsePacket((byte) opcode, status, opaque, cas, keyBytes, valueBytes));
+          replies.add(new ResponsePacket(opcode, status, opaque, cas, keyBytes, valueBytes));
         }
       } else {
-        replies.add(new ResponsePacket((byte) opcode, status, opaque, cas, keyBytes, valueBytes));
+        replies.add(new ResponsePacket(opcode, status, opaque, cas, keyBytes, valueBytes));
         if ((opaque & 0xFF) == 0) {
           out.add(replies);
           replies = new BinaryResponse();

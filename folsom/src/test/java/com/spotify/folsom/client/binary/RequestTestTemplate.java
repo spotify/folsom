@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.base.Charsets;
+import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
@@ -40,14 +41,14 @@ public abstract class RequestTestTemplate {
 
   protected void assertHeader(
       final ByteBuf b,
-      final int opcode,
+      final OpCode opcode,
       final int keyLength,
       final int extrasLength,
       final int totalLength,
       final int opaque,
       final long cas) {
     assertByte(0x80, b.readByte());
-    assertByte(opcode, b.readByte());
+    assertByte(opcode.value(), b.readByte());
     assertShort(keyLength, b.readShort());
     assertShort(extrasLength, b.readByte());
     assertZeros(b, 3);
