@@ -17,9 +17,10 @@
 package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.OpCode;
 
 public class ResponsePacket {
-  public final byte opcode;
+  public final OpCode opcode;
   public final MemcacheStatus status;
   public final int opaque;
   public final long cas;
@@ -27,7 +28,7 @@ public class ResponsePacket {
   public final byte[] value;
 
   public ResponsePacket(
-      final byte opcode,
+      final OpCode opcode,
       final MemcacheStatus status,
       final int opaque,
       final long cas,

@@ -75,7 +75,7 @@ public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
       final int opaque = multigetOpaque | --sequenceNumber;
 
       dst.put(MAGIC_NUMBER);
-      dst.put(sequenceNumber == 0 ? OpCode.GET : OpCode.GETQ);
+      dst.put(sequenceNumber == 0 ? OpCode.GET.value() : OpCode.GETQ.value());
       dst.putShort((short) keyLength); // byte 2-3
       dst.put((byte) extrasLength); // byte 4
       dst.put((byte) 0); // byte 5-7, Data type, Reserved

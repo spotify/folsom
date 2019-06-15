@@ -47,7 +47,7 @@ public class BinaryMemcacheDecoderTest {
 
     ByteBuf cb = Unpooled.buffer(30);
     cb.writeByte(0x81);
-    cb.writeByte(OpCode.GET);
+    cb.writeByte(OpCode.GET.value());
     cb.writeShort(3);
     cb.writeByte(0);
     cb.writeZero(1);

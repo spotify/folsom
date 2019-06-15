@@ -28,13 +28,13 @@ import java.nio.ByteBuffer;
 public class SetRequest extends BinaryRequest<MemcacheStatus>
     implements com.spotify.folsom.client.SetRequest {
 
-  private final byte opcode;
+  private final OpCode opcode;
   private final byte[] value;
   private final int ttl;
   private final long cas;
 
   public SetRequest(
-      final byte opcode, final byte[] key, final byte[] value, final int ttl, final long cas) {
+      final OpCode opcode, final byte[] key, final byte[] value, final int ttl, final long cas) {
     super(key);
     this.opcode = opcode;
     this.value = value;

@@ -38,7 +38,7 @@ public class NoopRequest extends BinaryRequest<Void> {
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
     dst.put(MAGIC_NUMBER);
-    dst.put(OpCode.NOOP);
+    dst.put(OpCode.NOOP.value());
     dst.putShort((short) 0); // byte 2-3
     dst.put((byte) 0); // byte 4
     dst.put((byte) 0);

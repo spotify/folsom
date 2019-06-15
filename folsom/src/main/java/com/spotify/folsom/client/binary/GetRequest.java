@@ -30,10 +30,10 @@ import java.nio.ByteBuffer;
 
 public class GetRequest extends BinaryRequest<GetResult<byte[]>>
     implements com.spotify.folsom.client.GetRequest {
-  private final byte opcode;
+  private final OpCode opcode;
   private final int ttl;
 
-  public GetRequest(final byte[] key, final byte opcode, final int ttl) {
+  public GetRequest(final byte[] key, final OpCode opcode, final int ttl) {
     super(key);
     this.opcode = checkNotNull(opcode, "opcode");
     this.ttl = checkNotNull(ttl, "ttl");
