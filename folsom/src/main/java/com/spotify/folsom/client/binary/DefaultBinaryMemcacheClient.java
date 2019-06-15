@@ -28,6 +28,7 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.Tracer;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
@@ -51,6 +52,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
   private final RawMemcacheClient rawMemcacheClient;
   private final Metrics metrics;
+  private final Tracer tracer;
   private final Transcoder<V> valueTranscoder;
   private final TransformerUtil<V> transformerUtil;
   private final int maxKeyLength;
@@ -59,11 +61,13 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   public DefaultBinaryMemcacheClient(
       final RawMemcacheClient rawMemcacheClient,
       final Metrics metrics,
+      final Tracer tracer,
       final Transcoder<V> valueTranscoder,
       final Charset charset,
       final int maxKeyLength) {
     this.rawMemcacheClient = rawMemcacheClient;
     this.metrics = metrics;
+    this.tracer = tracer;
     this.valueTranscoder = valueTranscoder;
     this.charset = charset;
     this.transformerUtil = new TransformerUtil<>(valueTranscoder);
@@ -135,6 +139,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
         new SetRequest(opcode, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, cas);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    trace(opcode, key, valueBytes, future);
     return future;
   }
 
@@ -175,6 +180,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     GetRequest request = new GetRequest(encodeKey(key, charset, maxKeyLength), opCode, ttl);
     final CompletionStage<GetResult<byte[]>> future = rawMemcacheClient.send(request);
     metrics.measureGetFuture(future);
+    trace(opCode, key, null, future);
     return transformerUtil.decode(future);
   }
 
@@ -204,6 +210,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
         CompletableFutures.allAsList(futureList).thenApply(Utils.flatten());
 
     metrics.measureMultigetFuture(future);
+    trace(OpCode.GET, null, null, future);
     return transformerUtil.decodeList(future);
   }
 
@@ -232,6 +239,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     TouchRequest request = new TouchRequest(encodeKey(key, charset, maxKeyLength), ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
+    trace(OpCode.TOUCH, key, null, future);
     return future;
   }
 
@@ -248,6 +256,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength));
     final CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
+    trace(OpCode.DELETE, key, null, future);
     return future;
   }
 
@@ -259,6 +268,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     DeleteAllRequest request = new DeleteAllRequest(encodeKey(key, charset, maxKeyLength));
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
+    trace(OpCode.DELETE, key, null, future);
     return future;
   }
 
@@ -278,6 +288,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
         rawMemcacheClient.send(
             new IncrRequest(encodeKey(key, charset, maxKeyLength), opcode, by, initial, ttl));
     metrics.measureIncrDecrFuture(future);
+    trace(opcode, key, null, future);
     return future;
   }
 
@@ -379,6 +390,22 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public CompletionStage<Map<String, MemcachedStats>> getStats(String key) {
     return rawMemcacheClient.send(new StatsRequest(key));
+  }
+
+  private void trace(
+      final OpCode opcode, final String key, final byte[] value, final CompletionStage<?> future) {
+    final String operationName = opcode.name().toLowerCase();
+    final String spanName = "folsom." + operationName;
+
+    if (key != null) {
+      if (value != null) {
+        tracer.span(spanName, future, operationName, key, value);
+      } else {
+        tracer.span(spanName, future, operationName, key);
+      }
+    } else {
+      tracer.span(spanName, future, operationName);
+    }
   }
 
   @Override

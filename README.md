@@ -23,8 +23,9 @@ API.
 ### Runtime dependencies
 
 * Netty 4
-* Yammer metrics
 * Google Guava
+* Yammer metrics (optional)
+* OpenCensus (optional)
 
 ### Usage
 
@@ -52,7 +53,15 @@ To import it with maven, use this:
       <version>1.6.0</version>
     </dependency>
 
-If you want to use one of the metric libraries, make sure you use the same version as the main artifact.
+    <!-- optional if you want to expose folsom tracing with OpenCensus -->
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-opencensus</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+
+If you want to use one of the metrics or tracing libraries, make sure you use the same version as
+the main artifact.
 
 We are using [semantic versioning](http://semver.org)
 
@@ -147,8 +156,24 @@ get a period of low cache hit ratio.
 
 #### Yammer metrics
 
-You can optionally choose to track performance using yammer metrics. You will need to include
-`folsom-yammer-metrics` dependency in this case.
+You can optionally choose to track performance using
+[Yammer metrics](https://metrics.dropwizard.io/4.0.0/).
+You will need to include the `folsom-yammer-metrics` dependency and initialize
+using MemcacheClientBuilder:
+
+```
+builder.withMetrics(new YammerMetrics(metricsRegistry));
+```
+
+#### OpenCensus tracing
+
+You can optionally use [OpenCensus](https://opencensus.io/) to trace Folsom operations.
+You will need to include the `folsom-opencensus` dependency and initialize tracing
+using MemcacheClientBuilder:
+
+```
+builder.withTracer(OpenCensus.tracer());
+```
 
 ### Building
 

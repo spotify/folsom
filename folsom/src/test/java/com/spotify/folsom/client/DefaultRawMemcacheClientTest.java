@@ -89,6 +89,7 @@ public class DefaultRawMemcacheClientTest {
         new DefaultAsciiMemcacheClient<>(
             rawClient,
             new NoopMetrics(),
+            NoopTracer.INSTANCE,
             new StringTranscoder(Charsets.UTF_8),
             Charsets.UTF_8,
             MemcacheEncoder.MAX_KEY_LEN);

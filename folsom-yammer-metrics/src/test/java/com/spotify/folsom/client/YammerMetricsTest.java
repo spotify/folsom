@@ -45,6 +45,7 @@ public class YammerMetricsTest {
         new DefaultAsciiMemcacheClient<>(
             fakeRawMemcacheClient,
             metrics,
+            NoopTracer.INSTANCE,
             StringTranscoder.UTF8_INSTANCE,
             Charsets.UTF_8,
             MemcacheEncoder.MAX_KEY_LEN);
