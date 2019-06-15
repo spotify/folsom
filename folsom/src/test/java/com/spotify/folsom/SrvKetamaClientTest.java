@@ -21,8 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.spotify.dns.DnsSrvResolver;
-import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.SrvKetamaClient;
@@ -43,7 +41,7 @@ public class SrvKetamaClientTest {
     HostAndPort hostNameC = HostAndPort.fromString("c:1");
     HostAndPort hostNameD = HostAndPort.fromString("d:1");
 
-    DnsSrvResolver resolver = Mockito.mock(DnsSrvResolver.class);
+    Resolver resolver = Mockito.mock(Resolver.class);
 
     // Run shutdown code immediately
     DeterministicScheduler executor = new DeterministicScheduler();
@@ -59,7 +57,6 @@ public class SrvKetamaClientTest {
 
     SrvKetamaClient ketamaClient =
         new SrvKetamaClient(
-            "the-srv-record",
             resolver,
             executor,
             1000,
@@ -71,8 +68,7 @@ public class SrvKetamaClientTest {
 
     assertFalse(ketamaClient.isConnected());
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("a"), result("b")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("a"), result("b")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -80,8 +76,7 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameA).isConnected());
     assertTrue(knownClients.get(hostNameB).isConnected());
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("b"), result("c")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("b"), result("c")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -90,8 +85,7 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameB).isConnected());
     assertTrue(knownClients.get(hostNameC).isConnected());
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("c"), result("d")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("c"), result("d")));
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -102,7 +96,7 @@ public class SrvKetamaClientTest {
     assertTrue(knownClients.get(hostNameD).isConnected());
 
     // Ignore empty dns results
-    Mockito.when(resolver.resolve(Mockito.anyString())).thenReturn(ImmutableList.of());
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of());
     ketamaClient.updateDNS();
     executor.tick(1000, TimeUnit.SECONDS);
 
@@ -117,7 +111,7 @@ public class SrvKetamaClientTest {
 
   @Test
   public void testReusingConnections() {
-    DnsSrvResolver resolver = Mockito.mock(DnsSrvResolver.class);
+    Resolver resolver = Mockito.mock(Resolver.class);
 
     // Run shutdown code immediately
     DeterministicScheduler executor = new DeterministicScheduler();
@@ -136,7 +130,6 @@ public class SrvKetamaClientTest {
 
     SrvKetamaClient ketamaClient =
         new SrvKetamaClient(
-            "the-srv-record",
             resolver,
             executor,
             1000,
@@ -148,26 +141,23 @@ public class SrvKetamaClientTest {
 
     assertFalse(ketamaClient.isConnected());
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("a"), result("b")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("a"), result("b")));
     ketamaClient.updateDNS();
     assertEquals(2, allClients.size());
     executor.tick(1000, TimeUnit.SECONDS);
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("b"), result("c")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("b"), result("c")));
     ketamaClient.updateDNS();
     assertEquals(3, allClients.size());
     executor.tick(1000, TimeUnit.SECONDS);
 
-    Mockito.when(resolver.resolve(Mockito.anyString()))
-        .thenReturn(ImmutableList.of(result("c"), result("d")));
+    Mockito.when(resolver.resolve()).thenReturn(ImmutableList.of(result("c"), result("d")));
     ketamaClient.updateDNS();
     assertEquals(4, allClients.size());
     executor.tick(1000, TimeUnit.SECONDS);
   }
 
-  private LookupResult result(final String hostname) {
-    return LookupResult.create(hostname, 1, 100, 100, 100);
+  private Resolver.ResolveResult result(final String hostname) {
+    return new Resolver.ResolveResult(hostname, 1, 100);
   }
 }
