@@ -28,6 +28,7 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.Tracer;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.TransformerUtil;
@@ -50,6 +51,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   private final RawMemcacheClient rawMemcacheClient;
   private final Metrics metrics;
+  private final Tracer tracer;
   private final Transcoder<V> valueTranscoder;
   private final TransformerUtil<V> transformerUtil;
   private final Charset charset;
@@ -58,11 +60,13 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   public DefaultAsciiMemcacheClient(
       final RawMemcacheClient rawMemcacheClient,
       final Metrics metrics,
+      final Tracer tracer,
       final Transcoder<V> valueTranscoder,
       final Charset charset,
       final int maxKeyLength) {
     this.rawMemcacheClient = rawMemcacheClient;
     this.metrics = metrics;
+    this.tracer = tracer;
     this.valueTranscoder = valueTranscoder;
     this.charset = charset;
     this.transformerUtil = new TransformerUtil<>(valueTranscoder);
@@ -79,6 +83,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             SetRequest.Operation.SET, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.set", future, "set", key, valueBytes);
     return future;
   }
 
@@ -90,6 +95,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     SetRequest request = SetRequest.casSet(byteKey, valueBytes, ttl, cas);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.set", future, "set", key, valueBytes);
     return future;
   }
 
@@ -98,6 +104,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength));
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
+    tracer.span("folsom.delete", future, "delete", key);
     return future;
   }
 
@@ -106,6 +113,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     DeleteAllRequest request = new DeleteAllRequest(encodeKey(key, charset, maxKeyLength));
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
+    tracer.span("folsom.delete_all", future, "delete", key);
     return future;
   }
 
@@ -118,6 +126,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             SetRequest.Operation.ADD, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.add", future, "add", key, valueBytes);
     return future;
   }
 
@@ -130,6 +139,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             SetRequest.Operation.REPLACE, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.replace", future, "replace", key, valueBytes);
     return future;
   }
 
@@ -142,6 +152,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             SetRequest.Operation.APPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.append", future, "append", key, valueBytes);
     return future;
   }
 
@@ -154,6 +165,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             SetRequest.Operation.PREPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
+    tracer.span("folsom.prepend", future, "prepend", key, valueBytes);
     return future;
   }
 
@@ -162,6 +174,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     IncrRequest request = IncrRequest.createIncr(encodeKey(key, charset, maxKeyLength), by);
     CompletionStage<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
+    tracer.span("folsom.incr", future, "incr", key);
     return future;
   }
 
@@ -170,6 +183,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     IncrRequest request = IncrRequest.createDecr(encodeKey(key, charset, maxKeyLength), by);
     CompletionStage<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
+    tracer.span("folsom.decr", future, "decr", key);
     return future;
   }
 
@@ -189,6 +203,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
         rawMemcacheClient.send(new GetRequest(encodeKey(key, charset, maxKeyLength), withCas));
 
     metrics.measureGetFuture(future);
+    tracer.span("folsom.get", future, "get", key);
     return transformerUtil.decode(future);
   }
 
@@ -209,6 +224,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     TouchRequest request = new TouchRequest(encodeKey(key, charset, maxKeyLength), ttl);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureTouchFuture(future);
+    tracer.span("folsom.touch", future, "touch", key);
     return future;
   }
 
@@ -238,6 +254,8 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
             .thenApply(Utils.flatten());
 
     metrics.measureMultigetFuture(future);
+    tracer.span("folsom.multiget", future, "get");
+
     return transformerUtil.decodeList(future);
   }
 

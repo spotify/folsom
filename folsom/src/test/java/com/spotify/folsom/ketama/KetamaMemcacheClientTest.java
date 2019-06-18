@@ -26,6 +26,7 @@ import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.NoopTracer;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
@@ -103,7 +104,8 @@ public class KetamaMemcacheClientTest {
     if (binary) {
       return new DefaultBinaryMemcacheClient<>(
           client,
-          new NoopMetrics(),
+          NoopMetrics.INSTANCE,
+          NoopTracer.INSTANCE,
           StringTranscoder.UTF8_INSTANCE,
           Charsets.UTF_8,
           MemcacheEncoder.MAX_KEY_LEN);
@@ -111,6 +113,7 @@ public class KetamaMemcacheClientTest {
       return new DefaultAsciiMemcacheClient<>(
           client,
           new NoopMetrics(),
+          NoopTracer.INSTANCE,
           StringTranscoder.UTF8_INSTANCE,
           Charsets.UTF_8,
           MemcacheEncoder.MAX_KEY_LEN);

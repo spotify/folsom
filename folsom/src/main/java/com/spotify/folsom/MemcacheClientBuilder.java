@@ -35,6 +35,7 @@ import com.spotify.folsom.authenticate.MultiAuthenticator;
 import com.spotify.folsom.authenticate.NoAuthenticationValidation;
 import com.spotify.folsom.authenticate.PlaintextAuthenticator;
 import com.spotify.folsom.client.NoopMetrics;
+import com.spotify.folsom.client.NoopTracer;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
@@ -102,6 +103,7 @@ public class MemcacheClientBuilder<V> {
   private int batchSize = Settings.DEFAULT_BATCH_SIZE;
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
+  private Tracer tracer = NoopTracer.INSTANCE;
 
   private BackoffFunction backoffFunction = new ExponentialBackoff(10L, 60 * 1000L, 2.5);
 
@@ -265,7 +267,18 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withMetrics(final Metrics metrics) {
-    this.metrics = metrics;
+    this.metrics = checkNotNull(metrics);
+    return this;
+  }
+
+  /**
+   * Specify how to collect tracing.
+   *
+   * @param tracer Default is NoopTracer - which doesn't collect anything.
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withTracer(final Tracer tracer) {
+    this.tracer = checkNotNull(tracer);
     return this;
   }
 
@@ -476,7 +489,7 @@ public class MemcacheClientBuilder<V> {
         getAuthenticator(BinaryAuthenticationValidator.getInstance());
     authenticator.validate(true);
     return new DefaultBinaryMemcacheClient<>(
-        connectRaw(true, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
+        connectRaw(true, authenticator), metrics, tracer, valueTranscoder, charset, maxKeyLength);
   }
 
   private Authenticator getAuthenticator(Authenticator defaultValue) {
@@ -503,7 +516,7 @@ public class MemcacheClientBuilder<V> {
         getAuthenticator(AsciiAuthenticationValidator.getInstance());
     authenticator.validate(false);
     return new DefaultAsciiMemcacheClient<>(
-        connectRaw(false, authenticator), metrics, valueTranscoder, charset, maxKeyLength);
+        connectRaw(false, authenticator), metrics, tracer, valueTranscoder, charset, maxKeyLength);
   }
 
   /**
