@@ -18,11 +18,11 @@ package com.spotify.folsom.client.binary;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
@@ -31,10 +31,11 @@ public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    IncrRequest req = new IncrRequest(KEY.getBytes(Charsets.UTF_8), OpCode.INCREMENT, 2, 3, 1000);
+    IncrRequest req =
+        new IncrRequest(KEY.getBytes(StandardCharsets.UTF_8), OpCode.INCREMENT, 2, 3, 1000);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
-    List<Object> out = Lists.newArrayList();
+    List<Object> out = new ArrayList<>();
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 

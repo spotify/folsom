@@ -19,7 +19,6 @@ package com.spotify.folsom.client;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -32,6 +31,7 @@ import com.yammer.metrics.core.TimerContext;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class YammerMetrics implements Metrics {
 
@@ -64,7 +64,7 @@ public class YammerMetrics implements Metrics {
   private final Meter touchSuccesses;
   private final Meter touchFailures;
 
-  private final Set<OutstandingRequestsGauge> gauges = Sets.newCopyOnWriteArraySet();
+  private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
 
   public YammerMetrics(final MetricsRegistry registry) {
     this.gets = registry.newTimer(name("get", "requests"), SECONDS, SECONDS);

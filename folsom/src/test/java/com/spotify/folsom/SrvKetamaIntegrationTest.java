@@ -19,11 +19,11 @@ package com.spotify.folsom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.Lists;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.spotify.futures.CompletableFutures;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -76,7 +76,7 @@ public class SrvKetamaIntegrationTest {
 
   @Test
   public void testSetGet() throws Exception {
-    List<CompletionStage<?>> futures = Lists.newArrayList();
+    List<CompletionStage<?>> futures = new ArrayList<>();
     final int numKeys = 1000;
     for (int i = 0; i < numKeys; i++) {
       CompletionStage<MemcacheStatus> future = client.set("key-" + i, "value-" + i, 0);

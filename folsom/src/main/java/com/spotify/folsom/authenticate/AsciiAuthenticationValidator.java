@@ -18,9 +18,9 @@ package com.spotify.folsom.authenticate;
 
 import static com.spotify.folsom.client.Utils.unwrap;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.GetRequest;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
@@ -37,7 +37,7 @@ public class AsciiAuthenticationValidator implements Authenticator {
   }
 
   private static final byte[] EXAMPLE_KEY =
-      "folsom_authentication_validation".getBytes(Charsets.US_ASCII);
+      "folsom_authentication_validation".getBytes(StandardCharsets.US_ASCII);
 
   private AsciiAuthenticationValidator() {}
 

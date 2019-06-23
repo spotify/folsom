@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.MemcacheEncoder;
@@ -28,6 +27,7 @@ import com.spotify.folsom.client.NoopTracer;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -56,7 +56,7 @@ public class RoundRobinMemcacheClientTest {
             new NoopMetrics(),
             NoopTracer.INSTANCE,
             StringTranscoder.UTF8_INSTANCE,
-            Charsets.UTF_8,
+            StandardCharsets.UTF_8,
             MemcacheEncoder.MAX_KEY_LEN);
   }
 

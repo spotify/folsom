@@ -17,14 +17,12 @@
 package com.spotify.folsom;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
+import static java.util.Objects.requireNonNull;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.DnsSrvResolvers;
@@ -52,6 +50,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -110,7 +109,7 @@ public class MemcacheClientBuilder<V> {
   private int connections = 1;
   private boolean retry = true;
   private Supplier<Executor> executor = DEFAULT_REPLY_EXECUTOR;
-  private Charset charset = Charsets.UTF_8;
+  private Charset charset = StandardCharsets.UTF_8;
 
   private DnsSrvResolver srvResolver;
   private String srvRecord;
@@ -141,7 +140,7 @@ public class MemcacheClientBuilder<V> {
    * @return The builder
    */
   public static MemcacheClientBuilder<String> newStringClient() {
-    return newStringClient(Charsets.UTF_8);
+    return newStringClient(StandardCharsets.UTF_8);
   }
 
   /**
@@ -184,7 +183,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withKeyCharset(final Charset charset) {
-    this.charset = checkNotNull(charset);
+    this.charset = requireNonNull(charset);
     return this;
   }
 
@@ -220,7 +219,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withSRVRecord(final String srvRecord) {
-    this.srvRecord = checkNotNull(srvRecord);
+    this.srvRecord = requireNonNull(srvRecord);
     return this;
   }
 
@@ -256,7 +255,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withSrvResolver(final DnsSrvResolver srvResolver) {
-    this.srvResolver = checkNotNull(srvResolver, "srvResolver");
+    this.srvResolver = requireNonNull(srvResolver, "srvResolver");
     return this;
   }
 
@@ -267,7 +266,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withMetrics(final Metrics metrics) {
-    this.metrics = checkNotNull(metrics);
+    this.metrics = requireNonNull(metrics);
     return this;
   }
 
@@ -278,7 +277,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withTracer(final Tracer tracer) {
-    this.tracer = checkNotNull(tracer);
+    this.tracer = requireNonNull(tracer);
     return this;
   }
 
@@ -543,7 +542,7 @@ public class MemcacheClientBuilder<V> {
       if (addresses.size() > 1) {
         checkState(clients.size() == addresses.size());
 
-        final List<AddressAndClient> aac = Lists.newArrayListWithCapacity(clients.size());
+        final List<AddressAndClient> aac = new ArrayList<>(clients.size());
         for (int i = 0; i < clients.size(); i++) {
           final HostAndPort address = addresses.get(i);
           aac.add(new AddressAndClient(address, clients.get(i)));
@@ -564,7 +563,7 @@ public class MemcacheClientBuilder<V> {
   private List<RawMemcacheClient> createClients(
       final List<HostAndPort> addresses, final boolean binary, final Authenticator authenticator) {
 
-    final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(addresses.size());
+    final List<RawMemcacheClient> clients = new ArrayList<>(addresses.size());
     for (final HostAndPort address : addresses) {
       clients.add(createClient(address, binary, authenticator));
     }
@@ -598,7 +597,7 @@ public class MemcacheClientBuilder<V> {
     if (connections == 1) {
       return createReconnectingClient(address, binary, authenticator);
     }
-    final List<RawMemcacheClient> clients = Lists.newArrayList();
+    final List<RawMemcacheClient> clients = new ArrayList<>();
     for (int i = 0; i < connections; i++) {
       clients.add(createReconnectingClient(address, binary, authenticator));
     }

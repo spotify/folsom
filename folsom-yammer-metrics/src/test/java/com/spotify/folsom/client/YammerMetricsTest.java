@@ -18,7 +18,6 @@ package com.spotify.folsom.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
@@ -26,6 +25,7 @@ import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import com.yammer.metrics.core.Metered;
 import com.yammer.metrics.core.MetricsRegistry;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class YammerMetricsTest {
             metrics,
             NoopTracer.INSTANCE,
             StringTranscoder.UTF8_INSTANCE,
-            Charsets.UTF_8,
+            StandardCharsets.UTF_8,
             MemcacheEncoder.MAX_KEY_LEN);
     client.awaitConnected(10, TimeUnit.SECONDS);
   }

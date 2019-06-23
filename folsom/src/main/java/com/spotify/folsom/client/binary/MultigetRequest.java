@@ -16,7 +16,6 @@
 
 package com.spotify.folsom.client.binary;
 
-import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.MemcacheEncoder;
@@ -29,6 +28,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
@@ -97,7 +97,7 @@ public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
   public void handle(BinaryResponse replies, final HostAndPort server) throws IOException {
     final int size = keys.size();
 
-    final List<GetResult<byte[]>> result = Lists.newArrayListWithCapacity(size);
+    final List<GetResult<byte[]>> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       result.add(null);
     }

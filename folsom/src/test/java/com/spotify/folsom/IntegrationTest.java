@@ -25,7 +25,6 @@ import static org.junit.Assume.assumeTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
@@ -57,7 +56,7 @@ public class IntegrationTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
-    ArrayList<Object[]> res = Lists.newArrayList();
+    ArrayList<Object[]> res = new ArrayList<>();
     res.add(new Object[] {"ascii"});
     res.add(new Object[] {"binary"});
     return res;
@@ -288,12 +287,12 @@ public class IntegrationTest {
 
   @Test
   public void testPartitionMultiget() throws Exception {
-    final List<String> keys = Lists.newArrayList();
+    final List<String> keys = new ArrayList<>();
     for (int i = 0; i < 500; i++) {
       keys.add("key-" + i);
     }
 
-    final List<CompletionStage<MemcacheStatus>> futures = Lists.newArrayList();
+    final List<CompletionStage<MemcacheStatus>> futures = new ArrayList<>();
     try {
       for (final String key : keys) {
         futures.add(client.set(key, key, TTL));
@@ -366,8 +365,8 @@ public class IntegrationTest {
   public void testIncr() throws Throwable {
     assumeBinary();
 
-    assertEquals(new Long(3), binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
-    assertEquals(new Long(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(3), binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
   }
 
   private boolean isAscii() {
@@ -382,17 +381,17 @@ public class IntegrationTest {
   public void testDecr() throws Throwable {
     assumeBinary();
 
-    assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
-    assertEquals(new Long(1), binaryClient.decr(KEY1, 2, 5, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(1), binaryClient.decr(KEY1, 2, 5, TTL).toCompletableFuture().get());
   }
 
   @Test
   public void testDecrBelowZero() throws Throwable {
     assumeBinary();
 
-    assertEquals(new Long(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
     // should not go below 0
-    assertEquals(new Long(0), binaryClient.decr(KEY1, 4, 5, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(0), binaryClient.decr(KEY1, 4, 5, TTL).toCompletableFuture().get());
   }
 
   @Test
@@ -400,11 +399,11 @@ public class IntegrationTest {
     assumeBinary();
 
     // Ascii client behaves differently for this use case
-    assertEquals(new Long(0), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
+    assertEquals(Long.valueOf(0), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
     // memcached will intermittently cause this test to fail due to the value not being set
     // correctly when incr with initial=0 is used, this works around that
     binaryClient.set(KEY1, "0", TTL).toCompletableFuture().get();
-    assertEquals(new Long(2), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
+    assertEquals(Long.valueOf(2), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
   }
 
   @Test
@@ -416,7 +415,7 @@ public class IntegrationTest {
     // memcached will intermittently cause this test to fail due to the value not being set
     // correctly when incr with initial=0 is used, this works around that
     asciiClient.set(KEY1, "0", TTL).toCompletableFuture().get();
-    assertEquals(new Long(2), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
+    assertEquals(Long.valueOf(2), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
   }
 
   @Test
@@ -424,7 +423,7 @@ public class IntegrationTest {
     assumeAscii();
 
     asciiClient.set(KEY1, NUMERIC_VALUE, TTL).toCompletableFuture().get();
-    assertEquals(new Long(125), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
+    assertEquals(Long.valueOf(125), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
   }
 
   @Test
@@ -432,7 +431,7 @@ public class IntegrationTest {
     assumeAscii();
 
     asciiClient.set(KEY1, NUMERIC_VALUE, TTL).toCompletableFuture().get();
-    assertEquals(new Long(121), asciiClient.decr(KEY1, 2).toCompletableFuture().get());
+    assertEquals(Long.valueOf(121), asciiClient.decr(KEY1, 2).toCompletableFuture().get());
   }
 
   @Test

@@ -18,11 +18,11 @@ package com.spotify.folsom.client.binary;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
@@ -31,9 +31,9 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferNoCas() throws Exception {
-    TouchRequest req = new TouchRequest(KEY.getBytes(Charsets.UTF_8), 123);
+    TouchRequest req = new TouchRequest(KEY.getBytes(StandardCharsets.UTF_8), 123);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
-    List<Object> out = Lists.newArrayList();
+    List<Object> out = new ArrayList<>();
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 
@@ -45,9 +45,9 @@ public class TouchRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBufferTtl() throws Exception {
-    GetRequest get = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 123);
+    GetRequest get = new GetRequest(KEY.getBytes(StandardCharsets.UTF_8), OpCode.GET, 123);
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
-    List<Object> out = Lists.newArrayList();
+    List<Object> out = new ArrayList<>();
     memcacheEncoder.encode(ctx, get, out);
     ByteBuf b = (ByteBuf) out.get(0);
 

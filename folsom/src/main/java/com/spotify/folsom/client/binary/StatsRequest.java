@@ -15,9 +15,7 @@
  */
 package com.spotify.folsom.client.binary;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.OpCode;
@@ -27,6 +25,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +34,7 @@ public class StatsRequest extends BinaryRequest<Map<String, MemcachedStats>>
     implements AllRequest<Map<String, MemcachedStats>> {
 
   public StatsRequest(String key) {
-    super(key.getBytes(Charsets.US_ASCII));
+    super(key.getBytes(StandardCharsets.US_ASCII));
   }
 
   private StatsRequest(final byte[] key) {
@@ -51,7 +51,7 @@ public class StatsRequest extends BinaryRequest<Map<String, MemcachedStats>>
 
   @Override
   public void handle(final BinaryResponse replies, final HostAndPort server) throws IOException {
-    final Map<String, String> stats = Maps.newHashMap();
+    final Map<String, String> stats = new HashMap<>();
     final int expectedOpaque = opaque;
     for (final ResponsePacket reply : replies) {
       if (OpCode.getKind(reply.opcode) != OpCode.STAT) {
@@ -62,8 +62,8 @@ public class StatsRequest extends BinaryRequest<Map<String, MemcachedStats>>
         throw new IOException("messages out of order for " + getClass().getSimpleName());
       }
       for (ResponsePacket responsePacket : replies) {
-        final String name = new String(responsePacket.key, Charsets.US_ASCII);
-        final String value = new String(responsePacket.value, Charsets.US_ASCII);
+        final String name = new String(responsePacket.key, StandardCharsets.US_ASCII);
+        final String value = new String(responsePacket.value, StandardCharsets.US_ASCII);
         stats.put(name, value);
       }
     }

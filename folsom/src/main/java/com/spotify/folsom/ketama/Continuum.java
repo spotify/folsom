@@ -16,9 +16,8 @@
 
 package com.spotify.folsom.ketama;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
-import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.spotify.folsom.RawMemcacheClient;
 import java.util.Collection;
@@ -38,7 +37,7 @@ public class Continuum {
   private TreeMap<Integer, RawMemcacheClient> buildRing(
       final Collection<AddressAndClient> clients) {
 
-    final TreeMap<Integer, RawMemcacheClient> r = Maps.newTreeMap();
+    final TreeMap<Integer, RawMemcacheClient> r = new TreeMap<>();
     for (final AddressAndClient client : clients) {
       final String address = client.getAddress().toString();
 
@@ -77,7 +76,7 @@ public class Continuum {
   }
 
   private RawMemcacheClient findClient(final Entry<Integer, RawMemcacheClient> entry) {
-    checkNotNull(entry);
+    requireNonNull(entry);
     return entry.getValue();
   }
 

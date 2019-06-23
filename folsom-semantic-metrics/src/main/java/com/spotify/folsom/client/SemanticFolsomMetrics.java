@@ -19,7 +19,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.RatioGauge;
 import com.codahale.metrics.Timer;
-import com.google.common.collect.Sets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
@@ -28,6 +27,7 @@ import com.spotify.metrics.core.SemanticMetricRegistry;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * {@link com.spotify.folsom.Metrics} implementation using semantic-metrics. Mostly a port of the
@@ -72,7 +72,7 @@ public class SemanticFolsomMetrics implements Metrics {
   private final SemanticMetricRegistry registry;
   private final MetricId id;
 
-  private final Set<OutstandingRequestsGauge> gauges = Sets.newCopyOnWriteArraySet();
+  private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
 
   public SemanticFolsomMetrics(final SemanticMetricRegistry registry, final MetricId baseMetricId) {
 

@@ -16,13 +16,13 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.client.AbstractRequest;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public abstract class AsciiRequest<T> extends AbstractRequest<T> {
-  protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(Charsets.US_ASCII);
+  protected static final byte[] NEWLINE_BYTES = "\r\n".getBytes(StandardCharsets.US_ASCII);
   protected static final byte SPACE_BYTES = ' ';
 
   protected AsciiRequest(byte[] key) {

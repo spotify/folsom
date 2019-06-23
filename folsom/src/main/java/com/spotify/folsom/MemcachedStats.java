@@ -15,7 +15,8 @@
  */
 package com.spotify.folsom;
 
-import com.google.common.base.Preconditions;
+import static java.util.Objects.requireNonNull;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,7 +24,7 @@ public class MemcachedStats {
   private final Map<String, String> stats;
 
   public MemcachedStats(final Map<String, String> stats) {
-    this.stats = Preconditions.checkNotNull(stats);
+    this.stats = requireNonNull(stats);
   }
 
   public Map<String, String> getStats() {

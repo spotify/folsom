@@ -1,7 +1,7 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -13,7 +13,7 @@ public class KetamaServers {
   private final List<MemcachedServer> servers;
 
   public KetamaServers(int instances) {
-    servers = Lists.newArrayList();
+    servers = new ArrayList<>();
     for (int i = 0; i < instances; i++) {
       servers.add(new MemcachedServer());
     }

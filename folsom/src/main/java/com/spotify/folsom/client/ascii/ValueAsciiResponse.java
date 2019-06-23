@@ -16,12 +16,12 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ValueAsciiResponse extends AsciiResponse {
 
-  public final List<ValueResponse> values = Lists.newArrayListWithCapacity(50);
+  public final List<ValueResponse> values = new ArrayList<>(50);
 
   public ValueAsciiResponse() {
     super(Type.VALUE);

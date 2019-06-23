@@ -18,39 +18,39 @@ package com.spotify.folsom.client.ascii;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class IncrRequestTest extends RequestTestTemplate {
 
   @Test
-  public void testIncrRequest() throws Exception {
-    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
+  public void testIncrRequest() {
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(StandardCharsets.UTF_8), 2);
     assertRequest(req, "incr" + " foo 2\r\n");
   }
 
   @Test
-  public void testDecrRequest() throws Exception {
-    IncrRequest req = IncrRequest.createDecr("foo".getBytes(Charsets.UTF_8), 2);
+  public void testDecrRequest() {
+    IncrRequest req = IncrRequest.createDecr("foo".getBytes(StandardCharsets.UTF_8), 2);
     assertRequest(req, "decr" + " foo 2\r\n");
   }
 
   @Test
   public void testResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(StandardCharsets.UTF_8), 2);
 
     AsciiResponse response = new NumericAsciiResponse(123);
     req.handle(response, HostAndPort.fromHost("host"));
 
-    assertEquals(new Long(123), req.get());
+    assertEquals(Long.valueOf(123), req.get());
   }
 
   @Test
   public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
-    IncrRequest req = IncrRequest.createIncr("foo".getBytes(Charsets.UTF_8), 2);
+    IncrRequest req = IncrRequest.createIncr("foo".getBytes(StandardCharsets.UTF_8), 2);
 
     req.handle(AsciiResponse.NOT_FOUND, HostAndPort.fromHost("host"));
     assertEquals(null, req.get());

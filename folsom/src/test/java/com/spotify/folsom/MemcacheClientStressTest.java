@@ -20,14 +20,14 @@ import static org.junit.Assert.assertEquals;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.spotify.folsom.client.Utils;
 import com.spotify.futures.CompletableFutures;
 import com.thimbleware.jmemcached.protocol.MemcachedCommandHandler;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -85,10 +85,10 @@ public class MemcacheClientStressTest {
     client.set(KEY, VALUE, 100000).toCompletableFuture().get();
 
     while (true) {
-      final List<CompletionStage<byte[]>> futures = Lists.newArrayList();
+      final List<CompletionStage<byte[]>> futures = new ArrayList<>();
 
       final AtomicInteger successes = new AtomicInteger();
-      final ConcurrentMap<String, AtomicInteger> failures = Maps.newConcurrentMap();
+      final ConcurrentMap<String, AtomicInteger> failures = new ConcurrentHashMap<>();
       for (int i = 0; i < N; i++) {
         addRequest(client, futures, successes, failures);
       }

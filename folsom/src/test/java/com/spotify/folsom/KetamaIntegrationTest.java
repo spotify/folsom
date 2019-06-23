@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import java.time.Duration;
@@ -44,7 +43,7 @@ public class KetamaIntegrationTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
-    ArrayList<Object[]> res = Lists.newArrayList();
+    ArrayList<Object[]> res = new ArrayList<>();
     res.add(new Object[] {"ascii"});
     res.add(new Object[] {"binary"});
     return res;
@@ -197,8 +196,8 @@ public class KetamaIntegrationTest {
     }
     int listSize = 10;
     for (int i = 0; i <= 100 - listSize; i++) {
-      List<String> keys = Lists.newArrayList();
-      List<String> expectedValues = Lists.newArrayList();
+      List<String> keys = new ArrayList<>();
+      List<String> expectedValues = new ArrayList<>();
       for (int j = 0; j < listSize; j++) {
         keys.add("key-" + (i + j));
         expectedValues.add("value-" + (i + j));

@@ -16,17 +16,17 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class DeleteRequest extends AsciiRequest<MemcacheStatus> {
 
-  private static final byte[] CMD_BYTES = "delete ".getBytes(Charsets.US_ASCII);
+  private static final byte[] CMD_BYTES = "delete ".getBytes(StandardCharsets.US_ASCII);
 
   public DeleteRequest(final byte[] key) {
     super(key);

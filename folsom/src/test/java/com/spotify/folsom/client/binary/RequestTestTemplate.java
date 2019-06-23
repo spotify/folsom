@@ -21,17 +21,17 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
 
 public abstract class RequestTestTemplate {
 
   protected static final int ID = 17;
-  protected static final StringTranscoder TRANSCODER = new StringTranscoder(Charsets.UTF_8);
+  protected static final StringTranscoder TRANSCODER = new StringTranscoder(StandardCharsets.UTF_8);
 
   protected static final ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
 

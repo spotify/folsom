@@ -15,14 +15,14 @@
  */
 package com.spotify.folsom.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
-import com.google.common.collect.Lists;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -66,8 +66,8 @@ public abstract class AbstractRequest<V> extends CompletableFuture<V> implements
   }
 
   public static byte[] encodeKey(String key, Charset charset, int maxKeyLength) {
-    checkNotNull(key, "key");
-    checkNotNull(charset, "charset");
+    requireNonNull(key, "key");
+    requireNonNull(charset, "charset");
     byte[] keyBytes = key.getBytes(charset);
     int length = keyBytes.length;
     if (length > maxKeyLength) {
@@ -88,7 +88,7 @@ public abstract class AbstractRequest<V> extends CompletableFuture<V> implements
   }
 
   public static List<byte[]> encodeKeys(List<String> keys, Charset charset, int maxKeyLength) {
-    List<byte[]> res = Lists.newArrayListWithCapacity(keys.size());
+    List<byte[]> res = new ArrayList<>(keys.size());
     for (String key : keys) {
       res.add(encodeKey(key, charset, maxKeyLength));
     }

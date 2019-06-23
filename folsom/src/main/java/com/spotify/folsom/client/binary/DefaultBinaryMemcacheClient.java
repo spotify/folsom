@@ -16,9 +16,9 @@
 
 package com.spotify.folsom.client.binary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.spotify.folsom.client.AbstractRequest.encodeKey;
 import static com.spotify.folsom.client.AbstractRequest.encodeKeys;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.Lists;
 import com.spotify.folsom.BinaryMemcacheClient;
@@ -132,7 +132,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
   private CompletionStage<MemcacheStatus> casSetInternal(
       final OpCode opcode, final String key, final V value, final int ttl, final long cas) {
-    checkNotNull(value);
+    requireNonNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =

@@ -19,9 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.MemcacheClient;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.MemcacheEncoder;
@@ -32,6 +30,7 @@ import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.transcoder.StringTranscoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -60,7 +59,7 @@ public class KetamaMemcacheClientTest {
 
     final Random random = new Random(123717678612L);
 
-    final ArrayList<AddressAndClient> clients = Lists.newArrayList();
+    final ArrayList<AddressAndClient> clients = new ArrayList<>();
     for (int i = 0; i < numClients; i++) {
       final FakeRawMemcacheClient client = new FakeRawMemcacheClient();
       final AddressAndClient aac =
@@ -77,7 +76,7 @@ public class KetamaMemcacheClientTest {
     final KetamaMemcacheClient ketamaMemcacheClient = new KetamaMemcacheClient(clients);
     final MemcacheClient<String> memcacheClient = buildClient(ketamaMemcacheClient, binary);
 
-    final List<String> requestedKeys = Lists.newArrayList();
+    final List<String> requestedKeys = new ArrayList<>();
     for (int i = 0; i < requestSize; i++) {
       requestedKeys.add("key-" + random.nextInt(keysFound * 2));
     }
@@ -107,7 +106,7 @@ public class KetamaMemcacheClientTest {
           NoopMetrics.INSTANCE,
           NoopTracer.INSTANCE,
           StringTranscoder.UTF8_INSTANCE,
-          Charsets.UTF_8,
+          StandardCharsets.UTF_8,
           MemcacheEncoder.MAX_KEY_LEN);
     } else {
       return new DefaultAsciiMemcacheClient<>(
@@ -115,7 +114,7 @@ public class KetamaMemcacheClientTest {
           new NoopMetrics(),
           NoopTracer.INSTANCE,
           StringTranscoder.UTF8_INSTANCE,
-          Charsets.UTF_8,
+          StandardCharsets.UTF_8,
           MemcacheEncoder.MAX_KEY_LEN);
     }
   }

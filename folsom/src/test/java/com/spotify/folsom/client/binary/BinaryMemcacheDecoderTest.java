@@ -18,8 +18,6 @@ package com.spotify.folsom.client.binary;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Transcoder;
 import com.spotify.folsom.client.OpCode;
@@ -27,6 +25,8 @@ import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.transcoder.StringTranscoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class BinaryMemcacheDecoderTest {
 
   @Test
   public void test() throws Exception {
-    GetRequest request = new GetRequest(KEY.getBytes(Charsets.UTF_8), OpCode.GET, 123);
+    GetRequest request = new GetRequest(KEY.getBytes(StandardCharsets.UTF_8), OpCode.GET, 123);
     BinaryMemcacheDecoder decoder = new BinaryMemcacheDecoder();
 
     ByteBuf cb = Unpooled.buffer(30);
@@ -58,7 +58,7 @@ public class BinaryMemcacheDecoderTest {
     cb.writeBytes(KEY.getBytes());
     cb.writeBytes(VALUE.getBytes());
 
-    List<Object> out = Lists.newArrayList();
+    List<Object> out = new ArrayList<>();
     decoder.decode(null, cb, out);
     @SuppressWarnings("unchecked")
     List<ResponsePacket> replies = (List<ResponsePacket>) out.get(0);

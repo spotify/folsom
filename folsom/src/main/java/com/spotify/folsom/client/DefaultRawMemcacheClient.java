@@ -16,7 +16,7 @@
 
 package com.spotify.folsom.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.common.base.Supplier;
@@ -197,7 +197,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.timeoutMillis = timeoutMillis;
     this.metrics = metrics;
     this.maxSetLength = maxSetLength;
-    this.channel = checkNotNull(channel, "channel");
+    this.channel = requireNonNull(channel, "channel");
     this.flusher = new BatchFlusher(channel, batchSize);
     this.outstandingRequestLimit = outstandingRequestLimit;
 

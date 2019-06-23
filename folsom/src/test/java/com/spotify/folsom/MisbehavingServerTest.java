@@ -19,12 +19,12 @@ package com.spotify.folsom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import com.google.common.base.Charsets;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -205,7 +205,7 @@ public class MisbehavingServerTest {
     private volatile Socket socket;
 
     private Server(String responseString) throws IOException {
-      final byte[] response = responseString.getBytes(Charsets.UTF_8);
+      final byte[] response = responseString.getBytes(StandardCharsets.UTF_8);
       serverSocket = new ServerSocket(0);
       port = serverSocket.getLocalPort();
       thread =
@@ -230,7 +230,7 @@ public class MisbehavingServerTest {
                     s = reader.readLine();
                     if (s.equals("get folsom_authentication_validation")) {
                       // Handle authentication phase first
-                      socket.getOutputStream().write("END\r\n".getBytes(Charsets.UTF_8));
+                      socket.getOutputStream().write("END\r\n".getBytes(StandardCharsets.UTF_8));
                       socket.getOutputStream().flush();
                     } else {
                       break;
