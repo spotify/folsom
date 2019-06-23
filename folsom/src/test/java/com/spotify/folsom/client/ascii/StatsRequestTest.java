@@ -18,12 +18,12 @@ package com.spotify.folsom.client.ascii;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
 public class StatsRequestTest extends RequestTestTemplate {
 

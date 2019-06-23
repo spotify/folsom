@@ -2,6 +2,7 @@ package com.spotify.folsom;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.thimbleware.jmemcached.protocol.text.MemcachedResponseEncoder;
 import io.netty.channel.nio.NioEventLoop;
 import java.time.Duration;
@@ -16,7 +17,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class ReconnectStressTest {
 
