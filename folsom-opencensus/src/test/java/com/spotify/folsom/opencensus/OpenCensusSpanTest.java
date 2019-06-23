@@ -16,10 +16,16 @@
 
 package com.spotify.folsom.opencensus;
 
+import static io.opencensus.trace.AttributeValue.longAttributeValue;
+import static io.opencensus.trace.AttributeValue.stringAttributeValue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
+import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.Span;
 import io.opencensus.trace.Status;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -27,6 +33,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OpenCensusSpanTest {
+
+  private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
+  private static final byte[] VALUE = "value".getBytes(StandardCharsets.US_ASCII);
 
   @Mock private io.opencensus.trace.Span wrapped;
 
@@ -48,5 +57,31 @@ public class OpenCensusSpanTest {
 
     verify(wrapped).setStatus(Status.UNKNOWN);
     verify(wrapped).end();
+  }
+
+  @Test
+  public void includedValue() {
+    final Span span = new OpenCensusSpan(wrapped, true);
+    span.value(VALUE);
+
+    verify(wrapped).putAttribute("value_size_bytes", longAttributeValue(VALUE.length));
+    verify(wrapped).putAttribute("value_hex", stringAttributeValue(HEX.encode(VALUE)));
+  }
+
+  @Test
+  public void nonIncludedValue() {
+    final Span span = new OpenCensusSpan(wrapped, false);
+    span.value(VALUE);
+
+    verify(wrapped).putAttribute("value_size_bytes", longAttributeValue(VALUE.length));
+    verify(wrapped, never()).putAttribute("value_hex", stringAttributeValue(HEX.encode(VALUE)));
+  }
+
+  @Test
+  public void nullValue() {
+    final Span span = new OpenCensusSpan(wrapped, true);
+    span.value(null);
+
+    verifyZeroInteractions(wrapped);
   }
 }

@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.opencensus;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
 
@@ -31,16 +32,18 @@ class OpenCensusSpan implements Span {
   private final boolean includeValues;
 
   OpenCensusSpan(final io.opencensus.trace.Span span, final boolean includeValues) {
-    this.span = span;
+    this.span = checkNotNull(span);
     this.includeValues = includeValues;
   }
 
   @Override
   public Span value(final byte[] value) {
-    if (includeValues) {
-      span.putAttribute("value_hex", stringAttributeValue(HEX.encode(value)));
+    if (value != null) {
+      if (includeValues) {
+        span.putAttribute("value_hex", stringAttributeValue(HEX.encode(value)));
+      }
+      span.putAttribute("value_size_bytes", longAttributeValue(value.length));
     }
-    span.putAttribute("value_size_bytes", longAttributeValue(value.length));
     return this;
   }
 
