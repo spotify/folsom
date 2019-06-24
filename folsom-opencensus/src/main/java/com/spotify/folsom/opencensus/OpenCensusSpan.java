@@ -16,9 +16,9 @@
 
 package com.spotify.folsom.opencensus;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.Span;
@@ -32,7 +32,7 @@ class OpenCensusSpan implements Span {
   private final boolean includeValues;
 
   OpenCensusSpan(final io.opencensus.trace.Span span, final boolean includeValues) {
-    this.span = checkNotNull(span);
+    this.span = requireNonNull(span);
     this.includeValues = includeValues;
   }
 
