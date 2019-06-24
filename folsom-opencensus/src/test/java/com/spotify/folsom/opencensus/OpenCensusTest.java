@@ -19,6 +19,7 @@ package com.spotify.folsom.opencensus;
 import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.MemcacheClient;
@@ -32,6 +33,7 @@ import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.config.TraceParams;
 import io.opencensus.trace.export.SpanData;
 import io.opencensus.trace.samplers.Samplers;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -46,13 +48,13 @@ public class OpenCensusTest {
   private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
   private static final String ROOT_SPAN_NAME = "trace-test";
-  public static final String KEY = "hello";
-  public static final String VALUE = "world";
+  private static final String KEY = "hello";
+  private static final byte[] VALUE = "world".getBytes(StandardCharsets.US_ASCII);
 
   private final TestHandler handler = new TestHandler();
 
   private GenericContainer container;
-  private MemcacheClientBuilder<String> builder;
+  private MemcacheClientBuilder<byte[]> builder;
 
   @Before
   public void setUp() {
@@ -67,9 +69,9 @@ public class OpenCensusTest {
     container.start();
 
     builder =
-        MemcacheClientBuilder.newStringClient()
+        MemcacheClientBuilder.newByteArrayClient()
             .withAddress(container.getContainerIpAddress(), container.getFirstMappedPort())
-            .withTracer(OpenCensus.tracer());
+            .withTracer(new OpenCensus.Builder().withIncludeValues(true).build());
   }
 
   @Test
@@ -82,11 +84,12 @@ public class OpenCensusTest {
     trace(builder.connectBinary());
   }
 
-  private void trace(final MemcacheClient<String> client)
+  private void trace(final MemcacheClient<byte[]> client)
       throws TimeoutException, InterruptedException {
     client.awaitConnected(10, TimeUnit.SECONDS);
 
     try (final Scope scope = Tracing.getTracer().spanBuilder(ROOT_SPAN_NAME).startScopedSpan()) {
+      client.get(KEY);
       client.set(KEY, VALUE, 3600);
       client.get(KEY);
     }
@@ -100,16 +103,18 @@ public class OpenCensusTest {
 
     // find first level spans
     final List<SpanData> firstLevel = getByParent(spans, root);
-    assertEquals(2, firstLevel.size());
+    assertEquals(3, firstLevel.size());
 
-    assertSpan("folsom.set", "set", KEY, firstLevel.get(0));
-    assertSpan("folsom.get", "get", KEY, firstLevel.get(1));
+    assertSpan("folsom.get", "get", KEY, null, firstLevel.get(0));
+    assertSpan("folsom.set", "set", KEY, VALUE, firstLevel.get(1));
+    assertSpan("folsom.get", "get", KEY, VALUE, firstLevel.get(2));
   }
 
   private void assertSpan(
       final String expectedName,
       final String expectedOperation,
       final String expectedKey,
+      final byte[] expectedValue,
       final SpanData actual) {
     assertEquals(expectedName, actual.getName());
     assertEquals(Status.OK, actual.getStatus());
@@ -117,7 +122,13 @@ public class OpenCensusTest {
     final Map<String, AttributeValue> attributes = actual.getAttributes().getAttributeMap();
     assertEquals(stringAttributeValue(expectedOperation), attributes.get("operation"));
     assertEquals(stringAttributeValue(expectedKey), attributes.get("key"));
-    assertEquals(longAttributeValue(VALUE.length()), attributes.get("value_size_bytes"));
+    if (expectedValue != null) {
+      assertEquals(longAttributeValue(expectedValue.length), attributes.get("value_size_bytes"));
+      assertEquals(stringAttributeValue(HEX.encode(expectedValue)), attributes.get("value_hex"));
+    } else {
+      assertNull(attributes.get("value_size_bytes"));
+      assertNull(attributes.get("value_hex"));
+    }
   }
 
   private List<SpanData> getByParent(final List<SpanData> spans, final SpanData parent) {
