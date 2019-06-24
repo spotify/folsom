@@ -17,16 +17,16 @@
 package com.spotify.folsom.guava;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
-import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.net.HostSpecifier;
 import com.google.common.net.InetAddresses;
 import java.io.Serializable;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -165,7 +165,7 @@ public final class HostAndPort implements Serializable {
    * @throws IllegalArgumentException if nothing meaningful could be parsed.
    */
   public static HostAndPort fromString(String hostPortString) {
-    checkNotNull(hostPortString);
+    requireNonNull(hostPortString);
     String host;
     String portString = null;
     boolean hasBracketlessColons = false;
@@ -285,7 +285,7 @@ public final class HostAndPort implements Serializable {
     }
     if (other instanceof HostAndPort) {
       HostAndPort that = (HostAndPort) other;
-      return Objects.equal(this.host, that.host)
+      return Objects.equals(this.host, that.host)
           && this.port == that.port
           && this.hasBracketlessColons == that.hasBracketlessColons;
     }
@@ -294,7 +294,7 @@ public final class HostAndPort implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(host, port, hasBracketlessColons);
+    return Objects.hash(host, port, hasBracketlessColons);
   }
 
   /** Rebuild the host:port string, including brackets if necessary. */

@@ -16,8 +16,6 @@
 
 package com.spotify.folsom.ketama;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
@@ -25,7 +23,9 @@ import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
 import com.spotify.futures.CompletableFutures;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,7 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
       final Collection<AddressAndClient> addressAndClients) {
 
     int size = addressAndClients.size();
-    final List<RawMemcacheClient> clients = Lists.newArrayListWithCapacity(size);
+    final List<RawMemcacheClient> clients = new ArrayList<>(size);
     for (final AddressAndClient client : addressAndClients) {
       clients.add(client.getClient());
     }
@@ -92,16 +92,16 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
   private <T> CompletionStage<List<T>> sendSplitRequest(final MultiRequest<T> multiRequest) {
     final List<byte[]> keys = multiRequest.getKeys();
 
-    final Map<RawMemcacheClient, List<byte[]>> routing = Maps.newIdentityHashMap();
-    final List<RawMemcacheClient> routing2 = Lists.newArrayListWithCapacity(keys.size());
+    final Map<RawMemcacheClient, List<byte[]>> routing = new IdentityHashMap<>();
+    final List<RawMemcacheClient> routing2 = new ArrayList<>(keys.size());
     for (final byte[] key : keys) {
       final RawMemcacheClient client = getClient(key);
-      List<byte[]> subKeys = routing.computeIfAbsent(client, k -> Lists.newArrayList());
+      List<byte[]> subKeys = routing.computeIfAbsent(client, k -> new ArrayList<>());
       subKeys.add(key);
       routing2.add(client);
     }
 
-    final Map<RawMemcacheClient, CompletionStage<List<T>>> futures = Maps.newIdentityHashMap();
+    final Map<RawMemcacheClient, CompletionStage<List<T>>> futures = new IdentityHashMap<>();
 
     for (final Map.Entry<RawMemcacheClient, List<byte[]>> entry : routing.entrySet()) {
       final List<byte[]> subKeys = entry.getValue();
@@ -126,12 +126,12 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
 
     @Override
     public List<T> apply(final Void ignored) {
-      final Map<R, Iterator<T>> map = Maps.newIdentityHashMap();
+      final Map<R, Iterator<T>> map = new IdentityHashMap<>();
       for (final Map.Entry<R, CompletionStage<List<T>>> entry : futures.entrySet()) {
         final R client = entry.getKey();
         map.put(client, CompletableFutures.getCompleted(entry.getValue()).iterator());
       }
-      final List<T> result = Lists.newArrayList();
+      final List<T> result = new ArrayList<>();
       for (final R memcacheClient : routing2) {
         final Iterator<T> iterator = map.get(memcacheClient);
         result.add(iterator.next());

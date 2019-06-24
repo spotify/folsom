@@ -20,13 +20,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.SrvKetamaClient;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +48,7 @@ public class SrvKetamaClientTest {
     // Run shutdown code immediately
     DeterministicScheduler executor = new DeterministicScheduler();
 
-    final Map<HostAndPort, FakeRawMemcacheClient> knownClients = Maps.newHashMap();
+    final Map<HostAndPort, FakeRawMemcacheClient> knownClients = new HashMap<>();
 
     SrvKetamaClient.Connector connector =
         input -> {
@@ -124,7 +124,7 @@ public class SrvKetamaClientTest {
 
     Set<RawMemcacheClient> allClients = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    final Map<HostAndPort, FakeRawMemcacheClient> knownClients = Maps.newHashMap();
+    final Map<HostAndPort, FakeRawMemcacheClient> knownClients = new HashMap<>();
 
     SrvKetamaClient.Connector connector =
         input -> {

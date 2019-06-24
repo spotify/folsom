@@ -16,7 +16,7 @@
 
 package com.spotify.folsom.client.binary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
@@ -35,8 +35,8 @@ public class GetRequest extends BinaryRequest<GetResult<byte[]>>
 
   public GetRequest(final byte[] key, final OpCode opcode, final int ttl) {
     super(key);
-    this.opcode = checkNotNull(opcode, "opcode");
-    this.ttl = checkNotNull(ttl, "ttl");
+    this.opcode = requireNonNull(opcode, "opcode");
+    this.ttl = requireNonNull(ttl, "ttl");
   }
 
   @Override

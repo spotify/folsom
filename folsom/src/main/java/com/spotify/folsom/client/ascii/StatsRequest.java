@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.client.AllRequest;
@@ -25,6 +24,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +34,7 @@ public class StatsRequest extends AsciiRequest<Map<String, MemcachedStats>>
   private static final byte[] CMD = "stats ".getBytes();
 
   public StatsRequest(final String key) {
-    this(key.getBytes(Charsets.US_ASCII));
+    this(key.getBytes(StandardCharsets.US_ASCII));
   }
 
   private StatsRequest(final byte[] key) {

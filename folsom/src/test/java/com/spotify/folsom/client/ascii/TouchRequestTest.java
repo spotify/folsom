@@ -18,19 +18,19 @@ package com.spotify.folsom.client.ascii;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.guava.HostAndPort;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class TouchRequestTest extends RequestTestTemplate {
 
-  private TouchRequest req = new TouchRequest("foo".getBytes(Charsets.UTF_8), 123);
+  private TouchRequest req = new TouchRequest("foo".getBytes(StandardCharsets.UTF_8), 123);
 
   @Test
-  public void testRequest() throws Exception {
+  public void testRequest() {
     assertRequest(req, "touch foo 123\r\n");
   }
 

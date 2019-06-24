@@ -16,13 +16,13 @@
 
 package com.spotify.folsom.transcoder;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.Transcoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class StringTranscoder implements Transcoder<String> {
 
-  public static final StringTranscoder UTF8_INSTANCE = new StringTranscoder(Charsets.UTF_8);
+  public static final StringTranscoder UTF8_INSTANCE = new StringTranscoder(StandardCharsets.UTF_8);
 
   private final Charset charset;
 

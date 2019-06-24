@@ -18,14 +18,14 @@ package com.spotify.folsom.transcoder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Charsets;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 public class StringTranscoderTest {
 
   private static final String STRING = "hällo wörld";
-  private static final byte[] BYTES = STRING.getBytes(Charsets.UTF_8);
-  private StringTranscoder transcoder = new StringTranscoder(Charsets.UTF_8);
+  private static final byte[] BYTES = STRING.getBytes(StandardCharsets.UTF_8);
+  private StringTranscoder transcoder = new StringTranscoder(StandardCharsets.UTF_8);
 
   @Test
   public void testDecodeEncode() {

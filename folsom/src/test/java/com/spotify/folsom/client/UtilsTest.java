@@ -2,12 +2,12 @@ package com.spotify.folsom.client;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Test;
-import org.testcontainers.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class UtilsTest {
   @Test

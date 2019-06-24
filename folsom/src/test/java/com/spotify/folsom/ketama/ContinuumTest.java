@@ -21,10 +21,10 @@ import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -184,6 +184,6 @@ public class ContinuumTest {
   }
 
   private static byte[] bytes(String key) {
-    return key.getBytes(Charsets.US_ASCII);
+    return key.getBytes(StandardCharsets.US_ASCII);
   }
 }

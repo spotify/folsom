@@ -16,12 +16,11 @@
 
 package com.spotify.folsom.client.binary;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.spotify.folsom.MemcacheStatus.OK;
 import static com.spotify.folsom.MemcacheStatus.UNAUTHORIZED;
 import static com.spotify.folsom.MemcacheStatus.UNKNOWN_COMMAND;
+import static java.util.Objects.requireNonNull;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.guava.HostAndPort;
@@ -29,10 +28,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> {
 
-  private static final byte[] KEY = "PLAIN".getBytes(Charsets.US_ASCII);
+  private static final byte[] KEY = "PLAIN".getBytes(StandardCharsets.US_ASCII);
 
   private final String username;
   private final String password;
@@ -41,8 +41,8 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     // Key is auth type
     super(KEY);
 
-    this.username = checkNotNull(username);
-    this.password = checkNotNull(password);
+    this.username = requireNonNull(username);
+    this.password = requireNonNull(password);
   }
 
   @Override
@@ -56,9 +56,9 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
 
     final byte separator = 0x00;
     dst.put(separator);
-    dst.put(username.getBytes(Charsets.US_ASCII));
+    dst.put(username.getBytes(StandardCharsets.US_ASCII));
     dst.put(separator);
-    dst.put(password.getBytes(Charsets.US_ASCII));
+    dst.put(password.getBytes(StandardCharsets.US_ASCII));
 
     return toBuffer(alloc, dst);
   }

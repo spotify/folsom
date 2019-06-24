@@ -16,7 +16,6 @@
 
 package com.spotify.folsom.client.binary;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
@@ -25,11 +24,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class NoopRequest extends BinaryRequest<Void> {
 
   // Keys have to be valid, so pick the key "X" even though we will never actually use it.
-  private static final byte[] DUMMY_KEY = "X".getBytes(Charsets.US_ASCII);
+  private static final byte[] DUMMY_KEY = "X".getBytes(StandardCharsets.US_ASCII);
 
   public NoopRequest() {
     super(DUMMY_KEY);

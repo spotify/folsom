@@ -16,8 +16,6 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.MultiRequest;
@@ -27,14 +25,16 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
     implements MultiRequest<GetResult<byte[]>> {
 
-  private static final byte[] GET = "get ".getBytes(Charsets.US_ASCII);
-  private static final byte[] CAS_GET = "gets ".getBytes(Charsets.US_ASCII);
+  private static final byte[] GET = "get ".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] CAS_GET = "gets ".getBytes(StandardCharsets.US_ASCII);
 
   private final List<byte[]> keys;
   private final byte[] cmd;
@@ -69,7 +69,7 @@ public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
   @Override
   public void handle(AsciiResponse response, final HostAndPort server) throws IOException {
     final int size = keys.size();
-    final List<GetResult<byte[]>> result = Lists.newArrayListWithCapacity(size);
+    final List<GetResult<byte[]>> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       result.add(null);
     }

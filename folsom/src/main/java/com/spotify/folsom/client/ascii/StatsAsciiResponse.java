@@ -16,12 +16,12 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.Map;
 
 public class StatsAsciiResponse extends AsciiResponse {
 
-  public final Map<String, String> values = Maps.newHashMap();
+  public final Map<String, String> values = new HashMap<>();
 
   public StatsAsciiResponse() {
     super(Type.STATS);

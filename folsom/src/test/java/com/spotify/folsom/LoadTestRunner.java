@@ -16,8 +16,8 @@
 
 package com.spotify.folsom;
 
-import com.google.common.collect.Lists;
 import com.spotify.futures.CompletableFutures;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -35,7 +35,7 @@ public class LoadTestRunner {
       keys[i] = "key" + i;
     }
 
-    final List<CompletionStage<Boolean>> futures = Lists.newArrayList();
+    final List<CompletionStage<Boolean>> futures = new ArrayList<>();
     for (int r = 0; r < 100; r++) {
       for (final String keyProto : keys) {
         final String key = keyProto + ":" + r;

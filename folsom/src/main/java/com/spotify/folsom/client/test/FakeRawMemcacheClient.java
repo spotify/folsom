@@ -15,8 +15,6 @@
  */
 package com.spotify.folsom.client.test;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
@@ -32,6 +30,8 @@ import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
 import com.spotify.futures.CompletableFutures;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -40,7 +40,7 @@ import java.util.concurrent.CompletionStage;
 public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private boolean connected = true;
-  private final Map<ByteBuffer, byte[]> map = Maps.newHashMap();
+  private final Map<ByteBuffer, byte[]> map = new HashMap<>();
   private int outstanding = 0;
 
   public FakeRawMemcacheClient() {
@@ -72,7 +72,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
     }
 
     if (request instanceof MultiRequest) {
-      List<GetResult<byte[]>> result = Lists.newArrayList();
+      List<GetResult<byte[]>> result = new ArrayList<>();
       MultiRequest<?> multiRequest = (MultiRequest<?>) request;
       for (byte[] key : multiRequest.getKeys()) {
         byte[] value = map.get(ByteBuffer.wrap(key));

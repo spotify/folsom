@@ -16,7 +16,7 @@
 
 package com.spotify.folsom;
 
-import com.google.common.base.Preconditions;
+import static java.util.Objects.requireNonNull;
 
 public class GetResult<V> {
 
@@ -24,12 +24,12 @@ public class GetResult<V> {
   private final long cas;
 
   private GetResult(final V value, final long cas) {
-    this.value = Preconditions.checkNotNull(value);
+    this.value = requireNonNull(value);
     this.cas = cas;
   }
 
   public static <V> GetResult<V> success(final V value, final long cas) {
-    Preconditions.checkNotNull(value, "value");
+    requireNonNull(value, "value");
     return new GetResult<>(value, cas);
   }
 

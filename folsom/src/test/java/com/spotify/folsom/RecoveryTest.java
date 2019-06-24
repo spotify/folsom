@@ -24,7 +24,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
@@ -32,6 +31,7 @@ import com.thimbleware.jmemcached.Cache;
 import com.thimbleware.jmemcached.CacheElement;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -101,7 +101,7 @@ public class RecoveryTest {
 
     // Overload the client
     final int overload = 10;
-    final List<CompletionStage<String>> overloadFutures = Lists.newArrayList();
+    final List<CompletionStage<String>> overloadFutures = new ArrayList<>();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS + overload; i++) {
       overloadFutures.add(client.get("foo"));
     }
@@ -134,7 +134,7 @@ public class RecoveryTest {
     answer.set(elements("foo", "bar"));
 
     // Verify that the client recovers and successfully processes requests
-    final List<CompletionStage<String>> recoveryFutures = Lists.newArrayList();
+    final List<CompletionStage<String>> recoveryFutures = new ArrayList<>();
     for (int i = 0; i < MAX_OUTSTANDING_REQUESTS; i++) {
       recoveryFutures.add(client.get("foo"));
     }

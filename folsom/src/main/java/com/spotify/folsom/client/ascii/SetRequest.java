@@ -16,7 +16,8 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
@@ -33,15 +34,15 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
 
   static {
     CMD = new EnumMap<>(Operation.class);
-    CMD.put(Operation.SET, "set ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.ADD, "add ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.REPLACE, "replace ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.APPEND, "append ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.PREPEND, "prepend ".getBytes(Charsets.US_ASCII));
-    CMD.put(Operation.CAS, "cas ".getBytes(Charsets.US_ASCII));
+    CMD.put(Operation.SET, "set ".getBytes(US_ASCII));
+    CMD.put(Operation.ADD, "add ".getBytes(US_ASCII));
+    CMD.put(Operation.REPLACE, "replace ".getBytes(US_ASCII));
+    CMD.put(Operation.APPEND, "append ".getBytes(US_ASCII));
+    CMD.put(Operation.PREPEND, "prepend ".getBytes(US_ASCII));
+    CMD.put(Operation.CAS, "cas ".getBytes(US_ASCII));
   }
 
-  private static final byte[] FLAGS = " 0 ".getBytes(Charsets.US_ASCII);
+  private static final byte[] FLAGS = " 0 ".getBytes(US_ASCII);
 
   private final Operation operation;
   private final byte[] value;

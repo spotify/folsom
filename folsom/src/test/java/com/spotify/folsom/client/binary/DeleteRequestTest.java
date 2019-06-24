@@ -16,11 +16,11 @@
 
 package com.spotify.folsom.client.binary;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
@@ -29,9 +29,9 @@ public class DeleteRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    DeleteRequest req = new DeleteRequest(KEY.getBytes(Charsets.UTF_8));
+    DeleteRequest req = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8));
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
-    List<Object> out = Lists.newArrayList();
+    List<Object> out = new ArrayList<>();
     memcacheEncoder.encode(ctx, req, out);
     ByteBuf b = (ByteBuf) out.get(0);
 

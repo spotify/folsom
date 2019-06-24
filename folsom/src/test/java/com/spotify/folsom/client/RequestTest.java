@@ -15,30 +15,30 @@
  */
 package com.spotify.folsom.client;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 public class RequestTest {
 
   @Test
-  public void testValidateKey() throws Exception {
-    AbstractRequest.encodeKey("hello", Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+  public void testValidateKey() {
+    AbstractRequest.encodeKey("hello", StandardCharsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
   }
 
   @Test
-  public void testValidateUTFCharacter() throws Exception {
-    AbstractRequest.encodeKey("räksmörgås", Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+  public void testValidateUTFCharacter() {
+    AbstractRequest.encodeKey("räksmörgås", StandardCharsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testValidateKeyTooLongKey() throws Exception {
+  public void testValidateKeyTooLongKey() {
     AbstractRequest.encodeKey(
-        Strings.repeat("hello", 100), Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+        Strings.repeat("hello", 100), StandardCharsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testValidateKeyWithSpace() throws Exception {
-    AbstractRequest.encodeKey("hello world", Charsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
+  public void testValidateKeyWithSpace() {
+    AbstractRequest.encodeKey("hello world", StandardCharsets.UTF_8, MemcacheEncoder.MAX_KEY_LEN);
   }
 }

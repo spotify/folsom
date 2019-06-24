@@ -20,11 +20,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -40,12 +40,12 @@ public class MemcacheClientBuilderTest {
   private static MemcachedServer server;
 
   @BeforeClass
-  public static void setUp() throws Exception {
+  public static void setUp() {
     server = MemcachedServer.SIMPLE_INSTANCE.get();
   }
 
   @Before
-  public void setUpInstance() throws Exception {
+  public void setUpInstance() {
     server.flush();
   }
 
@@ -53,7 +53,7 @@ public class MemcacheClientBuilderTest {
   public void testValidLatin1() throws Exception {
     AsciiMemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
-            .withKeyCharset(Charsets.ISO_8859_1)
+            .withKeyCharset(StandardCharsets.ISO_8859_1)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
@@ -69,7 +69,7 @@ public class MemcacheClientBuilderTest {
   public void testValidUTF8() throws Exception {
     AsciiMemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
-            .withKeyCharset(Charsets.UTF_8)
+            .withKeyCharset(StandardCharsets.UTF_8)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
@@ -85,7 +85,7 @@ public class MemcacheClientBuilderTest {
   public void testInvalidUTF16() throws Exception {
     AsciiMemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
-            .withKeyCharset(Charsets.UTF_16)
+            .withKeyCharset(StandardCharsets.UTF_16)
             .withAddress(server.getHost(), server.getPort())
             .connectAscii();
     try {
@@ -107,7 +107,7 @@ public class MemcacheClientBuilderTest {
     client.awaitConnected(10, TimeUnit.SECONDS);
 
     try {
-      List<CompletionStage<String>> futures = Lists.newArrayList();
+      List<CompletionStage<String>> futures = new ArrayList<>();
       for (int i = 0; i < 4000; i++) {
         futures.add(client.get("key"));
       }

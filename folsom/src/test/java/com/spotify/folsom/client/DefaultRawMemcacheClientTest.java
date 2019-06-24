@@ -22,8 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
@@ -42,6 +40,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -77,7 +76,7 @@ public class DefaultRawMemcacheClientTest {
                 false,
                 null,
                 3000,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
@@ -90,12 +89,12 @@ public class DefaultRawMemcacheClientTest {
             rawClient,
             new NoopMetrics(),
             NoopTracer.INSTANCE,
-            new StringTranscoder(Charsets.UTF_8),
-            Charsets.UTF_8,
+            new StringTranscoder(StandardCharsets.UTF_8),
+            StandardCharsets.UTF_8,
             MemcacheEncoder.MAX_KEY_LEN);
 
     try {
-      List<CompletionStage<?>> futures = Lists.newArrayList();
+      List<CompletionStage<?>> futures = new ArrayList<>();
       for (int i = 0; i < 2; i++) {
         futures.add(asciiClient.set("key", "value" + i, 0));
       }
@@ -143,7 +142,7 @@ public class DefaultRawMemcacheClientTest {
     try {
       rawClient
           .send(
-              new AsciiRequest<String>("key".getBytes(Charsets.UTF_8)) {
+              new AsciiRequest<String>("key".getBytes(StandardCharsets.UTF_8)) {
                 @Override
                 protected void handle(final AsciiResponse response, final HostAndPort server)
                     throws IOException {
@@ -179,7 +178,7 @@ public class DefaultRawMemcacheClientTest {
                 false,
                 null,
                 1000,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
@@ -188,7 +187,7 @@ public class DefaultRawMemcacheClientTest {
             .get();
 
     final CompletionStage<?> future =
-        rawClient.send(new GetRequest("foo".getBytes(Charsets.UTF_8), false));
+        rawClient.send(new GetRequest("foo".getBytes(StandardCharsets.UTF_8), false));
     try {
       future.toCompletableFuture().get();
       fail();
@@ -218,7 +217,7 @@ public class DefaultRawMemcacheClientTest {
                 binary,
                 executor,
                 timeoutMillis,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 maxSetLength,
                 null,
@@ -227,7 +226,7 @@ public class DefaultRawMemcacheClientTest {
             .get();
 
     try {
-      byte[] key = "foo".getBytes(Charsets.UTF_8);
+      byte[] key = "foo".getBytes(StandardCharsets.UTF_8);
       final com.spotify.folsom.client.binary.GetRequest request =
           new com.spotify.folsom.client.binary.GetRequest(key, OpCode.GET, -1);
 
@@ -262,7 +261,7 @@ public class DefaultRawMemcacheClientTest {
                 binary,
                 executor,
                 timeoutMillis,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 maxSetLength,
                 null,
@@ -271,7 +270,7 @@ public class DefaultRawMemcacheClientTest {
             .get();
 
     try {
-      final GetRequest request = new GetRequest("foo".getBytes(Charsets.UTF_8), false);
+      final GetRequest request = new GetRequest("foo".getBytes(StandardCharsets.UTF_8), false);
 
       // Send request once
       rawClient.send(request).toCompletableFuture().get();
@@ -298,7 +297,7 @@ public class DefaultRawMemcacheClientTest {
                 false,
                 null,
                 1000,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
@@ -325,7 +324,7 @@ public class DefaultRawMemcacheClientTest {
                 false,
                 null,
                 1000,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
@@ -341,7 +340,7 @@ public class DefaultRawMemcacheClientTest {
     for (int i = 0; i < 100; i++) {
       try {
         rawClient
-            .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+            .send(new GetRequest("key".getBytes(StandardCharsets.UTF_8), false))
             .toCompletableFuture()
             .get();
       } catch (ExecutionException e) {
@@ -351,7 +350,7 @@ public class DefaultRawMemcacheClientTest {
 
     try {
       rawClient
-          .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+          .send(new GetRequest("key".getBytes(StandardCharsets.UTF_8), false))
           .toCompletableFuture()
           .get();
     } catch (ExecutionException e) {
@@ -373,7 +372,7 @@ public class DefaultRawMemcacheClientTest {
                 false,
                 null,
                 1000,
-                Charsets.UTF_8,
+                StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
@@ -387,7 +386,7 @@ public class DefaultRawMemcacheClientTest {
 
     try {
       rawClient
-          .send(new GetRequest("key".getBytes(Charsets.UTF_8), false))
+          .send(new GetRequest("key".getBytes(StandardCharsets.UTF_8), false))
           .toCompletableFuture()
           .get();
     } catch (ExecutionException e) {
@@ -398,7 +397,7 @@ public class DefaultRawMemcacheClientTest {
   @Test
   public void testOutstandingRequestMetric() throws Exception {
     final OutstandingRequestListenerMetrics metrics = new OutstandingRequestListenerMetrics();
-    final Charset charset = Charsets.UTF_8;
+    final Charset charset = StandardCharsets.UTF_8;
     final byte[] response = "END\r\n".getBytes(charset);
 
     try (SlowStaticServer server = new SlowStaticServer(response, 1000)) {

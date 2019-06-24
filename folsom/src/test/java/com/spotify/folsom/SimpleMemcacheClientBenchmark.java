@@ -18,11 +18,10 @@ package com.spotify.folsom;
 
 import static java.util.concurrent.TimeUnit.DAYS;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -90,13 +89,13 @@ public class SimpleMemcacheClientBenchmark {
     }
     // Set up test data
 
-    final List<List<String>> keys = Lists.newArrayList();
-    final List<List<String>> values = Lists.newArrayList();
+    final List<List<String>> keys = new ArrayList<>();
+    final List<List<String>> values = new ArrayList<>();
 
-    final List<CompletionStage<MemcacheStatus>> futures = Lists.newArrayList();
+    final List<CompletionStage<MemcacheStatus>> futures = new ArrayList<>();
     for (int i = 0; i < CONCURRENCY; i++) {
-      final List<String> keys2 = Lists.newArrayList();
-      final List<String> values2 = Lists.newArrayList();
+      final List<String> keys2 = new ArrayList<>();
+      final List<String> values2 = new ArrayList<>();
       for (int j = 0; j < MULTIGET_SIZE; j++) {
         final String key = String.format("key-%020d-%010d", i, j);
         final String value = String.format("value-%0200d-%0200d", i, j);
@@ -146,7 +145,7 @@ public class SimpleMemcacheClientBenchmark {
   }
 
   private static Map<String, String> toMap(final List<String> keys, final List<String> values) {
-    final HashMap<String, String> map = Maps.newHashMap();
+    final HashMap<String, String> map = new HashMap<>();
     for (int i = 0; i < keys.size(); i++) {
       map.put(keys.get(i), values.get(i));
     }

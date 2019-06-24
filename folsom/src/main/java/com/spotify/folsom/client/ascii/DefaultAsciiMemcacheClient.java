@@ -16,9 +16,9 @@
 
 package com.spotify.folsom.client.ascii;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.spotify.folsom.client.AbstractRequest.encodeKey;
 import static com.spotify.folsom.client.AbstractRequest.encodeKeys;
+import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.Lists;
 import com.spotify.folsom.AsciiMemcacheClient;
@@ -75,7 +75,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> set(final String key, final V value, final int ttl) {
-    checkNotNull(value);
+    requireNonNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
@@ -89,7 +89,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas) {
-    checkNotNull(value);
+    requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     byte[] byteKey = encodeKey(key, charset, maxKeyLength);
     SetRequest request = SetRequest.casSet(byteKey, valueBytes, ttl, cas);
@@ -119,7 +119,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> add(String key, V value, int ttl) {
-    checkNotNull(value);
+    requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(
@@ -132,7 +132,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl) {
-    checkNotNull(value);
+    requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(
@@ -145,7 +145,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> append(String key, V value) {
-    checkNotNull(value);
+    requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(
@@ -158,7 +158,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> prepend(String key, V value) {
-    checkNotNull(value);
+    requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(

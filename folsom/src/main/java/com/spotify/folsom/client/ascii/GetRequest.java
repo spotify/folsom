@@ -16,21 +16,21 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.google.common.base.Charsets;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
 public class GetRequest extends AsciiRequest<GetResult<byte[]>>
     implements com.spotify.folsom.client.GetRequest {
 
-  private static final byte[] GET = "get ".getBytes(Charsets.US_ASCII);
-  private static final byte[] CAS_GET = "gets ".getBytes(Charsets.US_ASCII);
+  private static final byte[] GET = "get ".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] CAS_GET = "gets ".getBytes(StandardCharsets.US_ASCII);
 
   private final byte[] cmd;
 
@@ -76,6 +76,6 @@ public class GetRequest extends AsciiRequest<GetResult<byte[]>>
 
   private String decodeKey(byte[] key1) {
     // TODO: use charset from request object
-    return new String(key1, Charsets.US_ASCII);
+    return new String(key1, StandardCharsets.US_ASCII);
   }
 }
