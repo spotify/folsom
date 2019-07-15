@@ -76,7 +76,8 @@
       <dependency>
         <groupId>com.spotify.metrics</groupId>
         <artifactId>semantic-metrics-core</artifactId>
-        <version>0.10.0</version>
+        <!--version>0.10.0</version-->
+        <version>1.0.2</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
