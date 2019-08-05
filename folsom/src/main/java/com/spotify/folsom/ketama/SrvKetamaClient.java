@@ -105,11 +105,11 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
           return;
         }
 
-        final ImmutableSet<HostAndPort> newAddresses =
+        final Set<HostAndPort> newAddresses =
             lookupResults
                 .stream()
                 .map(result -> HostAndPort.fromParts(result.host(), result.port()))
-                .collect(ImmutableSet.toImmutableSet());
+                .collect(Collectors.toSet());
 
         final long resolvedTtl =
             lookupResults.stream().mapToLong(LookupResult::ttl).min().orElse(Long.MAX_VALUE);
