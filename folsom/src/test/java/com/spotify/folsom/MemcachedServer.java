@@ -29,7 +29,7 @@ public class MemcachedServer {
   private MemcacheClient<String> client;
 
   public static final Supplier<MemcachedServer> SIMPLE_INSTANCE =
-      Suppliers.memoize(MemcachedServer::new);
+      Suppliers.memoize(MemcachedServer::new)::get;
   private final String username;
   private final String password;
 

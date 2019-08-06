@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 public class KetamaServers {
 
   public static final Supplier<KetamaServers> SIMPLE_INSTANCE =
-      Suppliers.memoize(() -> new KetamaServers(3));
+      Suppliers.memoize(() -> new KetamaServers(3))::get;
 
   private final List<MemcachedServer> servers;
 

@@ -71,31 +71,34 @@ public class MemcacheClientBuilder<V> {
   /** Lazily instantiated singleton default executor. */
   private static final Supplier<Executor> DEFAULT_REPLY_EXECUTOR =
       Suppliers.memoize(
-          () ->
-              new ForkJoinPool(
-                  Runtime.getRuntime().availableProcessors(),
-                  ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-                  new UncaughtExceptionHandler(),
-                  true));
+              () ->
+                  new ForkJoinPool(
+                      Runtime.getRuntime().availableProcessors(),
+                      ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                      new UncaughtExceptionHandler(),
+                      true))
+          ::get;
 
   /** Lazily instantiated singleton default srvResolver. */
   private static final Supplier<DnsSrvResolver> DEFAULT_SRV_RESOLVER_EXECUTOR =
       Suppliers.memoize(
-          () ->
-              DnsSrvResolvers.newBuilder()
-                  .cachingLookups(true)
-                  .retainingDataOnFailures(true)
-                  .build());
+              () ->
+                  DnsSrvResolvers.newBuilder()
+                      .cachingLookups(true)
+                      .retainingDataOnFailures(true)
+                      .build())
+          ::get;
 
   /** Lazily instantiated singleton default scheduled executor. */
   private static final Supplier<ScheduledExecutorService> DEFAULT_SCHEDULED_EXECUTOR =
       Suppliers.memoize(
-          () ->
-              Executors.newSingleThreadScheduledExecutor(
-                  new ThreadFactoryBuilder()
-                      .setDaemon(true)
-                      .setNameFormat("folsom-default-scheduled-executor")
-                      .build()));
+              () ->
+                  Executors.newSingleThreadScheduledExecutor(
+                      new ThreadFactoryBuilder()
+                          .setDaemon(true)
+                          .setNameFormat("folsom-default-scheduled-executor")
+                          .build()))
+          ::get;
 
   private final List<HostAndPort> addresses = new ArrayList<>();
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
@@ -356,7 +359,7 @@ public class MemcacheClientBuilder<V> {
    * @return itself
    */
   public MemcacheClientBuilder<V> withReplyExecutor(final Executor executor) {
-    this.executor = Suppliers.ofInstance(executor);
+    this.executor = Suppliers.ofInstance(executor)::get;
     return this;
   }
 
