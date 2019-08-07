@@ -1,3 +1,12 @@
+### 1.6.2
+* Bump dependency versions. This includes major version bumps of
+  com.google.guava:guava and com.spotify.metrics:semantic-metrics-core. Folsom
+  continues supporting also the old versions, so users can delay upgrading if
+  needed.
+
+### 1.6.1
+* Add support for OpenCensus based tracing
+
 ### 1.6.0
 * Implemented support for reading memcached statistics
 
