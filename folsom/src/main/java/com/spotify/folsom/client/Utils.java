@@ -16,6 +16,8 @@
 
 package com.spotify.folsom.client;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.List;
@@ -71,5 +73,44 @@ public final class Utils {
       return future;
     }
     return future.whenCompleteAsync((t, throwable) -> {}, executor);
+  }
+
+  /**
+   * Checks if an executor is direct or not. Direct means that the executor executes work on the
+   * same thread as the work was submitted on.
+   *
+   * @param executor may not be null
+   * @return true if the executor is a direct executor, otherwise false
+   */
+  static boolean isDirectExecutor(Executor executor) {
+    requireNonNull(executor);
+    RunnableWithThread runnableWithThread = new RunnableWithThread();
+    try {
+      executor.execute(runnableWithThread);
+
+      // We have the following cases
+      // 1) It is a direct executor, so runnableWithThread.thread will be set to the current thread.
+      //    We will correctly return true
+      // 2) It is not a direct executor and runnableWithThread.thread is still null when we check
+      // it.
+      //    We correctly return false
+      // 3) It is not a direct executor but the runnableWithThread.thread somehow managed to get set
+      //    before we check it. In any case, it can't be referencing the same thread we are in
+      //    We correctly return false
+
+      return runnableWithThread.thread == Thread.currentThread();
+    } catch (Exception e) {
+      // If the executor throws any exception, it can not be a direct executor
+      return false;
+    }
+  }
+
+  private static class RunnableWithThread implements Runnable {
+    private Thread thread;
+
+    @Override
+    public void run() {
+      thread = Thread.currentThread();
+    }
   }
 }

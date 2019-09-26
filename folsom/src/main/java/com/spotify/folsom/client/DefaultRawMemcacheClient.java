@@ -83,6 +83,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final BatchFlusher flusher;
   private final HostAndPort address;
   private final Executor executor;
+  private final boolean isDirectExecutor;
   private final long timeoutMillis;
   private final Metrics metrics;
   private final int maxSetLength;
@@ -194,6 +195,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       int maxSetLength) {
     this.address = address;
     this.executor = executor;
+    this.isDirectExecutor = executor == null || Utils.isDirectExecutor(executor);
     this.timeoutMillis = timeoutMillis;
     this.metrics = metrics;
     this.maxSetLength = maxSetLength;
@@ -247,7 +249,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   private <T> CompletionStage<T> onExecutor(CompletionStage<T> future) {
-    return Utils.onExecutor(future, executor);
+    if (isDirectExecutor) {
+      return future;
+    } else {
+      return Utils.onExecutor(future, executor);
+    }
   }
 
   /**
