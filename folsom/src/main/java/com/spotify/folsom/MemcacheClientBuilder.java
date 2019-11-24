@@ -231,6 +231,7 @@ public class MemcacheClientBuilder<V> {
   }
 
   /** @deprecated Use {@link #withResolver(Resolver)} with {@link SrvResolver} instead. */
+  @Deprecated
   public MemcacheClientBuilder<V> withSRVRecord(final String srvRecord) {
     this.srvRecord = requireNonNull(srvRecord);
     updateResolver();
@@ -250,6 +251,7 @@ public class MemcacheClientBuilder<V> {
   }
 
   /** @deprecated Use {@link #withResolveRefreshPeriod(long)} */
+  @Deprecated
   public MemcacheClientBuilder<V> withSRVRefreshPeriod(final long periodMillis) {
     return withResolveRefreshPeriod(periodMillis);
   }
@@ -267,11 +269,13 @@ public class MemcacheClientBuilder<V> {
   }
 
   /** @deprecated Use {@link #withResolveShutdownDelay(long)} */
+  @Deprecated
   public MemcacheClientBuilder<V> withSRVShutdownDelay(final long shutdownDelay) {
     return withResolveShutdownDelay(shutdownDelay);
   }
 
   /** @deprecated Use {@link #withResolver(Resolver)} with {@link SrvResolver} instead */
+  @Deprecated
   public MemcacheClientBuilder<V> withSrvResolver(final DnsSrvResolver srvResolver) {
     this.srvResolver = requireNonNull(srvResolver, "srvResolver");
     updateResolver();

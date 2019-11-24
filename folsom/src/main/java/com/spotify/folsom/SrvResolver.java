@@ -18,12 +18,23 @@ package com.spotify.folsom;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.base.Suppliers;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.DnsSrvResolvers;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class SrvResolver implements Resolver {
+
+  private static final Supplier<DnsSrvResolver> DEFAULT_DNS_RESOLVER =
+      Suppliers.memoize(
+              () ->
+                  DnsSrvResolvers.newBuilder()
+                      .cachingLookups(true)
+                      .retainingDataOnFailures(true)
+                      .build())
+          ::get;
 
   public static class Builder {
     private final String srvRecord;
@@ -48,8 +59,7 @@ public class SrvResolver implements Resolver {
     public SrvResolver build() {
       DnsSrvResolver srvResolver = this.srvResolver;
       if (srvResolver == null) {
-        srvResolver =
-            DnsSrvResolvers.newBuilder().cachingLookups(true).retainingDataOnFailures(true).build();
+        srvResolver = DEFAULT_DNS_RESOLVER.get();
       }
 
       return new SrvResolver(srvResolver, srvRecord);
