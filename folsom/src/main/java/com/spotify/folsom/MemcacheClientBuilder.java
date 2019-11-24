@@ -25,7 +25,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
-import com.spotify.dns.DnsSrvResolvers;
 import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
 import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
@@ -39,7 +38,7 @@ import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
-import com.spotify.folsom.ketama.SrvKetamaClient;
+import com.spotify.folsom.ketama.ResolvingKetamaClient;
 import com.spotify.folsom.reconnect.ReconnectingClient;
 import com.spotify.folsom.retry.RetryingClient;
 import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
@@ -79,16 +78,6 @@ public class MemcacheClientBuilder<V> {
                       true))
           ::get;
 
-  /** Lazily instantiated singleton default srvResolver. */
-  private static final Supplier<DnsSrvResolver> DEFAULT_SRV_RESOLVER_EXECUTOR =
-      Suppliers.memoize(
-              () ->
-                  DnsSrvResolvers.newBuilder()
-                      .cachingLookups(true)
-                      .retainingDataOnFailures(true)
-                      .build())
-          ::get;
-
   /** Lazily instantiated singleton default scheduled executor. */
   private static final Supplier<ScheduledExecutorService> DEFAULT_SCHEDULED_EXECUTOR =
       Suppliers.memoize(
@@ -114,9 +103,10 @@ public class MemcacheClientBuilder<V> {
   private Supplier<Executor> executor = DEFAULT_REPLY_EXECUTOR;
   private Charset charset = StandardCharsets.UTF_8;
 
-  private DnsSrvResolver srvResolver;
-  private String srvRecord;
-  private long dnsRefreshPeriod = 60 * 1000L;
+  private Resolver resolver;
+  private DnsSrvResolver srvResolver; // deprecated, retained for backwards compatibility
+  private String srvRecord; // deprecated, retained for backwards compatibility
+  private long resolveRefreshPeriod = 60 * 1000L;
   private long shutdownDelay = 60 * 1000L;
 
   private long timeoutMillis = 3000;
@@ -215,50 +205,76 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Use SRV to lookup nodes instead of a fixed set of addresses. This means that the set of nodes
+   * Use a dynamic resolved instead of a fixed set of addresses. This means that the set of nodes
    * can change dynamically over time.
    *
-   * @param srvRecord the SRV record to use.
+   * @param resolver the resolver to use.
    * @return itself
    */
+  public MemcacheClientBuilder<V> withResolver(final Resolver resolver) {
+    this.resolver = requireNonNull(resolver);
+    return this;
+  }
+
+  /** Used for backwards compatibility for srvRecord and srvResolver. */
+  private void updateResolver() {
+    // if the srvRecord is not provided, do not create a resolver
+    if (srvRecord != null) {
+      final SrvResolver.Builder builder = SrvResolver.newBuilder(srvRecord);
+      if (srvResolver != null) {
+        builder.withSrvResolver(srvResolver);
+      }
+      this.resolver = builder.build();
+    } else {
+      this.resolver = null;
+    }
+  }
+
+  /** @deprecated Use {@link #withResolver(Resolver)} with {@link SrvResolver} instead. */
   public MemcacheClientBuilder<V> withSRVRecord(final String srvRecord) {
     this.srvRecord = requireNonNull(srvRecord);
+    updateResolver();
     return this;
   }
 
   /**
-   * This is only used for the SRV based ketama client. This is the maximum time DNS should be
-   * queried for updates. It can be shorter, depending the ttl values in the DNS lookup result
+   * This is only used for the dynamic ketama client. This is the maximum time the resolver should
+   * be queried for updates. It can be shorter, depending the getTtl values in the resolve result
    *
    * @param periodMillis time in milliseonds. The default is 60 seconds.
    * @return itself
    */
-  public MemcacheClientBuilder<V> withSRVRefreshPeriod(final long periodMillis) {
-    this.dnsRefreshPeriod = periodMillis;
+  public MemcacheClientBuilder<V> withResolveRefreshPeriod(final long periodMillis) {
+    this.resolveRefreshPeriod = periodMillis;
     return this;
   }
 
+  /** @deprecated Use {@link #withResolveRefreshPeriod(long)} */
+  public MemcacheClientBuilder<V> withSRVRefreshPeriod(final long periodMillis) {
+    return withResolveRefreshPeriod(periodMillis);
+  }
+
   /**
-   * This is only used for the SRV based ketama client. When the SRV record has changed, the old
+   * This is only used for the dynamic ketama client. When the resolver results has changed, the old
    * client will be shutdown after this much time has passed, in order to complete pending requests.
    *
    * @param shutdownDelay time in milliseconds. The default is 60 seconds.
    * @return itself
    */
-  public MemcacheClientBuilder<V> withSRVShutdownDelay(final long shutdownDelay) {
+  public MemcacheClientBuilder<V> withResolveShutdownDelay(final long shutdownDelay) {
     this.shutdownDelay = shutdownDelay;
     return this;
   }
 
-  /**
-   * Use a specific SRV resolver.
-   *
-   * @param srvResolver the resolver to use. Default is a caching resolver from {@link
-   *     com.spotify.dns.DnsSrvResolvers}
-   * @return itself
-   */
+  /** @deprecated Use {@link #withResolveShutdownDelay(long)} */
+  public MemcacheClientBuilder<V> withSRVShutdownDelay(final long shutdownDelay) {
+    return withResolveShutdownDelay(shutdownDelay);
+  }
+
+  /** @deprecated Use {@link #withResolver(Resolver)} with {@link SrvResolver} instead */
   public MemcacheClientBuilder<V> withSrvResolver(final DnsSrvResolver srvResolver) {
     this.srvResolver = requireNonNull(srvResolver, "srvResolver");
+    updateResolver();
     return this;
   }
 
@@ -531,11 +547,11 @@ public class MemcacheClientBuilder<V> {
   protected RawMemcacheClient connectRaw(boolean binary, Authenticator authenticator) {
     List<HostAndPort> addresses = this.addresses;
     RawMemcacheClient client;
-    if (srvRecord != null) {
+    if (resolver != null) {
       if (!addresses.isEmpty()) {
-        throw new IllegalStateException("You may not specify both srvRecord and addresses");
+        throw new IllegalStateException("You may not specify both a resolver and addresses");
       }
-      client = createSRVClient(binary, authenticator);
+      client = createResolvingClient(binary, authenticator);
     } else {
       if (addresses.isEmpty()) {
         addresses = ImmutableList.of(HostAndPort.fromParts(DEFAULT_HOSTNAME, DEFAULT_PORT));
@@ -573,19 +589,13 @@ public class MemcacheClientBuilder<V> {
     return clients;
   }
 
-  private RawMemcacheClient createSRVClient(
+  private RawMemcacheClient createResolvingClient(
       final boolean binary, final Authenticator authenticator) {
-    DnsSrvResolver resolver = srvResolver;
-    if (resolver == null) {
-      resolver = DEFAULT_SRV_RESOLVER_EXECUTOR.get();
-    }
-
-    SrvKetamaClient client =
-        new SrvKetamaClient(
-            srvRecord,
+    ResolvingKetamaClient client =
+        new ResolvingKetamaClient(
             resolver,
             DEFAULT_SCHEDULED_EXECUTOR.get(),
-            dnsRefreshPeriod,
+            resolveRefreshPeriod,
             TimeUnit.MILLISECONDS,
             input -> createClient(input, binary, authenticator),
             shutdownDelay,
