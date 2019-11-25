@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SrvKetamaIntegrationTest {
+public class ResolveKetamaIntegrationTest {
 
   private KetamaServers servers = KetamaServers.SIMPLE_INSTANCE.get();
 

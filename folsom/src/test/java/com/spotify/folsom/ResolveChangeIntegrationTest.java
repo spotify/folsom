@@ -16,7 +16,7 @@
 
 package com.spotify.folsom;
 
-import static com.spotify.folsom.SrvKetamaIntegrationTest.toResult;
+import static com.spotify.folsom.ResolveKetamaIntegrationTest.toResult;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -28,14 +28,14 @@ import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
-import com.spotify.folsom.ketama.SrvKetamaClient;
+import com.spotify.folsom.ketama.ResolvingKetamaClient;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SrvChangeIntegrationTest {
+public class ResolveChangeIntegrationTest {
 
   private static KetamaServers servers = KetamaServers.SIMPLE_INSTANCE.get();
 
@@ -43,7 +43,7 @@ public class SrvChangeIntegrationTest {
   private DnsSrvResolver dnsSrvResolver;
   private List<LookupResult> fullResults;
   private List<LookupResult> oneMissing;
-  private SrvKetamaClient srvKetamaClient;
+  private ResolvingKetamaClient srvKetamaClient;
 
   private int connections;
 
@@ -60,10 +60,10 @@ public class SrvChangeIntegrationTest {
 
     MemcacheClientBuilder<String> builder =
         MemcacheClientBuilder.newStringClient()
-            .withSRVRecord("memcached.srv")
-            .withSrvResolver(dnsSrvResolver)
-            .withSRVRefreshPeriod(1)
-            .withSRVShutdownDelay(0)
+            .withResolver(
+                SrvResolver.newBuilder("memcached.srv").withSrvResolver(dnsSrvResolver).build())
+            .withResolveRefreshPeriod(1)
+            .withResolveShutdownDelay(0)
             .withMaxOutstandingRequests(10000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
@@ -71,7 +71,7 @@ public class SrvChangeIntegrationTest {
     client = builder.connectAscii();
 
     DefaultAsciiMemcacheClient client2 = (DefaultAsciiMemcacheClient) this.client;
-    srvKetamaClient = (SrvKetamaClient) client2.getRawMemcacheClient();
+    srvKetamaClient = (ResolvingKetamaClient) client2.getRawMemcacheClient();
 
     client.awaitFullyConnected(10, TimeUnit.SECONDS);
     servers.flush();
@@ -91,14 +91,14 @@ public class SrvChangeIntegrationTest {
   public void testFlappingSrv() throws Exception {
     for (int i = 0; i < 10; i++) {
       when(dnsSrvResolver.resolve(anyString())).thenReturn(fullResults);
-      srvKetamaClient.updateDNS();
+      srvKetamaClient.resolve();
       waitUntilSuccess(
           1000,
           () ->
               assertEquals("Full results (3)", fullResults.size(), client.numActiveConnections()));
 
       when(dnsSrvResolver.resolve(anyString())).thenReturn(oneMissing);
-      srvKetamaClient.updateDNS();
+      srvKetamaClient.resolve();
       waitUntilSuccess(
           1000,
           () -> assertEquals("One missing (2)", oneMissing.size(), client.numActiveConnections()));

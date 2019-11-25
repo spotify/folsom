@@ -18,12 +18,11 @@ package com.spotify.folsom.ketama;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.spotify.dns.DnsSrvResolver;
-import com.spotify.dns.LookupResult;
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.Resolver;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
@@ -41,14 +40,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SrvKetamaClient extends AbstractRawMemcacheClient {
-  private static final Logger log = LoggerFactory.getLogger(SrvKetamaClient.class);
-  public static final int MIN_DNS_WAIT_TIME = 10;
-  public static final int MAX_DNS_WAIT_TIME = 3600;
+public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
+  private static final Logger log = LoggerFactory.getLogger(ResolvingKetamaClient.class);
+  public static final int MIN_RESOLVE_WAIT_TIME = 10;
+  public static final int MAX_RESOLVE_WAIT_TIME = 3600;
 
   private final ScheduledExecutorService executor;
-  private final String srvRecord;
-  private final DnsSrvResolver srvResolver;
+  private final Resolver resolver;
   private final long ttl;
 
   private final Connector connector;
@@ -66,17 +64,15 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
   private volatile RawMemcacheClient pendingClient = null;
   private boolean shutdown = false;
 
-  public SrvKetamaClient(
-      final String srvRecord,
-      DnsSrvResolver srvResolver,
+  public ResolvingKetamaClient(
+      Resolver resolver,
       ScheduledExecutorService executor,
       long period,
       TimeUnit periodUnit,
       final Connector connector,
       long shutdownDelay,
       TimeUnit shutdownUnit) {
-    this.srvRecord = srvRecord;
-    this.srvResolver = srvResolver;
+    this.resolver = resolver;
     this.connector = connector;
     this.shutdownDelay = shutdownDelay;
     this.shutdownUnit = shutdownUnit;
@@ -89,17 +85,17 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
     if (refreshJob != null) {
       throw new RuntimeException("You may only start this once");
     }
-    refreshJob = this.executor.schedule(this::updateDNS, 0, TimeUnit.MILLISECONDS);
+    refreshJob = this.executor.schedule(this::resolve, 0, TimeUnit.MILLISECONDS);
   }
 
-  public void updateDNS() {
+  public void resolve() {
     synchronized (sync) {
       if (shutdown) {
         return;
       }
       long ttl = this.ttl; // Default ttl to use if resolve fails
       try {
-        final List<LookupResult> lookupResults = srvResolver.resolve(srvRecord);
+        final List<Resolver.ResolveResult> lookupResults = resolver.resolve();
         if (lookupResults.isEmpty()) {
           // Just ignore empty results
           return;
@@ -108,11 +104,15 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
         final Set<HostAndPort> newAddresses =
             lookupResults
                 .stream()
-                .map(result -> HostAndPort.fromParts(result.host(), result.port()))
+                .map(result -> HostAndPort.fromParts(result.getHost(), result.getPort()))
                 .collect(Collectors.toSet());
 
         final long resolvedTtl =
-            lookupResults.stream().mapToLong(LookupResult::ttl).min().orElse(Long.MAX_VALUE);
+            lookupResults
+                .stream()
+                .mapToLong(Resolver.ResolveResult::getTtl)
+                .min()
+                .orElse(Long.MAX_VALUE);
         ttl = Math.min(ttl, resolvedTtl);
 
         final Set<HostAndPort> currentAddresses = clients.keySet();
@@ -143,8 +143,8 @@ public class SrvKetamaClient extends AbstractRawMemcacheClient {
           setPendingClient(removedClients);
         }
       } finally {
-        long delay = clamp(MIN_DNS_WAIT_TIME, MAX_DNS_WAIT_TIME, ttl);
-        refreshJob = this.executor.schedule(this::updateDNS, delay, TimeUnit.SECONDS);
+        long delay = clamp(MIN_RESOLVE_WAIT_TIME, MAX_RESOLVE_WAIT_TIME, ttl);
+        refreshJob = this.executor.schedule(this::resolve, delay, TimeUnit.SECONDS);
       }
     }
   }
