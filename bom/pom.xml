@@ -18,32 +18,34 @@
   </description>
   <url>https://github.com/spotify/folsom/</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>folsom</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>folsom-semantic-metrics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>folsom-elasticache</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>folsom-opencensus</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>folsom-yammer-metrics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-  </dependencies>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom-semantic-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom-elasticache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom-opencensus</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom-yammer-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project>
 
