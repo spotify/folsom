@@ -25,6 +25,7 @@
     <module>folsom-yammer-metrics</module>
     <module>folsom-opencensus</module>
     <module>folsom-elasticache</module>
+    <module>bom</module>
   </modules>
 
   <scm>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.spotify</groupId>
+  <artifactId>folsom-bom</artifactId>
+  <version>1.6.3-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Folsom BOM</name>
+  <description>
+    The Folsom BOM project helps set a compatible set of folsom artifact versions.
+  </description>
+  <url>https://github.com/spotify/folsom/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-semantic-metrics</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-elasticache</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-opencensus</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-yammer-metrics</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+</project>
+
