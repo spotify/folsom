@@ -33,38 +33,43 @@ Folsom is meant to be used as a library embedded in other software.
 
 To import it with maven, use this:
 
+    <!-- In dependencyManagement section -->
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-bom</artifactId>
+      <version>1.7.1</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+
+    <!-- In dependencies section -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom</artifactId>
-      <version>1.6.0</version>
     </dependency>
 
     <!-- optional if you want to expose folsom metrics with spotify-semantic-metrics -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-semantic-metrics</artifactId>
-      <version>1.6.0</version>
     </dependency>
 
     <!-- optional if you want to expose folsom metrics with yammer -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-yammer-metrics</artifactId>
-      <version>1.6.0</version>
     </dependency>
 
     <!-- optional if you want to expose folsom tracing with OpenCensus -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-opencensus</artifactId>
-      <version>1.6.0</version>
     </dependency>
 
     <!-- optional if you want to use AWS ElastiCache auto-discovery -->
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-elasticache</artifactId>
-      <version>1.6.0</version>
     </dependency>
 
 If you want to use one of the metrics or tracing libraries, make sure you use the same version as

@@ -1,3 +1,7 @@
+### 1.7.1
+* Add elasticache resolver
+* Add BOM artifact
+
 ### 1.6.2
 * Bump dependency versions. This includes major version bumps of
   com.google.guava:guava and com.spotify.metrics:semantic-metrics-core. Folsom
