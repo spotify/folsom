@@ -60,6 +60,13 @@ To import it with maven, use this:
       <version>1.6.0</version>
     </dependency>
 
+    <!-- optional if you want to use AWS ElastiCache auto-discovery -->
+    <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>folsom-elasticache</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+
 If you want to use one of the metrics or tracing libraries, make sure you use the same version as
 the main artifact.
 
@@ -173,6 +180,22 @@ using MemcacheClientBuilder:
 
 ```
 builder.withTracer(OpenCensus.tracer());
+```
+
+#### Cluster auto-discovery
+
+Nodes in a memcache clusters can be auto-discovered. Folsom supports discovery through 
+DNS SRV records using the `com.spotify.folsom.SrvResolver` or AWS ElastiCache using the
+`com.spotify.folsom.elasticache.ElastiCacheResolver`.
+
+SrvResolver:
+```
+builder.withResolver(SrvResolver.newBuilder("foo._tcp.example.org").build());
+```
+
+ElastiCacheResolver:
+```
+builder.withResolver(ElastiCacheResolver.newBuilder("cluster-configuration-endpoint-hostname").build());
 ```
 
 ### Building

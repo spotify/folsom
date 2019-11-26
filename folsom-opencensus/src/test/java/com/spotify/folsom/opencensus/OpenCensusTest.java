@@ -18,8 +18,9 @@ package com.spotify.folsom.opencensus;
 
 import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.MemcacheClient;
@@ -39,6 +40,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.hamcrest.Description;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -105,29 +108,69 @@ public class OpenCensusTest {
     final List<SpanData> firstLevel = getByParent(spans, root);
     assertEquals(3, firstLevel.size());
 
-    assertSpan("folsom.get", "get", KEY, null, firstLevel.get(0));
-    assertSpan("folsom.set", "set", KEY, VALUE, firstLevel.get(1));
-    assertSpan("folsom.get", "get", KEY, VALUE, firstLevel.get(2));
+    assertThat(
+        firstLevel,
+        containsInAnyOrder(
+            new SpanMatcher("folsom.get", "get", KEY, null),
+            new SpanMatcher("folsom.set", "set", KEY, VALUE),
+            new SpanMatcher("folsom.get", "get", KEY, VALUE)));
   }
 
-  private void assertSpan(
-      final String expectedName,
-      final String expectedOperation,
-      final String expectedKey,
-      final byte[] expectedValue,
-      final SpanData actual) {
-    assertEquals(expectedName, actual.getName());
-    assertEquals(Status.OK, actual.getStatus());
+  private class SpanMatcher extends TypeSafeMatcher<SpanData> {
+    private final String expectedName;
+    private final String expectedOperation;
+    private final String expectedKey;
+    private final byte[] expectedValue;
 
-    final Map<String, AttributeValue> attributes = actual.getAttributes().getAttributeMap();
-    assertEquals(stringAttributeValue(expectedOperation), attributes.get("operation"));
-    assertEquals(stringAttributeValue(expectedKey), attributes.get("key"));
-    if (expectedValue != null) {
-      assertEquals(longAttributeValue(expectedValue.length), attributes.get("value_size_bytes"));
-      assertEquals(stringAttributeValue(HEX.encode(expectedValue)), attributes.get("value_hex"));
-    } else {
-      assertNull(attributes.get("value_size_bytes"));
-      assertNull(attributes.get("value_hex"));
+    private SpanMatcher(
+        final String expectedName,
+        final String expectedOperation,
+        final String expectedKey,
+        final byte[] expectedValue) {
+      this.expectedName = expectedName;
+      this.expectedOperation = expectedOperation;
+      this.expectedKey = expectedKey;
+      this.expectedValue = expectedValue;
+    }
+
+    @Override
+    protected boolean matchesSafely(final SpanData span) {
+      if (!expectedName.equals(span.getName())) {
+        return false;
+      }
+      if (span.getStatus() != Status.OK) {
+        return false;
+      }
+
+      final Map<String, AttributeValue> attributes = span.getAttributes().getAttributeMap();
+      if (!stringAttributeValue(expectedOperation).equals(attributes.get("operation"))) {
+        return false;
+      }
+      if (!stringAttributeValue(expectedKey).equals(attributes.get("key"))) {
+        return false;
+      }
+      if (expectedValue != null) {
+        if (!longAttributeValue(expectedValue.length).equals(attributes.get("value_size_bytes"))) {
+          return false;
+        }
+        if (!stringAttributeValue(HEX.encode(expectedValue)).equals(attributes.get("value_hex"))) {
+          return false;
+        }
+      } else {
+        if (attributes.get("value_size_bytes") != null) {
+          return false;
+        }
+        if (attributes.get("value_hex") != null) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    @Override
+    public void describeTo(final Description description) {
+      description.appendText("Span does not match");
     }
   }
 
