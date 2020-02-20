@@ -35,14 +35,18 @@ public class ResponseParserTest {
     final InputStream in =
         in("CONFIG cluster 0 140\n2\nhost1|172.31.15.57|11211 host2|172.31.8.107|11212\n\r\nEND");
 
-    assertEquals(asList(fromParts("host1", 11211), fromParts("host2", 11212)), parser.parse(in));
+    final Response response = parser.parse(in);
+    assertEquals(2, response.getConfigurationVersion());
+    assertEquals(asList(fromParts("host1", 11211), fromParts("host2", 11212)), response.getHosts());
   }
 
   @Test
   public void parseSingleNode() throws IOException {
     final InputStream in = in("CONFIG cluster 0 140\n2\nhost1|172.31.15.57|11211\n\r\nEND");
 
-    assertEquals(asList(fromParts("host1", 11211)), parser.parse(in));
+    final Response response = parser.parse(in);
+    assertEquals(2, response.getConfigurationVersion());
+    assertEquals(asList(fromParts("host1", 11211)), response.getHosts());
   }
 
   @Test
@@ -50,7 +54,9 @@ public class ResponseParserTest {
     final InputStream in =
         in("CONFIG cluster 0 140\n2\nhost1||11211 host2|172.31.8.107|11212\n\r\nEND");
 
-    assertEquals(asList(fromParts("host1", 11211), fromParts("host2", 11212)), parser.parse(in));
+    final Response response = parser.parse(in);
+    assertEquals(2, response.getConfigurationVersion());
+    assertEquals(asList(fromParts("host1", 11211), fromParts("host2", 11212)), response.getHosts());
   }
 
   @Test(expected = IOException.class)

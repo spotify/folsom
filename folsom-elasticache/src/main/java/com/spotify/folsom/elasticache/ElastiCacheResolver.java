@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implement support for AWS ElastiCache node auto-discovery <a
@@ -100,7 +101,9 @@ public class ElastiCacheResolver implements Resolver {
      * @return The resolver
      */
     public ElastiCacheResolver build() {
-      return new ElastiCacheResolver(configHost, configPort, ttl, timeout);
+      final Resolver resolver = new SocketResolver(configHost, configPort, timeout);
+
+      return new ElastiCacheResolver(resolver, ttl);
     }
   }
 
@@ -117,36 +120,66 @@ public class ElastiCacheResolver implements Resolver {
     return new Builder(configHost);
   }
 
-  private final String configHost;
-  private final int configPort;
+  private final Resolver resolver;
   private final long ttl;
-  private final int timeout;
-  private final ResponseParser parser;
+  private final AtomicReference<Response> currentResponse = new AtomicReference<>();
 
-  private ElastiCacheResolver(
-      final String configHost, final int configPort, final long ttl, final int timeout) {
-    this.configHost = configHost;
-    this.configPort = configPort;
+  ElastiCacheResolver(final Resolver resolver, final long ttl) {
+    this.resolver = resolver;
     this.ttl = ttl;
-    this.parser = new ResponseParser();
-    this.timeout = timeout;
   }
 
   @Override
   public List<ResolveResult> resolve() {
-    try (final Socket socket = new Socket()) {
-      socket.setSoTimeout(timeout);
-      socket.connect(new InetSocketAddress(configHost, configPort), timeout);
+    final Response response = resolver.resolve();
 
-      socket.getOutputStream().write(CMD);
+    final Response effective =
+        currentResponse.accumulateAndGet(
+            response,
+            (current, r) -> {
+              if (current == null
+                  || r.getConfigurationVersion() > current.getConfigurationVersion()) {
+                return r;
+              } else {
+                return current;
+              }
+            });
 
-      return parser
-          .parse(socket.getInputStream())
-          .stream()
-          .map(hap -> new ResolveResult(hap.getHostText(), hap.getPort(), ttl))
-          .collect(toList());
-    } catch (IOException e) {
-      throw new RuntimeException("ElastiCache auto-discovery failed", e);
+    return effective
+        .getHosts()
+        .stream()
+        .map(hap -> new ResolveResult(hap.getHostText(), hap.getPort(), ttl))
+        .collect(toList());
+  }
+
+  public interface Resolver {
+    Response resolve();
+  }
+
+  public static class SocketResolver implements Resolver {
+
+    private final String configHost;
+    private final int configPort;
+    private final int timeout;
+    private final ResponseParser parser = new ResponseParser();
+
+    public SocketResolver(final String configHost, final int configPort, final int timeout) {
+      this.configHost = configHost;
+      this.configPort = configPort;
+      this.timeout = timeout;
+    }
+
+    public Response resolve() {
+      try (final Socket socket = new Socket()) {
+        socket.setSoTimeout(timeout);
+        socket.connect(new InetSocketAddress(configHost, configPort), timeout);
+
+        socket.getOutputStream().write(CMD);
+
+        return parser.parse(socket.getInputStream());
+      } catch (IOException e) {
+        throw new RuntimeException("ElastiCache auto-discovery failed", e);
+      }
     }
   }
 }

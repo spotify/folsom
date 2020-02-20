@@ -29,12 +29,12 @@ import java.util.List;
 
 public class ResponseParser {
 
-  public List<HostAndPort> parse(final InputStream in) throws IOException {
+  public Response parse(final InputStream in) throws IOException {
     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(in, US_ASCII))) {
       final String response = reader.readLine().trim();
 
       if (response.startsWith("CONFIG cluster ")) {
-        reader.readLine(); // configuration version, not used
+        final int configVersion = Integer.valueOf(reader.readLine()); // configuration version
 
         final List<String> hosts = Splitter.on(' ').splitToList(reader.readLine());
 
@@ -59,7 +59,7 @@ public class ResponseParser {
           throw new IOException("Expected end of response, invalid server response");
         }
 
-        return result;
+        return new Response(configVersion, result);
       } else {
         throw new IOException("Unexpected server response: " + response);
       }
