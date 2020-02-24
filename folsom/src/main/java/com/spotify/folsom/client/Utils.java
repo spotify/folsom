@@ -32,22 +32,21 @@ public final class Utils {
   private Utils() {}
 
   public static int ttlToExpiration(final int ttl) {
-    if (ttl <= 0) {
-      return 0;
-    }
-
+    // This intentionally includes negative and zero TTLs
     if (ttl < TTL_CUTOFF) {
       return ttl;
     }
 
-    int expirationTime = (int) (System.currentTimeMillis() / 1000) + ttl;
-    if (expirationTime < 0) {
-      // throw new IllegalArgumentException("TTL set too far into the future (Y2038 limitation)");
+    // Above the cutoff it needs to be translated to a seconds-since-epoch timestamp
+    long expirationTime = (System.currentTimeMillis() / 1000) + ttl;
+    if ((int) expirationTime != expirationTime) {
+      // The above check is the same as performed by toIntExact, signifying an integer overflow.
       // Not strictly correct - should switch to failure on the next major version bump
       return Integer.MAX_VALUE
           - 1; // Avoid Integer.MAX_VALUE in case memcached treats it in some special way.
     }
-    return expirationTime;
+
+    return (int) expirationTime;
   }
 
   public static <T> Function<List<List<T>>, List<T>> flatten() {

@@ -12,7 +12,7 @@ import org.junit.Test;
 public class UtilsTest {
   @Test
   public void testTtlToExpiration() {
-    assertEquals(0, Utils.ttlToExpiration(-123123));
+    assertEquals(-1, Utils.ttlToExpiration(-1));
     assertEquals(0, Utils.ttlToExpiration(0));
     assertEquals(123, Utils.ttlToExpiration(123));
 
