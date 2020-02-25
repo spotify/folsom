@@ -41,4 +41,13 @@ public interface AsciiMemcacheClient<V> extends MemcacheClient<V> {
    * @return A future representing completion of the request, with the new value of the counter
    */
   CompletionStage<Long> decr(String key, long by);
+
+  /**
+   * Deletes a key with CAS check.
+   *
+   * @param key The key, must not be null
+   * @param cas The CAS value, must match the value on the server for the set to go through
+   * @return A future representing completion of the request.
+   */
+  CompletionStage<MemcacheStatus> deleteWithCas(String key, long cas);
 }
