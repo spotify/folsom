@@ -586,34 +586,27 @@ public class IntegrationTest {
 
   @Test
   public void testDeleteWithCasHappyPath() throws Exception {
-    assumeAscii();
-    assertEquals(MemcacheStatus.OK, asciiClient.set(KEY1, VALUE1, 0).toCompletableFuture().get());
-    GetResult<String> v = asciiClient.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
     assertEquals(VALUE1, v.getValue());
-    assertEquals(
-        MemcacheStatus.OK, asciiClient.deleteWithCas(KEY1, v.getCas()).toCompletableFuture().get());
-    assertNull(asciiClient.get(KEY1).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK, client.delete(KEY1, v.getCas()).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testDeleteWithCasMissingKey() throws Exception {
-    assumeAscii();
-    assertEquals(
-        MemcacheStatus.KEY_NOT_FOUND,
-        asciiClient.deleteWithCas(KEY1, 1).toCompletableFuture().get());
-    assertNull(asciiClient.get(KEY1).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1, 1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
   }
 
   @Test
   public void testDeleteWithCasWrongCas() throws Exception {
-    assumeAscii();
-    assertEquals(MemcacheStatus.OK, asciiClient.set(KEY1, VALUE1, 0).toCompletableFuture().get());
-    GetResult<String> v = asciiClient.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
     assertEquals(VALUE1, v.getValue());
     assertEquals(
-        MemcacheStatus.ITEM_NOT_STORED,
-        asciiClient.deleteWithCas(KEY1, v.getCas() + 1).toCompletableFuture().get());
-    assertEquals(VALUE1, asciiClient.get(KEY1).toCompletableFuture().get());
+        MemcacheStatus.KEY_EXISTS, client.delete(KEY1, v.getCas() + 1).toCompletableFuture().get());
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
   }
 
   private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)

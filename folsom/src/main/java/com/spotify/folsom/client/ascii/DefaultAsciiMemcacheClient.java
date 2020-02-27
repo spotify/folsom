@@ -109,6 +109,16 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   }
 
   @Override
+  public CompletionStage<MemcacheStatus> delete(String key, long cas) {
+    DeleteWithCasRequest request =
+        new DeleteWithCasRequest(encodeKey(key, charset, maxKeyLength), cas);
+    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
+    metrics.measureDeleteFuture(future);
+    tracer.span("folsom.deleteWithCas", future, "delete", key);
+    return future;
+  }
+
+  @Override
   public CompletionStage<MemcacheStatus> deleteAll(String key) {
     DeleteAllRequest request = new DeleteAllRequest(encodeKey(key, charset, maxKeyLength));
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
@@ -184,16 +194,6 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     CompletionStage<Long> future = rawMemcacheClient.send(request);
     metrics.measureIncrDecrFuture(future);
     tracer.span("folsom.decr", future, "decr", key);
-    return future;
-  }
-
-  @Override
-  public CompletionStage<MemcacheStatus> deleteWithCas(String key, long cas) {
-    DeleteWithCasRequest request =
-        new DeleteWithCasRequest(encodeKey(key, charset, maxKeyLength), cas);
-    CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
-    metrics.measureDeleteFuture(future);
-    tracer.span("folsom.deleteWithCas", future, "delete", key);
     return future;
   }
 

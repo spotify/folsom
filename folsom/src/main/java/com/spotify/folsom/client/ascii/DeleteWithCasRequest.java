@@ -62,7 +62,7 @@ public class DeleteWithCasRequest extends AsciiRequest<MemcacheStatus> {
         succeed(MemcacheStatus.OK);
         return;
       case EXISTS:
-        succeed(MemcacheStatus.ITEM_NOT_STORED);
+        succeed(MemcacheStatus.KEY_EXISTS);
         return;
       case NOT_FOUND:
         succeed(MemcacheStatus.KEY_NOT_FOUND);

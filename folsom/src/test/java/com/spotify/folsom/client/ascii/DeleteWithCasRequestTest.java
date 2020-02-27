@@ -41,8 +41,14 @@ public class DeleteWithCasRequestTest extends RequestTestTemplate {
   }
 
   @Test
-  public void testNonFoundResponse() throws IOException, InterruptedException, ExecutionException {
+  public void testNotFoundResponse() throws IOException, InterruptedException, ExecutionException {
     req.handle(AsciiResponse.NOT_FOUND, HostAndPort.fromHost("host"));
     assertEquals(MemcacheStatus.KEY_NOT_FOUND, req.get());
+  }
+
+  @Test
+  public void testKeyExistsResponse() throws IOException, InterruptedException, ExecutionException {
+    req.handle(AsciiResponse.EXISTS, HostAndPort.fromHost("host"));
+    assertEquals(MemcacheStatus.KEY_EXISTS, req.get());
   }
 }
