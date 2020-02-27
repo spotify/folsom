@@ -26,13 +26,17 @@ import java.nio.ByteBuffer;
 
 public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
-  public DeleteRequest(final byte[] key) {
+  private final long cas;
+
+  public DeleteRequest(final byte[] key, final long cas) {
     super(key);
+
+    this.cas = cas;
   }
 
   @Override
   public ByteBuf writeRequest(final ByteBufAllocator alloc, final ByteBuffer dst) {
-    writeHeader(dst, OpCode.DELETE, (byte) 0, 0, 0L);
+    writeHeader(dst, OpCode.DELETE, (byte) 0, 0, cas);
     dst.put(key);
     return toBuffer(alloc, dst);
   }

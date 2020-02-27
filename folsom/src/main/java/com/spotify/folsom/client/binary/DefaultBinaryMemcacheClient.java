@@ -253,7 +253,16 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> delete(final String key) {
-    DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength));
+    DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength), 0L);
+    final CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
+    metrics.measureDeleteFuture(future);
+    trace(OpCode.DELETE, key, null, future);
+    return future;
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> delete(String key, long cas) {
+    DeleteRequest request = new DeleteRequest(encodeKey(key, charset, maxKeyLength), cas);
     final CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureDeleteFuture(future);
     trace(OpCode.DELETE, key, null, future);

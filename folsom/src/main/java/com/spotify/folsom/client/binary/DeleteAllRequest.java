@@ -7,7 +7,7 @@ import java.util.List;
 
 public class DeleteAllRequest extends DeleteRequest implements AllRequest<MemcacheStatus> {
   public DeleteAllRequest(byte[] key) {
-    super(key);
+    super(key, 0L);
   }
 
   @Override

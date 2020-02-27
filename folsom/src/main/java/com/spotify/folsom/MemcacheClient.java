@@ -51,6 +51,15 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<MemcacheStatus> delete(String key);
 
   /**
+   * Deletes a key with CAS check.
+   *
+   * @param key The key, must not be null
+   * @param cas The CAS value, must match the value on the server for the set to go through
+   * @return A future representing completion of the request.
+   */
+  CompletionStage<MemcacheStatus> delete(String key, long cas);
+
+  /**
    * Delete the provided key on all memcached instances. This is typically only useful for a
    * multi-instance setup (using Ketama).
    *

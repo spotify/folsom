@@ -584,6 +584,31 @@ public class IntegrationTest {
     assertEquals(ImmutableSet.of(), stats.getStats().keySet());
   }
 
+  @Test
+  public void testDeleteWithCasHappyPath() throws Exception {
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(VALUE1, v.getValue());
+    assertEquals(MemcacheStatus.OK, client.delete(KEY1, v.getCas()).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDeleteWithCasMissingKey() throws Exception {
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1, 1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDeleteWithCasWrongCas() throws Exception {
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(VALUE1, v.getValue());
+    assertEquals(
+        MemcacheStatus.KEY_EXISTS, client.delete(KEY1, v.getCas() + 1).toCompletableFuture().get());
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+  }
+
   private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)
       throws InterruptedException, ExecutionException, TimeoutException {
     Map<String, MemcachedStats> statsMap =

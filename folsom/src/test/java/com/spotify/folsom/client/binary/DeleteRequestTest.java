@@ -29,14 +29,28 @@ public class DeleteRequestTest extends RequestTestTemplate {
 
   @Test
   public void testBuffer() throws Exception {
-    DeleteRequest req = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8));
-    MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
-    List<Object> out = new ArrayList<>();
-    memcacheEncoder.encode(ctx, req, out);
-    ByteBuf b = (ByteBuf) out.get(0);
+    DeleteRequest req = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8), 0L);
+    ByteBuf b = encode(req);
 
     assertHeader(b, OpCode.DELETE, KEY.length(), 0, KEY.length(), req.opaque, 0);
     assertString(KEY, b);
     assertEOM(b);
+  }
+
+  @Test
+  public void testBufferWithCas() throws Exception {
+    DeleteRequest req = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8), 123L);
+    ByteBuf b = encode(req);
+
+    assertHeader(b, OpCode.DELETE, KEY.length(), 0, KEY.length(), req.opaque, 123);
+    assertString(KEY, b);
+    assertEOM(b);
+  }
+
+  private ByteBuf encode(final DeleteRequest req) throws Exception {
+    MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
+    List<Object> out = new ArrayList<>();
+    memcacheEncoder.encode(ctx, req, out);
+    return (ByteBuf) out.get(0);
   }
 }
