@@ -2,11 +2,14 @@ package com.spotify.folsom.client;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import org.junit.Test;
 
 public class UtilsTest {
@@ -69,5 +72,25 @@ public class UtilsTest {
           future.completeExceptionally(new RuntimeException());
         });
     assertEquals("thread-B-0", future2.get());
+  }
+
+  @Test
+  public void testIsDirectExecutor() {
+    assertDirect(MoreExecutors.directExecutor(), true);
+    assertDirect(MoreExecutors.newDirectExecutorService(), true);
+
+    assertDirect(ForkJoinPool.commonPool(), false);
+    assertDirect(Executors.newFixedThreadPool(1), false);
+    assertDirect(Executors.newFixedThreadPool(10), false);
+    assertDirect(Executors.newSingleThreadExecutor(), false);
+    assertDirect(Executors.newCachedThreadPool(), false);
+    assertDirect(Executors.newWorkStealingPool(), false);
+    assertDirect(Executors.newWorkStealingPool(10), false);
+  }
+
+  private void assertDirect(Executor executor, boolean expected) {
+    for (int i = 0; i < 1000000; i++) {
+      assertEquals(expected, Utils.isDirectExecutor(executor));
+    }
   }
 }
