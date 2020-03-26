@@ -15,6 +15,9 @@
  */
 package com.spotify.folsom;
 
+import com.spotify.folsom.client.Flags;
+
+import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -38,6 +41,19 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
   CompletionStage<MemcacheStatus> add(String key, V value, int ttl, long cas);
 
   /**
+   * Add a key in memcache with the provided value, with the specified TTL. Key must not exist in
+   * memcache
+   *
+   * @param key The key, must not be null
+   * @param value The value, must not be null
+   * @param ttl The TTL in seconds
+   * @param cas The CAS value, must match the value on the server for the set to go through
+   * @param flags Memcached flags
+   * @return A future representing completion of the request, containing the new CAS value
+   */
+  CompletionStage<MemcacheStatus> add(String key, V value, int ttl, long cas, Flags flags);
+
+  /**
    * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
    * memcache
    *
@@ -48,6 +64,19 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    * @return A future representing completion of the request, containing the new CAS value
    */
   CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, long cas);
+
+  /**
+   * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
+   * memcache
+   *
+   * @param key The key, must not be null
+   * @param value The value, must not be null
+   * @param ttl The TTL in seconds
+   * @param cas The CAS value, must match the value on the server for the set to go through
+   * @param flags Memcached flags
+   * @return A future representing completion of the request, containing the new CAS value
+   */
+  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, long cas, Flags flags);
 
   /**
    * Get the value for the provided key and sets the expiration

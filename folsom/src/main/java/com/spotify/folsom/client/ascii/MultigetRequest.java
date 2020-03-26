@@ -95,7 +95,7 @@ public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
       if (index < 0) {
         throw new IOException("Got key in value that was not present in request");
       }
-      result.set(index, GetResult.success(value.value, value.cas));
+      result.set(index, GetResult.success(value.value, value.cas, value.flags));
     }
     succeed(result);
   }

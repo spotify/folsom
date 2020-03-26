@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.binary.GetRequest;
 import com.spotify.folsom.transcoder.StringTranscoder;
@@ -44,7 +45,7 @@ public class RetryingClientTest {
     RawMemcacheClient delegate = mock(RawMemcacheClient.class);
 
     MemcacheClosedException ex = new MemcacheClosedException("reason");
-    GetResult<byte[]> result = GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123);
+    GetResult<byte[]> result = GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123, Flags.DEFAULT);
     when(delegate.send(GET_REQUEST))
         .thenReturn(CompletableFutures.exceptionallyCompletedFuture(ex))
         .thenReturn(CompletableFuture.completedFuture(result));

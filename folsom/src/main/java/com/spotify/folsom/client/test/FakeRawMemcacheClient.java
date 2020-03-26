@@ -20,6 +20,7 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
+import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -68,7 +69,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
       if (value == null) {
         return CompletableFuture.completedFuture(null);
       }
-      return (CompletionStage<T>) CompletableFuture.completedFuture(GetResult.success(value, 0L));
+      return (CompletionStage<T>) CompletableFuture.completedFuture(GetResult.success(value, 0L, Flags.DEFAULT));
     }
 
     if (request instanceof MultiRequest) {
@@ -77,7 +78,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
       for (byte[] key : multiRequest.getKeys()) {
         byte[] value = map.get(ByteBuffer.wrap(key));
         if (value != null) {
-          result.add(GetResult.success(value, 0));
+          result.add(GetResult.success(value, 0, Flags.DEFAULT));
         } else {
           result.add(null);
         }
