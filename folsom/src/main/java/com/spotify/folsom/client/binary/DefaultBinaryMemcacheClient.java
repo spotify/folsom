@@ -30,6 +30,7 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.Tracer;
 import com.spotify.folsom.Transcoder;
+import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.TransformerUtil;
@@ -98,7 +99,15 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> set(final String key, final V value, final int ttl) {
-    return setInternal(OpCode.SET, key, value, ttl);
+    return setInternal(OpCode.SET, key, value, ttl, Flags.DEFAULT);
+  }
+
+  /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#set(java.lang.String, V, int, int)
+   */
+  @Override
+  public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, Flags flags) {
+    return setInternal(OpCode.SET, key, value, ttl, flags);
   }
 
   /*
@@ -107,7 +116,12 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public CompletionStage<MemcacheStatus> set(
       final String key, final V value, final int ttl, final long cas) {
-    return casSetInternal(OpCode.SET, key, value, ttl, cas);
+    return casSetInternal(OpCode.SET, key, value, ttl, cas, Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, Flags flags) {
+    return casSetInternal(OpCode.SET, key, value, ttl, cas, flags);
   }
 
   /*
@@ -115,7 +129,15 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> add(final String key, final V value, final int ttl) {
-    return setInternal(OpCode.ADD, key, value, ttl);
+    return setInternal(OpCode.ADD, key, value, ttl, Flags.DEFAULT);
+  }
+
+  /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#add(java.lang.String, V, int, int)
+   */
+  @Override
+  public CompletionStage<MemcacheStatus> add(String key, V value, int ttl, Flags flags) {
+    return setInternal(OpCode.ADD, key, value, ttl, flags);
   }
 
   /*
@@ -123,12 +145,17 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> replace(final String key, final V value, final int ttl) {
-    return setInternal(OpCode.REPLACE, key, value, ttl);
+    return replace(key, value, ttl, Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, Flags flags) {
+    return setInternal(OpCode.REPLACE, key, value, ttl, flags);
   }
 
   private CompletionStage<MemcacheStatus> setInternal(
-      final OpCode opcode, final String key, final V value, final int ttl) {
-    return casSetInternal(opcode, key, value, ttl, 0);
+      final OpCode opcode, final String key, final V value, final int ttl, final Flags flags) {
+    return casSetInternal(opcode, key, value, ttl, 0, flags);
   }
 
   /*
@@ -137,7 +164,15 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public CompletionStage<MemcacheStatus> add(
       final String key, final V value, final int ttl, final long cas) {
-    return casSetInternal(OpCode.ADD, key, value, ttl, cas);
+    return casSetInternal(OpCode.ADD, key, value, ttl, cas, Flags.DEFAULT);
+  }
+
+  /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#add(java.lang.String, V, int, long, int)
+   */
+  @Override
+  public CompletionStage<MemcacheStatus> add(String key, V value, int ttl, long cas, Flags flags) {
+    return casSetInternal(OpCode.ADD, key, value, ttl, cas, flags);
   }
 
   /*
@@ -146,16 +181,24 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public CompletionStage<MemcacheStatus> replace(
       final String key, final V value, final int ttl, final long cas) {
-    return casSetInternal(OpCode.REPLACE, key, value, ttl, cas);
+    return casSetInternal(OpCode.REPLACE, key, value, ttl, cas, Flags.DEFAULT);
+  }
+
+  /*
+   * @see com.spotify.folsom.BinaryMemcacheClient#replace(java.lang.String, V, int, long, int)
+   */
+  @Override
+  public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, long cas, Flags flags) {
+    return casSetInternal(OpCode.REPLACE, key, value, ttl, cas, flags);
   }
 
   private CompletionStage<MemcacheStatus> casSetInternal(
-      final OpCode opcode, final String key, final V value, final int ttl, final long cas) {
+      final OpCode opcode, final String key, final V value, final int ttl, final long cas, final Flags flags) {
     requireNonNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
-        new SetRequest(opcode, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, cas);
+        new SetRequest(opcode, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, cas, flags);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     trace(opcode, key, valueBytes, future);
@@ -334,7 +377,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> append(final String key, final V value) {
-    return casSetInternal(OpCode.APPEND, key, value, 0, 0);
+    return casSetInternal(OpCode.APPEND, key, value, 0, 0, Flags.DEFAULT);
   }
 
   /*
@@ -342,7 +385,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> append(final String key, final V value, final long cas) {
-    return casSetInternal(OpCode.APPEND, key, value, 0, cas);
+    return casSetInternal(OpCode.APPEND, key, value, 0, cas, Flags.DEFAULT);
   }
 
   /*
@@ -350,7 +393,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> prepend(final String key, final V value) {
-    return casSetInternal(OpCode.PREPEND, key, value, 0, 0);
+    return casSetInternal(OpCode.PREPEND, key, value, 0, 0, Flags.DEFAULT);
   }
 
   /*
@@ -358,7 +401,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    */
   @Override
   public CompletionStage<MemcacheStatus> prepend(final String key, final V value, final long cas) {
-    return casSetInternal(OpCode.PREPEND, key, value, 0, cas);
+    return casSetInternal(OpCode.PREPEND, key, value, 0, cas, Flags.DEFAULT);
   }
 
   /*

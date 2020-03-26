@@ -19,6 +19,7 @@ package com.spotify.folsom.client.ascii;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -42,37 +43,38 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     CMD.put(Operation.CAS, "cas ".getBytes(US_ASCII));
   }
 
-  private static final byte[] FLAGS = " 0 ".getBytes(US_ASCII);
-
   private final Operation operation;
   private final byte[] value;
   private final int ttl;
   private final long cas;
+  private final Flags flags;
 
   private SetRequest(
       final Operation operation,
       final byte[] key,
       final byte[] value,
       final int ttl,
-      final long cas) {
+      final long cas,
+      final Flags flags) {
     super(key);
     this.operation = operation;
     this.value = value;
     this.ttl = ttl;
     this.cas = cas;
+    this.flags = flags;
   }
 
   public static SetRequest casSet(
-      final byte[] key, final byte[] value, final int ttl, final long cas) {
-    return new SetRequest(Operation.CAS, key, value, ttl, cas);
+      final byte[] key, final byte[] value, final int ttl, final long cas, final Flags flags) {
+    return new SetRequest(Operation.CAS, key, value, ttl, cas, flags);
   }
 
   public static SetRequest create(
-      final Operation operation, final byte[] key, final byte[] value, final int ttl) {
+      final Operation operation, final byte[] key, final byte[] value, final int ttl, final Flags flags) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }
-    return new SetRequest(operation, key, value, ttl, 0);
+    return new SetRequest(operation, key, value, ttl, 0, flags);
   }
 
   @Override
@@ -81,7 +83,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     // "cas" <key> <flags> <exptime> <cas unique> <bytes> [noreply]\r\n
     dst.put(CMD.get(operation));
     dst.put(key);
-    dst.put(FLAGS);
+    dst.put(toFlags(flags));
     dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
     dst.put(SPACE_BYTES);
     dst.put(String.valueOf(value.length).getBytes());
@@ -106,6 +108,10 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     buffer.writeBytes(value);
     buffer.writeBytes(NEWLINE_BYTES);
     return buffer;
+  }
+
+  private static byte[] toFlags(Flags flags) {
+    return (" " + flags.asInt() + " ").getBytes(US_ASCII);
   }
 
   @Override

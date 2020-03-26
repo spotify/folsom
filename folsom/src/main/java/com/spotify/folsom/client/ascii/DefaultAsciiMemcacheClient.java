@@ -30,6 +30,7 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.Tracer;
 import com.spotify.folsom.Transcoder;
+import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.TransformerUtil;
 import com.spotify.folsom.client.Utils;
@@ -94,12 +95,17 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> set(final String key, final V value, final int ttl) {
+    return set(key, value, ttl, Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> set(final String key, final V value, final int ttl, final Flags flags) {
     requireNonNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
-        SetRequest.create(
-            SetRequest.Operation.SET, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
+            SetRequest.create(
+                    SetRequest.Operation.SET, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, flags);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.set", future, "set", key, valueBytes);
@@ -108,10 +114,15 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas) {
+    return set(key, value, ttl, cas, Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, Flags flags) {
     requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     byte[] byteKey = encodeKey(key, charset, maxKeyLength);
-    SetRequest request = SetRequest.casSet(byteKey, valueBytes, ttl, cas);
+    SetRequest request = SetRequest.casSet(byteKey, valueBytes, ttl, cas, flags);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.set", future, "set", key, valueBytes);
@@ -148,11 +159,16 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> add(String key, V value, int ttl) {
+    return add(key, value, ttl,  Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> add(String key, V value, int ttl, Flags flags) {
     requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
-        SetRequest.create(
-            SetRequest.Operation.ADD, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
+            SetRequest.create(
+                    SetRequest.Operation.ADD, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, flags);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.add", future, "add", key, valueBytes);
@@ -161,11 +177,16 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl) {
+   return replace(key, value, ttl,  Flags.DEFAULT);
+  }
+
+  @Override
+  public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, Flags flags) {
     requireNonNull(value);
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
-        SetRequest.create(
-            SetRequest.Operation.REPLACE, encodeKey(key, charset, maxKeyLength), valueBytes, ttl);
+            SetRequest.create(
+                    SetRequest.Operation.REPLACE, encodeKey(key, charset, maxKeyLength), valueBytes, ttl, flags);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.replace", future, "replace", key, valueBytes);
@@ -178,7 +199,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(
-            SetRequest.Operation.APPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
+            SetRequest.Operation.APPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0,  Flags.DEFAULT);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.append", future, "append", key, valueBytes);
@@ -191,7 +212,7 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     final byte[] valueBytes = valueTranscoder.encode(value);
     SetRequest request =
         SetRequest.create(
-            SetRequest.Operation.PREPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0);
+            SetRequest.Operation.PREPEND, encodeKey(key, charset, maxKeyLength), valueBytes, 0,  Flags.DEFAULT);
     CompletionStage<MemcacheStatus> future = rawMemcacheClient.send(request);
     metrics.measureSetFuture(future);
     tracer.span("folsom.prepend", future, "prepend", key, valueBytes);

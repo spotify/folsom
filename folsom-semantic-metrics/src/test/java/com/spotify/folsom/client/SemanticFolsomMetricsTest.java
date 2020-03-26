@@ -52,7 +52,7 @@ public class SemanticFolsomMetricsTest {
 
   @Test
   public void testGetHit() {
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {}, 0)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {}, 0, Flags.DEFAULT)));
 
     assertEquals(1, metrics.getGets().getCount());
     assertEquals(0, metrics.getGetMisses().getCount());
@@ -93,7 +93,7 @@ public class SemanticFolsomMetricsTest {
     metrics.measureMultigetFuture(
         completedFuture(
             ImmutableList.of(
-                GetResult.success(new byte[] {1}, 0), GetResult.success(new byte[] {1}, 0))));
+                GetResult.success(new byte[] {1}, 0, Flags.DEFAULT), GetResult.success(new byte[] {1}, 0, Flags.DEFAULT))));
 
     assertEquals(1, metrics.getMultigets().getCount());
     assertEquals(1, metrics.getMultigetSuccesses().getCount());
@@ -184,14 +184,14 @@ public class SemanticFolsomMetricsTest {
 
   @Test
   public void testGetAndMultigetHitRatio() {
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {1}, 1)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {1}, 1, Flags.DEFAULT)));
     metrics.measureGetFuture(completedFuture(missResult()));
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {2}, 1)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {2}, 1, Flags.DEFAULT)));
 
     final List<GetResult<byte[]>> list =
         Lists.newArrayList(
-            GetResult.success(new byte[] {3}, 3),
-            GetResult.success(new byte[] {4}, 4),
+            GetResult.success(new byte[] {3}, 3, Flags.DEFAULT),
+            GetResult.success(new byte[] {4}, 4, Flags.DEFAULT),
             missResult());
     metrics.measureMultigetFuture(completedFuture(list));
 
