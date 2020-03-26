@@ -17,7 +17,6 @@ package com.spotify.folsom;
 
 import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.Utils;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;

@@ -188,12 +188,18 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
    * @see com.spotify.folsom.BinaryMemcacheClient#replace(java.lang.String, V, int, long, int)
    */
   @Override
-  public CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, long cas, Flags flags) {
+  public CompletionStage<MemcacheStatus> replace(
+      String key, V value, int ttl, long cas, Flags flags) {
     return casSetInternal(OpCode.REPLACE, key, value, ttl, cas, flags);
   }
 
   private CompletionStage<MemcacheStatus> casSetInternal(
-      final OpCode opcode, final String key, final V value, final int ttl, final long cas, final Flags flags) {
+      final OpCode opcode,
+      final String key,
+      final V value,
+      final int ttl,
+      final long cas,
+      final Flags flags) {
     requireNonNull(value);
 
     final byte[] valueBytes = valueTranscoder.encode(value);

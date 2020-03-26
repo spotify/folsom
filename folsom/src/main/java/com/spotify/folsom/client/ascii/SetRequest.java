@@ -70,7 +70,11 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   }
 
   public static SetRequest create(
-      final Operation operation, final byte[] key, final byte[] value, final int ttl, final Flags flags) {
+      final Operation operation,
+      final byte[] key,
+      final byte[] value,
+      final int ttl,
+      final Flags flags) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }

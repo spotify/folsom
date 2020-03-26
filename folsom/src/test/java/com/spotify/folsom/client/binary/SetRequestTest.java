@@ -62,7 +62,12 @@ public class SetRequestTest extends RequestTestTemplate {
   private void verifySetRequest(int ttl, long cas, Flags flags) throws Exception {
     SetRequest req =
         new SetRequest(
-            OpCode.SET, KEY.getBytes(StandardCharsets.UTF_8), TRANSCODER.encode(VALUE), ttl, cas, flags);
+            OpCode.SET,
+            KEY.getBytes(StandardCharsets.UTF_8),
+            TRANSCODER.encode(VALUE),
+            ttl,
+            cas,
+            flags);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = new ArrayList<>();

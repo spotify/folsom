@@ -45,7 +45,8 @@ public class RetryingClientTest {
     RawMemcacheClient delegate = mock(RawMemcacheClient.class);
 
     MemcacheClosedException ex = new MemcacheClosedException("reason");
-    GetResult<byte[]> result = GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123, Flags.DEFAULT);
+    GetResult<byte[]> result =
+        GetResult.success(StringTranscoder.UTF8_INSTANCE.encode("bar"), 123, Flags.DEFAULT);
     when(delegate.send(GET_REQUEST))
         .thenReturn(CompletableFutures.exceptionallyCompletedFuture(ex))
         .thenReturn(CompletableFuture.completedFuture(result));

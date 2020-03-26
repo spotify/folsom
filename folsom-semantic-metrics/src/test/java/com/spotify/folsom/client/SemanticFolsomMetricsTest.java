@@ -93,7 +93,8 @@ public class SemanticFolsomMetricsTest {
     metrics.measureMultigetFuture(
         completedFuture(
             ImmutableList.of(
-                GetResult.success(new byte[] {1}, 0, Flags.DEFAULT), GetResult.success(new byte[] {1}, 0, Flags.DEFAULT))));
+                GetResult.success(new byte[] {1}, 0, Flags.DEFAULT),
+                GetResult.success(new byte[] {1}, 0, Flags.DEFAULT))));
 
     assertEquals(1, metrics.getMultigets().getCount());
     assertEquals(1, metrics.getMultigetSuccesses().getCount());

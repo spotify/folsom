@@ -16,11 +16,10 @@
 
 package com.spotify.folsom;
 
-import com.spotify.folsom.client.Flags;
-
-import java.util.Objects;
-
 import static java.util.Objects.requireNonNull;
+
+import com.spotify.folsom.client.Flags;
+import java.util.Objects;
 
 public class GetResult<V> {
 

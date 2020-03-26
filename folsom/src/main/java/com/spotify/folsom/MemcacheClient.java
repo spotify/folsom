@@ -17,7 +17,6 @@ package com.spotify.folsom;
 
 import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.Utils;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +197,8 @@ public interface MemcacheClient<V> extends ObservableClient {
    *
    * @param keys Keys, must not be null, nor must any key in the list
    * @return A future representing completion of the request, with the values, including the CAS
-   *     value and flags. Any non existing values will be null. Order will be maintained from the input keys
+   *     value and flags. Any non existing values will be null. Order will be maintained from the
+   *     input keys
    */
   CompletionStage<List<GetResult<V>>> casGet(List<String> keys);
 

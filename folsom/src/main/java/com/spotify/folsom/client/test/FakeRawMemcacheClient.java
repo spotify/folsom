@@ -79,7 +79,8 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
       if (value == null) {
         return CompletableFuture.completedFuture(null);
       }
-      return (CompletionStage<T>) CompletableFuture.completedFuture(GetResult.success(value, 0L, Flags.DEFAULT));
+      return (CompletionStage<T>)
+          CompletableFuture.completedFuture(GetResult.success(value, 0L, Flags.DEFAULT));
     }
 
     if (request instanceof MultiRequest) {
