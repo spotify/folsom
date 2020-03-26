@@ -163,7 +163,6 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             }
             int flags = (int) parseLong(token.get(), token);
 
-
             // size
             readNextToken();
             int sizeLen = token.remaining();

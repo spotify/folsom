@@ -16,8 +16,6 @@
 package com.spotify.folsom;
 
 import com.spotify.folsom.client.Flags;
-
-import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 

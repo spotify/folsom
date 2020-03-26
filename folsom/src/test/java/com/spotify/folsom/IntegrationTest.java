@@ -341,7 +341,9 @@ public class IntegrationTest {
     long cas2 = client.casGet(KEY2).toCompletableFuture().get().getCas();
 
     List<GetResult<String>> expected =
-        asList(GetResult.success(VALUE1, cas1, Flags.DEFAULT), GetResult.success(VALUE2, cas2, Flags.DEFAULT));
+        asList(
+            GetResult.success(VALUE1, cas1, Flags.DEFAULT),
+            GetResult.success(VALUE2, cas2, Flags.DEFAULT));
     assertEquals(expected, client.casGet(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
@@ -352,7 +354,8 @@ public class IntegrationTest {
     client.set(KEY1, VALUE1, TTL, flags1).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL, flags2).toCompletableFuture().get();
 
-    List<GetResult<String>> results = client.getWithFlags(asList(KEY1, KEY2)).toCompletableFuture().get();
+    List<GetResult<String>> results =
+        client.getWithFlags(asList(KEY1, KEY2)).toCompletableFuture().get();
 
     assertEquals(results.get(0).getFlags(), flags1);
     assertEquals(results.get(0).getValue(), VALUE1);
@@ -604,7 +607,8 @@ public class IntegrationTest {
   @Test
   public void testFlags() throws Exception {
     Flags flags = new Flags(42);
-    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, TTL, flags).toCompletableFuture().get());
+    assertEquals(
+        MemcacheStatus.OK, client.set(KEY1, VALUE1, TTL, flags).toCompletableFuture().get());
     GetResult<String> result = client.getWithFlags(KEY1).toCompletableFuture().get();
     assertEquals(flags, result.getFlags());
     assertEquals(result.getValue(), VALUE1);

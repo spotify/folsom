@@ -99,7 +99,7 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
           replies = new BinaryResponse();
         } else {
           // Skip end packet
-          replies.add(new ResponsePacket(opcode, status, opaque, cas, flags,keyBytes, valueBytes));
+          replies.add(new ResponsePacket(opcode, status, opaque, cas, flags, keyBytes, valueBytes));
         }
       } else {
         replies.add(new ResponsePacket(opcode, status, opaque, cas, flags, keyBytes, valueBytes));

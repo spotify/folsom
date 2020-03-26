@@ -17,7 +17,6 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.client.Flags;
-
 import java.util.ArrayList;
 import java.util.List;
 
