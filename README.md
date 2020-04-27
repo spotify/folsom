@@ -139,6 +139,20 @@ If you are still on Java 7, you can depend on the older version:
   race condition bugs and deadlocks. We try to isolate that as much as possible to minimize the risk,
   and most of the code base doesn't have to care.
 
+### Best practices
+
+Do not use `withConnectionTimeoutMillis()` or the deprecated `withRequestTimeoutMillis()` to set timeouts per request.
+This is intended to detect broken TCP connections to close it and recreate it. Once this happens, all open
+requests will be completed with a failure and Folsom will try to recreate the connection. If this timeout is set too low,
+this will create connection flapping which will result in an increase of failed requests and/or increased
+request latencies.
+
+A better way of setting timeouts on individual requests (in Java 9+) is something like this:
+
+```java
+CompletableFuture<T> future = client.get(...).toCompletableFuture().orTimeout(...);
+```
+
 ### Protocol
 
 Folsom implements both the [binary protocol] and [ascii protocol].

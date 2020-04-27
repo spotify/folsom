@@ -109,7 +109,7 @@ public class MemcacheClientBuilder<V> {
   private long resolveRefreshPeriod = 60 * 1000L;
   private long shutdownDelay = 60 * 1000L;
 
-  private long timeoutMillis = 3000;
+  private long connectionTimeoutMillis = 3000;
   private int maxSetLength = DEFAULT_MAX_SET_LENGTH;
   private int maxKeyLength = MAX_KEY_LEN;
   private EventLoopGroup eventLoopGroup;
@@ -399,14 +399,31 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Enforce a timeout for requests to complete, closing the connection and reconnecting if the
-   * timeout is exceeded.
+   * This has been deprecated - see {#link withConnectionTimeoutMillis}.
+   *
+   * <p>Do not use this to enforce request timeouts. Instead, set a timeout on the request futures
+   * using orTimeout() or some other manual mechanism.
    *
    * @param timeoutMillis The timeout in milliseconds. The default is 3000 ms.
    * @return itself
    */
+  @Deprecated
   public MemcacheClientBuilder<V> withRequestTimeoutMillis(final long timeoutMillis) {
-    this.timeoutMillis = timeoutMillis;
+    return withConnectionTimeoutMillis(timeoutMillis);
+  }
+
+  /**
+   * Set the maximum time to wait before considering the connection to be dead and should be closed
+   * and recreated.
+   *
+   * <p>Do not use this to enforce request timeouts. Instead, set a timeout on the request futures
+   * using orTimeout() or some other manual mechanism.
+   *
+   * @param timeoutMillis The timeout in milliseconds. The default is 3000 ms.
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withConnectionTimeoutMillis(final long timeoutMillis) {
+    this.connectionTimeoutMillis = timeoutMillis;
     return this;
   }
 
@@ -632,7 +649,7 @@ public class MemcacheClientBuilder<V> {
         binary,
         authenticator,
         executor.get(),
-        timeoutMillis,
+        connectionTimeoutMillis,
         charset,
         metrics,
         maxSetLength,
