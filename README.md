@@ -143,7 +143,7 @@ If you are still on Java 7, you can depend on the older version:
 
 Do not use `withConnectionTimeoutMillis()` or the deprecated `withRequestTimeoutMillis()` to set timeouts per request.
 This is intended to detect broken TCP connections to close it and recreate it. Once this happens, all open
-request will be completed with a failure and Folsom will try to recreate the connection. If this timeout is set too low,
+requests will be completed with a failure and Folsom will try to recreate the connection. If this timeout is set too low,
 this will create connection flapping which will result in an increase of failed requests and/or increased
 request latencies.
 
