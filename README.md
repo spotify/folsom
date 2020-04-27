@@ -151,7 +151,6 @@ A better way of setting timeouts on individual requests (in Java 9+) is somethin
 
 ```java
 CompletableFuture<T> future = client.get(...).toCompletableFuture().orTimeout(...);
-
 ```
 
 ### Protocol
