@@ -83,7 +83,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final BatchFlusher flusher;
   private final HostAndPort address;
   private final Executor executor;
-  private final long timeoutMillis;
+  private final long connectionTimeoutMillis;
   private final Metrics metrics;
   private final int maxSetLength;
 
@@ -104,7 +104,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final int batchSize,
       final boolean binary,
       final Executor executor,
-      final long timeoutMillis,
+      final long connectionTimeoutMillis,
       final Charset charset,
       final Metrics metrics,
       final int maxSetLength,
@@ -166,7 +166,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                         outstandingRequestLimit,
                         batchSize,
                         executor,
-                        timeoutMillis,
+                        connectionTimeoutMillis,
                         metrics,
                         maxSetLength);
                 clientFuture.complete(client);
@@ -189,12 +189,12 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final int outstandingRequestLimit,
       final int batchSize,
       final Executor executor,
-      final long timeoutMillis,
+      final long connectionTimeoutMillis,
       final Metrics metrics,
       int maxSetLength) {
     this.address = address;
     this.executor = executor;
-    this.timeoutMillis = timeoutMillis;
+    this.connectionTimeoutMillis = connectionTimeoutMillis;
     this.metrics = metrics;
     this.maxSetLength = maxSetLength;
     this.channel = requireNonNull(channel, "channel");
@@ -296,8 +296,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private class ConnectionHandler extends ChannelDuplexHandler {
 
     private final Queue<Request<?>> outstanding = Queues.newArrayDeque();
-    private final TimeoutChecker<Request<?>> timeoutChecker =
-        TimeoutChecker.create(MILLISECONDS, timeoutMillis);
+    private final TimeoutChecker<Request<?>> connectionTimeoutChecker =
+        TimeoutChecker.create(MILLISECONDS, connectionTimeoutMillis);
 
     private final Future<?> timeoutCheckTask;
 
@@ -312,8 +312,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                     if (head == null) {
                       return;
                     }
-                    if (timeoutChecker.check(head)) {
-                      log.error("Request timeout: {} {}", channel, head);
+                    if (connectionTimeoutChecker.check(head)) {
+                      log.error("Connection timeout: {} {}", channel, head);
                       DefaultRawMemcacheClient.this.setDisconnected("Timeout");
                     }
                   },
