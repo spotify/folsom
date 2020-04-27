@@ -413,7 +413,8 @@ public class MemcacheClientBuilder<V> {
    * Set the maximum time to wait before considering the connection to be dead and should be closed
    * and recreated.
    *
-   * <p>Do not use this to enforce request timeouts
+   * <p>Do not use this to enforce request timeouts. Instead, set a timeout on the request
+   * futures using orTimeout() or some other manual mechanism.
    *
    * @param timeoutMillis The timeout in milliseconds. The default is 3000 ms.
    * @return itself
