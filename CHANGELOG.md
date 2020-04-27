@@ -1,3 +1,10 @@
+### 1.7.3
+* Deprecate withRequestTimeoutMillis, replace with withConnectionTimeoutMillis.
+
+### 1.7.2
+* Add deleteWithCas
+* Take ElastiCache configuration version into account
+
 ### 1.7.1
 * Add elasticache resolver
 * Add BOM artifact
