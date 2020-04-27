@@ -147,7 +147,7 @@ requests will be completed with a failure and Folsom will try to recreate the co
 this will create connection flapping which will result in an increase of failed requests and/or increased
 request latencies.
 
-A better way of setting timeouts on individual requests (In Java 9+) is something like this:
+A better way of setting timeouts on individual requests (in Java 9+) is something like this:
 
 ```java
 CompletableFuture<T> future = client.get(...).toCompletableFuture().orTimeout(...);
