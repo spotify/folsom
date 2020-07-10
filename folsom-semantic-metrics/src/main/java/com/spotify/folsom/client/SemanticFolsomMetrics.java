@@ -27,6 +27,8 @@ import com.spotify.metrics.core.SemanticMetricRegistry;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -73,6 +75,8 @@ public class SemanticFolsomMetrics implements Metrics {
   private final MetricId id;
 
   private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
+  private final ConcurrentMap<String, HostMetrics> instanceMetrics = new ConcurrentHashMap<>();
+  private final MetricId outstandingRequestGaugeBaseId;
 
   public SemanticFolsomMetrics(final SemanticMetricRegistry registry, final MetricId baseMetricId) {
 
@@ -142,12 +146,12 @@ public class SemanticFolsomMetrics implements Metrics {
     this.touchSuccesses = registry.meter(touchMetersId.tagged("result", "success"));
     this.touchFailures = registry.meter(touchMetersId.tagged("result", "failure"));
 
-    final MetricId outstandingRequestGauge =
+    outstandingRequestGaugeBaseId =
         id.tagged(
             "what", "outstanding-requests",
             "unit", "requests");
     registry.register(
-        outstandingRequestGauge,
+        outstandingRequestGaugeBaseId.tagged("host", "all"),
         (Gauge<Long>)
             () ->
                 gauges.stream().mapToLong(OutstandingRequestsGauge::getOutstandingRequests).sum());
@@ -344,10 +348,47 @@ public class SemanticFolsomMetrics implements Metrics {
   @Override
   public void registerOutstandingRequestsGauge(final OutstandingRequestsGauge gauge) {
     gauges.add(gauge);
+    final String hostName = gauge.getHostName();
+    instanceMetrics.computeIfAbsent(hostName, HostMetrics::new).add(gauge);
   }
 
   @Override
-  public void unregisterOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {
+  public void unregisterOutstandingRequestsGauge(final OutstandingRequestsGauge gauge) {
+    final String hostName = gauge.getHostName();
     gauges.remove(gauge);
+    instanceMetrics.computeIfAbsent(hostName, HostMetrics::new).remove(gauge);
+
+    // TODO: possibly clean up old hostnames from the map.
+  }
+
+  private class HostMetrics {
+    private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
+    private final MetricId metricId;
+    private boolean active = false;
+
+    private HostMetrics(final String hostname) {
+      metricId = outstandingRequestGaugeBaseId.tagged("host", hostname);
+    }
+
+    private synchronized void remove(final OutstandingRequestsGauge gauge) {
+      gauges.remove(gauge);
+
+      if (gauges.isEmpty() && active) {
+        active = false;
+        registry.remove(metricId);
+      }
+    }
+
+    private synchronized void add(final OutstandingRequestsGauge gauge) {
+      gauges.add(gauge);
+      if (!active) {
+        active = true;
+        registry.register(metricId, (Gauge<Long>) this::gaugeFunction);
+      }
+    }
+
+    private long gaugeFunction() {
+      return gauges.stream().mapToLong(OutstandingRequestsGauge::getOutstandingRequests).sum();
+    }
   }
 }

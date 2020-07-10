@@ -42,5 +42,9 @@ public interface Metrics {
 
   interface OutstandingRequestsGauge {
     int getOutstandingRequests();
+
+    default String getHostName() {
+      return "";
+    }
   }
 }
