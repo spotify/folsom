@@ -97,6 +97,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                   ? new EpollEventLoopGroup(0, THREAD_FACTORY)
                   : new NioEventLoopGroup(0, THREAD_FACTORY));
   private final int pendingCounterLimit;
+  private final OutstandingRequestGauge outstandingRequestGauge = new OutstandingRequestGauge();
 
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
@@ -210,7 +211,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     GLOBAL_CONNECTION_COUNT.incrementAndGet();
 
-    metrics.registerOutstandingRequestsGauge(this::numPendingRequests);
+    metrics.registerOutstandingRequestsGauge(outstandingRequestGauge);
 
     channel.pipeline().addLast("handler", new ConnectionHandler());
   }
@@ -450,7 +451,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       pendingCounter.set(pendingCounterLimit);
       channel.close();
       GLOBAL_CONNECTION_COUNT.decrementAndGet();
-      metrics.unregisterOutstandingRequestsGauge(this::numPendingRequests);
+      metrics.unregisterOutstandingRequestsGauge(outstandingRequestGauge);
       notifyConnectionChange();
     }
   }
@@ -459,13 +460,21 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return GLOBAL_CONNECTION_COUNT.get();
   }
 
-  private int numPendingRequests() {
-    final int counter = pendingCounter.get();
-    if (counter >= pendingCounterLimit) {
-      if (disconnectReason.get() != null) {
-        return 0; // Disconnected implies no pending requests
+  private class OutstandingRequestGauge implements Metrics.OutstandingRequestsGauge {
+    @Override
+    public int getOutstandingRequests() {
+      final int counter = pendingCounter.get();
+      if (counter >= pendingCounterLimit) {
+        if (disconnectReason.get() != null) {
+          return 0; // Disconnected implies no pending requests
+        }
       }
+      return counter;
     }
-    return counter;
+
+    @Override
+    public String getHostName() {
+      return address.getHostText();
+    }
   }
 }
