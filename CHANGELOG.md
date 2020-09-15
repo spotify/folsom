@@ -1,3 +1,7 @@
+### 1.7.4
+* Minor bugfix: metrics for outstanding requests could sometimes return the wrong value after
+  connection is closed
+
 ### 1.7.3
 * Deprecate withRequestTimeoutMillis, replace with withConnectionTimeoutMillis.
 
