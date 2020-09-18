@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.futures.CompletableFutures;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -87,8 +86,6 @@ public class IntegrationTest {
     } else {
       throw new IllegalArgumentException(protocol);
     }
-    HostAndPort integrationServer = HostAndPort.fromParts(server.getHost(), server.getPort());
-
     MemcacheClientBuilder<String> builder =
         MemcacheClientBuilder.newStringClient()
             .withAddress(server.getHost(), server.getPort())
@@ -554,9 +551,7 @@ public class IntegrationTest {
     assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1).toCompletableFuture().get());
     assertNull(client.get(KEY1).toCompletableFuture().get());
     assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 5).toCompletableFuture().get());
-    Thread.sleep(4000);
-    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
-    Thread.sleep(2000);
+    Thread.sleep(6000);
     assertNull(client.get(KEY1).toCompletableFuture().get());
   }
 
