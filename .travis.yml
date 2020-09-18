@@ -13,7 +13,7 @@ install:
   - mvn -B install -DskipTests=true -Dgpg.skip=true
 
 after_success:
-  - mvn -B clean cobertura:cobertura coveralls:report -Dcoveralls.token=${COVERALLS_TOKEN}
+  - mvn -B clean test jacoco:report coveralls:report -Dcoveralls.token=${COVERALLS_TOKEN}
 
 services:
   - docker
