@@ -119,7 +119,7 @@ public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
       }
 
       if (reply.status == MemcacheStatus.OK) {
-        result.set(index, GetResult.success(reply.value, reply.cas));
+        result.set(index, GetResult.success(reply.value, reply.cas, reply.flags));
       } else if (reply.status == MemcacheStatus.KEY_NOT_FOUND) {
         // No need to do anything
       } else {

@@ -67,7 +67,7 @@ public class GetRequest extends BinaryRequest<GetResult<byte[]>>
       throw new IOException("Unmatched response");
     }
     if (reply.status == MemcacheStatus.OK) {
-      succeed(GetResult.success(reply.value, reply.cas));
+      succeed(GetResult.success(reply.value, reply.cas, reply.flags));
     } else if (reply.status == MemcacheStatus.KEY_NOT_FOUND) {
       succeed(null);
     } else {
