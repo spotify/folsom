@@ -1,16 +1,18 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.spotify</groupId>
-  <artifactId>folsom-parent</artifactId>
+  <artifactId>folsom-outbrain-parent</artifactId>
   <version>1.7.5-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>folsom-parent</name>
+  <name>folsom-outbrain-parent</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skip-enforce-jdk8>true</skip-enforce-jdk8>
+    <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
   </properties>
 
   <parent>
@@ -29,9 +31,9 @@
   </modules>
 
   <scm>
-    <connection>scm:git:https://github.com/spotify/folsom.git</connection>
-    <developerConnection>scm:git:git@github.com:spotify/folsom.git</developerConnection>
-    <url>scm:https://github.com/spotify/folsom/</url>
+    <connection>scm:git:https://github.com/outbrain/folsom.git</connection>
+    <developerConnection>scm:git:git@github.com:outbrain/folsom.git</developerConnection>
+    <url>scm:https://github.com/outbrain/folsom/</url>
   </scm>
 
   <licenses>
@@ -107,6 +109,7 @@
     </profile>
   </profiles>
 
+
   <build>
     <pluginManagement>
       <plugins>
@@ -157,20 +160,55 @@
           </configuration>
         </plugin>
         <plugin>
-            <groupId>com.coveo</groupId>
-            <artifactId>fmt-maven-plugin</artifactId>
-            <version>2.5.1</version>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>check</goal>
-                    </goals>
-                </execution>
-            </executions>
+          <groupId>com.coveo</groupId>
+          <artifactId>fmt-maven-plugin</artifactId>
+          <version>2.5.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven-shade-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <minimizeJar>false</minimizeJar>
+          <shadedArtifactAttached>false</shadedArtifactAttached>
+          <createSourcesJar>true</createSourcesJar>
+
+          <relocations>
+            <relocation>
+              <pattern>com.google</pattern>
+              <shadedPattern>folsom.shaded.guava</shadedPattern>
+              <includes>
+                <include>com.google.**</include>
+              </includes>
+            </relocation>
+          </relocations>
+          <artifactSet>
+            <includes>
+              <include>com.google.**:**</include>
+              <include>com.spotify:**</include>
+            </includes>
+          </artifactSet>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
