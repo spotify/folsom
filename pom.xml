@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.spotify</groupId>
-  <artifactId>folsom-outbrain-parent</artifactId>
-  <version>2.Outbrain.0-SNAPSHOT</version>
+  <groupId>com.spotify.outbrain</groupId>
+  <artifactId>folsom-parent</artifactId>
+  <version>${revision}</version>
   <packaging>pom</packaging>
-  <name>folsom-outbrain-parent</name>
+  <name>folsom-parent</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,13 +16,11 @@
     <artifactUrl>FILL_ME</artifactUrl>
     <artifactSnapshotUrl>FILL_ME</artifactSnapshotUrl>
     <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+    <revision>2.LOCAL.0-SNAPSHOT</revision>
+    <artifactReleaseUrl>FILL_ME</artifactReleaseUrl>
+    <artifactSnapshotsUrl>FILL_ME</artifactSnapshotsUrl>
   </properties>
 
-<!--  <parent>-->
-<!--    <groupId>org.sonatype.oss</groupId>-->
-<!--    <artifactId>oss-parent</artifactId>-->
-<!--    <version>9</version>-->
-<!--  </parent>-->
 
   <modules>
     <module>folsom</module>
@@ -57,11 +55,11 @@
   <distributionManagement>
     <repository>
       <id>art_releases</id>
-      <url>${artifactUrl}</url>
+      <url>${artifactReleaseUrl}</url>
     </repository>
     <snapshotRepository>
       <id>art_releases</id>
-      <url>${artifactSnapshotUrl}</url>
+      <url>${artifactSnapshotsUrl}</url>
     </snapshotRepository>
   </distributionManagement>
 
