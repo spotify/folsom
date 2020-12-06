@@ -13,13 +13,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skip-enforce-jdk8>true</skip-enforce-jdk8>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
+    <artifactUrl>FILL_ME</artifactUrl>
+    <artifactSnapshotUrl>FILL_ME</artifactSnapshotUrl>
+    <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
   </properties>
 
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
-  </parent>
+<!--  <parent>-->
+<!--    <groupId>org.sonatype.oss</groupId>-->
+<!--    <artifactId>oss-parent</artifactId>-->
+<!--    <version>9</version>-->
+<!--  </parent>-->
 
   <modules>
     <module>folsom</module>
@@ -50,29 +53,16 @@
     <url>http://www.spotify.com</url>
   </organization>
 
-  <developers>
-    <developer>
-      <id>krka</id>
-      <name>Kristofer Karlsson</name>
-      <email>krka@spotify.com</email>
-      <organization>Spotify AB</organization>
-      <organizationUrl>http://www.spotify.com</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+1</timezone>
-    </developer>
-  </developers>
 
   <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>art_releases</id>
+      <url>${artifactUrl}</url>
     </repository>
+    <snapshotRepository>
+      <id>art_releases</id>
+      <url>${artifactSnapshotUrl}</url>
+    </snapshotRepository>
   </distributionManagement>
 
   <dependencyManagement>
@@ -176,6 +166,11 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>${maven-release-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>${maven-shade-plugin.version}</version>
         <executions>
@@ -241,18 +236,18 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.5</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.jacoco</groupId>-->
+<!--        <artifactId>jacoco-maven-plugin</artifactId>-->
+<!--        <version>0.8.5</version>-->
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <goals>-->
+<!--              <goal>prepare-agent</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
+<!--      </plugin>-->
 
       <!-- Require releases to be done with java 8-->
       <plugin>
