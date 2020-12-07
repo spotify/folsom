@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>folsom-outbrain-parent</artifactId>
-    <version>10.Outbrain.0</version>
+    <version>11.Outbrain.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>folsom-elasticache</artifactId>
