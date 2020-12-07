@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>folsom-outbrain-parent</artifactId>
-    <version>2.Outbrain.0</version>
+    <version>3.Outbrain.0-SNAPSHOT</version>
   </parent>
 
   <groupId>com.spotify</groupId>
