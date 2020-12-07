@@ -90,14 +90,14 @@
     </dependencies>
   </dependencyManagement>
 
-  <profiles>
-    <profile>
-      <id>sonatype-oss-release</id>
-      <properties>
-        <skip-enforce-jdk8>false</skip-enforce-jdk8>
-      </properties>
-    </profile>
-  </profiles>
+<!--  <profiles>-->
+<!--    <profile>-->
+<!--      <id>sonatype-oss-release</id>-->
+<!--      <properties>-->
+<!--        <skip-enforce-jdk8>false</skip-enforce-jdk8>-->
+<!--      </properties>-->
+<!--    </profile>-->
+<!--  </profiles>-->
 
 
   <build>
@@ -204,17 +204,17 @@
           </artifactSet>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.3</version>
-        <extensions>true</extensions>
-        <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.sonatype.plugins</groupId>-->
+<!--        <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--        <version>1.6.3</version>-->
+<!--        <extensions>true</extensions>-->
+<!--        <configuration>-->
+<!--          <serverId>ossrh</serverId>-->
+<!--          <nexusUrl>https://oss.sonatype.org/</nexusUrl>-->
+<!--          <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
