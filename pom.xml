@@ -11,6 +11,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skip-enforce-jdk8>true</skip-enforce-jdk8>
+    <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
   </properties>
 
   <parent>
@@ -171,6 +172,39 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven-shade-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <minimizeJar>false</minimizeJar>
+          <shadedArtifactAttached>false</shadedArtifactAttached>
+          <createSourcesJar>true</createSourcesJar>
+          <relocations>
+            <relocation>
+              <pattern>com.google</pattern>
+              <shadedPattern>folsom.shaded.guava</shadedPattern>
+              <includes>
+                <include>com.google.**</include>
+              </includes>
+            </relocation>
+          </relocations>
+          <artifactSet>
+            <includes>
+              <include>com.google.**:**</include>
+              <include>com.spotify:**</include>
+            </includes>
+          </artifactSet>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
