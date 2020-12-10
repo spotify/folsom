@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.outbrain</groupId>
     <artifactId>folsom-outbrain-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>folsom-semantic-metrics</artifactId>
