@@ -12,16 +12,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skip-enforce-jdk8>true</skip-enforce-jdk8>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
-    <artifactUrl>FILL_ME</artifactUrl>
-    <artifactSnapshotUrl>FILL_ME</artifactSnapshotUrl>
     <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
   </properties>
-
-<!--  <parent>-->
-<!--    <groupId>org.sonatype.oss</groupId>-->
-<!--    <artifactId>oss-parent</artifactId>-->
-<!--    <version>9</version>-->
-<!--  </parent>-->
 
   <modules>
     <module>folsom</module>
@@ -57,11 +49,11 @@
   <distributionManagement>
     <repository>
       <id>art_releases</id>
-      <url>${artifactUrl}</url>
+      <url>http://artifactorymaster.outbrain.com:8081/artifactory/releases</url>
     </repository>
     <snapshotRepository>
       <id>art_releases</id>
-      <url>${artifactSnapshotUrl}</url>
+      <url>http://artifactorymaster.outbrain.com:8081/artifactory/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
@@ -89,16 +81,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-<!--  <profiles>-->
-<!--    <profile>-->
-<!--      <id>sonatype-oss-release</id>-->
-<!--      <properties>-->
-<!--        <skip-enforce-jdk8>false</skip-enforce-jdk8>-->
-<!--      </properties>-->
-<!--    </profile>-->
-<!--  </profiles>-->
-
 
   <build>
     <pluginManagement>
