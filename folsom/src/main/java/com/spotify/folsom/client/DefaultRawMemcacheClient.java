@@ -234,8 +234,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       // to get better performance in the happy case.
       String disconnectReason = this.disconnectReason.get();
       if (disconnectReason != null) {
-        MemcacheClosedException exception =
-            new MemcacheClosedException(disconnectReason, address);
+        MemcacheClosedException exception = new MemcacheClosedException(disconnectReason, address);
         return onExecutor(CompletableFutures.exceptionallyCompletedFuture(exception));
       }
 
@@ -347,8 +346,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         if (request == null) {
           break;
         }
-        request.fail(
-            new MemcacheClosedException(disconnectReason.get(), address), address);
+        request.fail(new MemcacheClosedException(disconnectReason.get(), address), address);
       }
     }
 
@@ -364,8 +362,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       } catch (final Exception exception) {
         log.error("Corrupt protocol: " + exception.getMessage(), exception);
         DefaultRawMemcacheClient.this.setDisconnected(exception);
-        request.fail(
-            new MemcacheClosedException(disconnectReason.get(), address), address);
+        request.fail(new MemcacheClosedException(disconnectReason.get(), address), address);
         ctx.channel().close();
       }
     }
@@ -434,8 +431,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
     private void fail(Throwable cause) {
       setDisconnected(cause);
-      request.fail(
-          new MemcacheClosedException(disconnectReason.get(), address), address);
+      request.fail(new MemcacheClosedException(disconnectReason.get(), address), address);
     }
   }
 
