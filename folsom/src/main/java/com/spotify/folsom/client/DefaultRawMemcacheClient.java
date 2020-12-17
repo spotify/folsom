@@ -241,7 +241,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
       return onExecutor(
           CompletableFutures.exceptionallyCompletedFuture(
-              new MemcacheOverloadedException("too many outstanding requests")));
+              new MemcacheOverloadedException("too many outstanding requests", address)));
     }
     channel.write(request, new RequestWritePromise(channel, request));
     flusher.flush();
