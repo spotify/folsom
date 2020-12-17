@@ -160,7 +160,8 @@ public class DefaultRawMemcacheClientTest {
           .get();
       fail();
     } catch (ExecutionException e) {
-      assertEquals(exceptionString+", memcached node:"+server.getHost(), e.getCause().getMessage());
+      assertEquals(
+          exceptionString + ", memcached node:" + server.getHost(), e.getCause().getMessage());
     }
   }
 
