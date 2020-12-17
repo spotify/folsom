@@ -16,13 +16,15 @@
 
 package com.spotify.folsom;
 
+import com.spotify.folsom.guava.HostAndPort;
+
 @SuppressWarnings("serial")
 public class MemcacheClosedException extends Exception {
   public MemcacheClosedException(final String message) {
     super(message);
   }
 
-  public MemcacheClosedException(final String message, final String host) {
-    super(message + ", Host:" + host);
+  public MemcacheClosedException(final String message, final HostAndPort address) {
+    super(message + ", Host:" + address.getHostText());
   }
 }
