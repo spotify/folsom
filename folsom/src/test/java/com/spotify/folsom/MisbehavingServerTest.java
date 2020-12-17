@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class MisbehavingServerTest {
+  private static final String HOST = "127.0.0.8";
   private Server server;
 
   @Before
@@ -44,99 +45,99 @@ public class MisbehavingServerTest {
 
   @Test
   public void testInvalidAsciiResponse() throws Throwable {
-    testAsciiGet("HIPPO\r\n", "Unexpected line: HIPPO");
+    testAsciiGet("HIPPO\r\n", "Unexpected line: HIPPO"+", memcached node:"+HOST);
   }
 
   @Test
   public void testInvalidAsciiResponse2() throws Throwable {
-    testAsciiGet("HIPPOS\r\n", "Unexpected line: HIPPOS");
+    testAsciiGet("HIPPOS\r\n", "Unexpected line: HIPPOS"+", memcached node:"+HOST);
   }
 
   @Test
   public void testInvalidAsciiResponse3() throws Throwable {
-    testAsciiGet("AAAAAAAAAAAAAAARGH\r\n", "Unexpected line: AAAAAAAAAAAAAAARGH");
+    testAsciiGet("AAAAAAAAAAAAAAARGH\r\n", "Unexpected line: AAAAAAAAAAAAAAARGH"+", memcached node:"+HOST);
   }
 
   @Test
   public void testAsciiNotANumber() throws Throwable {
-    testAsciiGet("123ABC\r\n", "Unexpected line: 123ABC");
+    testAsciiGet("123ABC\r\n", "Unexpected line: 123ABC"+", memcached node:"+HOST);
   }
 
   @Test
   public void testEmptyAsciiResponse() throws Throwable {
-    testAsciiGet("\r\n", "Unexpected line: ");
+    testAsciiGet("\r\n", "Unexpected line: "+", memcached node:"+HOST);
   }
 
   @Test
   public void testNotNewline() throws Throwable {
-    testAsciiGet("\rFoo\n", "Expected newline, got something else");
+    testAsciiGet("\rFoo\n", "Expected newline, got something else"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet() throws Throwable {
-    testAsciiGet("VALUE\r\n", "Unexpected line: VALUE");
+    testAsciiGet("VALUE\r\n", "Unexpected line: VALUE"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet2() throws Throwable {
-    testAsciiGet("VALUE \r\n", "Unexpected line: VALUE ");
+    testAsciiGet("VALUE \r\n", "Unexpected line: VALUE "+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet3() throws Throwable {
-    testAsciiGet("VALUE key\r\n", "Unexpected line: VALUE key");
+    testAsciiGet("VALUE key\r\n", "Unexpected line: VALUE key"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet4() throws Throwable {
-    testAsciiGet("VALUE key 123\r\n", "Unexpected line: VALUE key 123");
+    testAsciiGet("VALUE key 123\r\n", "Unexpected line: VALUE key 123"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet5() throws Throwable {
-    testAsciiGet("VALUE key 123 456\r\n", "Timeout");
+    testAsciiGet("VALUE key 123 456\r\n", "Timeout"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet6() throws Throwable {
-    testAsciiGet("VALUE key 123 0\r\nfoo\r\n", "Unexpected end of data block: foo");
+    testAsciiGet("VALUE key 123 0\r\nfoo\r\n", "Unexpected end of data block: foo"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet7() throws Throwable {
-    testAsciiGet("VALUE key 123 0\r\n\r\nSTORED\r\n", "Unexpected line: STORED");
+    testAsciiGet("VALUE key 123 0\r\n\r\nSTORED\r\n", "Unexpected line: STORED"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiGet8() throws Throwable {
-    testAsciiGet("VALUE key 123 1a3\r\n", "Unexpected line: VALUE key 123 1a3");
+    testAsciiGet("VALUE key 123 1a3\r\n", "Unexpected line: VALUE key 123 1a3"+", memcached node:"+HOST);
   }
 
   @Test
   public void testWrongAsciiKey() throws Throwable {
-    testAsciiGet("VALUE otherkey 123 0\r\n\r\nEND\r\n", "Expected key key but got otherkey");
+    testAsciiGet("VALUE otherkey 123 0\r\n\r\nEND\r\n", "Expected key key but got otherkey"+", memcached node:"+HOST);
   }
 
   @Test
   public void testTooManyAsciiValues() throws Throwable {
     testAsciiGet(
         "" + "VALUE key 123 0\r\n" + "\r\n" + "VALUE key 123 0\r\n" + "\r\n" + "END\r\n",
-        "Too many responses, expected 1 but got 2");
+        "Too many responses, expected 1 but got 2"+", memcached node:"+HOST);
   }
 
   @Test
   public void testAsciiWrongResponseType() throws Throwable {
-    testAsciiGet("1234\r\n", "Unexpected response type: NUMERIC_VALUE");
+    testAsciiGet("1234\r\n", "Unexpected response type: NUMERIC_VALUE"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiTouch() throws Throwable {
-    testAsciiTouch("STORED\r\n", "Unexpected line: STORED");
+    testAsciiTouch("STORED\r\n", "Unexpected line: STORED"+", memcached node:"+HOST);
   }
 
   @Test
   public void testBadAsciiSet() throws Throwable {
-    testAsciiSet("TOUCHED\r\n", "Unexpected line: TOUCHED");
+    testAsciiSet("TOUCHED\r\n", "Unexpected line: TOUCHED"+", memcached node:"+HOST);
   }
 
   private void testAsciiGet(String response, String expectedError) throws Exception {
@@ -188,7 +189,7 @@ public class MisbehavingServerTest {
     server = new Server(response);
     MemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.8", server.port)
+            .withAddress(HOST, server.port)
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
