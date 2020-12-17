@@ -32,6 +32,8 @@ public interface Metrics {
 
   void measureTouchFuture(CompletionStage<MemcacheStatus> future);
 
+  <T> void measureFuture(CompletionStage<T> future, String hostName);
+
   /**
    * Called by the MemcacheClient initialization process to allow a gauge to be registered with the
    * metrics implementation to monitor the number of outstanding requests at any moment in time.
