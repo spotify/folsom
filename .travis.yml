@@ -8,7 +8,7 @@ install:
   - mvn -B install -DskipTests=true -Dgpg.skip=true
 
 after_success:
-  - mvn -B clean test jacoco:report
+  - mvn -B clean test
 
 services:
   - docker
