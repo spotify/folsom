@@ -66,7 +66,7 @@ public class DefaultRawMemcacheClientTest {
 
   @Test
   public void testInvalidRequest() throws Exception {
-    final String exceptionString = "Crash the client";
+    final String exceptionString = "Crash the client"+", memcached node:"+server.getHost();
 
     RawMemcacheClient rawClient =
         DefaultRawMemcacheClient.connect(
