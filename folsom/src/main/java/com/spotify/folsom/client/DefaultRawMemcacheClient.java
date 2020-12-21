@@ -219,15 +219,18 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   @Override
   @SuppressWarnings("unchecked")
   public <T> CompletionStage<T> send(final Request<T> request) {
+    final CompletionStage<T> future = createFuture(request);
+    metrics.measureFuture(future, address.getHostText());
+    return future;
+  }
+
+  private <T> CompletionStage<T> createFuture(Request<T> request) {
     if (request instanceof SetRequest) {
       SetRequest setRequest = (SetRequest) request;
       byte[] value = setRequest.getValue();
       if (value.length > maxSetLength) {
-        final CompletionStage<T> future =
-            (CompletionStage<T>)
-                onExecutor(CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
-        metrics.measureFuture(future, address.getHostText());
-        return future;
+        return (CompletionStage<T>)
+            onExecutor(CompletableFuture.completedFuture(MemcacheStatus.VALUE_TOO_LARGE));
       }
     }
 
