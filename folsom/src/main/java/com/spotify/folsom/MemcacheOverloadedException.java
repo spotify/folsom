@@ -16,10 +16,16 @@
 
 package com.spotify.folsom;
 
+import com.spotify.folsom.guava.HostAndPort;
+
 @SuppressWarnings("serial")
 public class MemcacheOverloadedException extends Exception {
 
   public MemcacheOverloadedException(final String reason) {
     super(reason);
+  }
+
+  public MemcacheOverloadedException(final String reason, final HostAndPort address) {
+    super(reason + ", memcached node:" + address.getHostText());
   }
 }
