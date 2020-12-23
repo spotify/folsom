@@ -163,15 +163,16 @@
             <relocation>
               <pattern>com.google</pattern>
               <shadedPattern>folsom.shaded.guava</shadedPattern>
-              <includes>
-                <include>com.google.**</include>
-              </includes>
+<!--              <includes>-->
+<!--                <include>com.google.**</include>-->
+<!--              </includes>-->
             </relocation>
           </relocations>
           <artifactSet>
             <includes>
               <include>com.google.**:**</include>
               <include>com.spotify:**</include>
+              <include>dnsjava:dnsjava</include>
             </includes>
           </artifactSet>
         </configuration>
