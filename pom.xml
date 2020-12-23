@@ -4,7 +4,7 @@
 
   <groupId>com.outbrain</groupId>
   <artifactId>folsom-outbrain-parent</artifactId>
-  <version>3.0.5-SNAPSHOT</version>
+  <version>3.0.5</version>
   <packaging>pom</packaging>
   <name>folsom-outbrain-parent</name>
 
@@ -28,7 +28,7 @@
     <connection>scm:git:https://github.com/outbrain/folsom.git</connection>
     <developerConnection>scm:git:git@github.com:outbrain/folsom.git</developerConnection>
     <url>scm:https://github.com/outbrain/folsom/</url>
-    <tag>HEAD</tag>
+    <tag>folsom-outbrain-parent-3.0.5</tag>
   </scm>
 
   <licenses>
