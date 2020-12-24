@@ -192,9 +192,6 @@
             <relocation>
               <pattern>com.google</pattern>
               <shadedPattern>folsom.shaded.guava</shadedPattern>
-              <includes>
-                <include>com.google.**</include>
-              </includes>
             </relocation>
           </relocations>
           <artifactSet>
