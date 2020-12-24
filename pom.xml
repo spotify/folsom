@@ -199,8 +199,7 @@
           </relocations>
           <artifactSet>
             <includes>
-              <include>com.google.**:**</include>
-              <include>com.spotify:**</include>
+              <include>*:*</include>
             </includes>
           </artifactSet>
         </configuration>
