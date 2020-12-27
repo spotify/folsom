@@ -32,7 +32,7 @@ public interface Metrics {
 
   void measureTouchFuture(CompletionStage<MemcacheStatus> future);
 
-  <T> void measureFuture(CompletionStage<T> future, String hostName);
+  <T> void measureFuture(CompletionStage<T> future, String hostPort);
 
   /**
    * Called by the MemcacheClient initialization process to allow a gauge to be registered with the

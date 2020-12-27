@@ -25,6 +25,6 @@ public class MemcacheClosedException extends Exception {
   }
 
   public MemcacheClosedException(final String message, final HostAndPort address) {
-    super(message + ", memcached node:" + address.getHostText());
+    super(message + ", memcached node:" + address.toString());
   }
 }

@@ -220,7 +220,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   @SuppressWarnings("unchecked")
   public <T> CompletionStage<T> send(final Request<T> request) {
     final CompletionStage<T> future = createFuture(request);
-    metrics.measureFuture(future, address.getHostText());
+    metrics.measureFuture(future, address.toString());
     return future;
   }
 
