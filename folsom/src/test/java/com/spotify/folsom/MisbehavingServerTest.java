@@ -155,14 +155,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiGet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
-    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-    expectedError+=", memcached node:" + address.toString();
     try {
       client.get("key").toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
+      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
@@ -172,14 +172,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
-    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-    expectedError+=", memcached node:" + address.toString();
     try {
       client.touch("key", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
+      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
@@ -189,14 +189,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
-    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-    expectedError+=", memcached node:" + address.toString();
     try {
       client.set("key", "value", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
+      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
