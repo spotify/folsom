@@ -4,7 +4,7 @@
 
   <groupId>com.outbrain</groupId>
   <artifactId>folsom-outbrain-parent</artifactId>
-  <version>3.0.4-SNAPSHOT</version>
+  <version>3.0.7-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>folsom-outbrain-parent</name>
 
@@ -155,40 +155,28 @@
             </goals>
           </execution>
         </executions>
-
         <configuration>
           <minimizeJar>false</minimizeJar>
           <shadedArtifactAttached>false</shadedArtifactAttached>
           <createSourcesJar>true</createSourcesJar>
-
           <relocations>
             <relocation>
               <pattern>com.google</pattern>
               <shadedPattern>folsom.shaded.guava</shadedPattern>
-              <includes>
-                <include>com.google.**</include>
-              </includes>
+<!--              <includes>-->
+<!--                <include>com.google.**</include>-->
+<!--              </includes>-->
             </relocation>
           </relocations>
           <artifactSet>
             <includes>
               <include>com.google.**:**</include>
               <include>com.spotify:**</include>
+              <include>dnsjava:dnsjava</include>
             </includes>
           </artifactSet>
         </configuration>
       </plugin>
-<!--      <plugin>-->
-<!--        <groupId>org.sonatype.plugins</groupId>-->
-<!--        <artifactId>nexus-staging-maven-plugin</artifactId>-->
-<!--        <version>1.6.3</version>-->
-<!--        <extensions>true</extensions>-->
-<!--        <configuration>-->
-<!--          <serverId>ossrh</serverId>-->
-<!--          <nexusUrl>https://oss.sonatype.org/</nexusUrl>-->
-<!--          <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
-<!--        </configuration>-->
-<!--      </plugin>-->
       <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
@@ -210,19 +198,6 @@
           </execution>
         </executions>
       </plugin>
-<!--      <plugin>-->
-<!--        <groupId>org.jacoco</groupId>-->
-<!--        <artifactId>jacoco-maven-plugin</artifactId>-->
-<!--        <version>0.8.5</version>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <goals>-->
-<!--              <goal>prepare-agent</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
-
       <!-- Require releases to be done with java 8-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
