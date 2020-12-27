@@ -172,6 +172,8 @@ public class MisbehavingServerTest {
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
+    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+    expectedError+=", memcached node:" + address.toString();
     try {
       client.touch("key", 123).toCompletableFuture().get();
       fail();
@@ -187,6 +189,8 @@ public class MisbehavingServerTest {
 
   private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
+    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+    expectedError+=", memcached node:" + address.toString();
     try {
       client.set("key", "value", 123).toCompletableFuture().get();
       fail();
