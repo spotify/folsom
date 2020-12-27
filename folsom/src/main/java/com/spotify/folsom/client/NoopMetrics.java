@@ -44,6 +44,9 @@ public class NoopMetrics implements Metrics {
   public void measureTouchFuture(CompletionStage<MemcacheStatus> future) {}
 
   @Override
+  public <T> void measureFuture(CompletionStage<T> future, String hostName) {}
+
+  @Override
   public void registerOutstandingRequestsGauge(OutstandingRequestsGauge gauge) {}
 
   @Override

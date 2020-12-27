@@ -63,7 +63,6 @@ public class YammerMetrics implements Metrics {
   private final Timer touches;
   private final Meter touchSuccesses;
   private final Meter touchFailures;
-
   private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
 
   public YammerMetrics(final MetricsRegistry registry) {
@@ -226,6 +225,11 @@ public class YammerMetrics implements Metrics {
             touchFailures.mark();
           }
         });
+  }
+
+  @Override
+  public <T> void measureFuture(CompletionStage<T> future, String hostName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

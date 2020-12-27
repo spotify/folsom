@@ -261,6 +261,11 @@ public class SemanticFolsomMetrics implements Metrics {
         });
   }
 
+  @Override
+  public <T> void measureFuture(CompletionStage<T> future, String hostName) {
+    throw new UnsupportedOperationException();
+  }
+
   public Timer getGets() {
     return gets;
   }
