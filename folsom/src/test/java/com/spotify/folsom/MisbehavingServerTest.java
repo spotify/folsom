@@ -19,6 +19,7 @@ package com.spotify.folsom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.spotify.folsom.guava.HostAndPort;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,8 +28,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import com.spotify.folsom.guava.HostAndPort;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +56,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testInvalidAsciiResponse3() throws Throwable {
-    testAsciiGet(
-        "AAAAAAAAAAAAAAARGH\r\n",
-        "Unexpected line: AAAAAAAAAAAAAAARGH");
+    testAsciiGet("AAAAAAAAAAAAAAARGH\r\n", "Unexpected line: AAAAAAAAAAAAAAARGH");
   }
 
   @Test
@@ -94,8 +91,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testBadAsciiGet4() throws Throwable {
-    testAsciiGet(
-        "VALUE key 123\r\n", "Unexpected line: VALUE key 123");
+    testAsciiGet("VALUE key 123\r\n", "Unexpected line: VALUE key 123");
   }
 
   @Test
@@ -105,29 +101,22 @@ public class MisbehavingServerTest {
 
   @Test
   public void testBadAsciiGet6() throws Throwable {
-    testAsciiGet(
-        "VALUE key 123 0\r\nfoo\r\n",
-        "Unexpected end of data block: foo");
+    testAsciiGet("VALUE key 123 0\r\nfoo\r\n", "Unexpected end of data block: foo");
   }
 
   @Test
   public void testBadAsciiGet7() throws Throwable {
-    testAsciiGet(
-        "VALUE key 123 0\r\n\r\nSTORED\r\n",
-        "Unexpected line: STORED");
+    testAsciiGet("VALUE key 123 0\r\n\r\nSTORED\r\n", "Unexpected line: STORED");
   }
 
   @Test
   public void testBadAsciiGet8() throws Throwable {
-    testAsciiGet(
-        "VALUE key 123 1a3\r\n", "Unexpected line: VALUE key 123 1a3");
+    testAsciiGet("VALUE key 123 1a3\r\n", "Unexpected line: VALUE key 123 1a3");
   }
 
   @Test
   public void testWrongAsciiKey() throws Throwable {
-    testAsciiGet(
-        "VALUE otherkey 123 0\r\n\r\nEND\r\n",
-        "Expected key key but got otherkey");
+    testAsciiGet("VALUE otherkey 123 0\r\n\r\nEND\r\n", "Expected key key but got otherkey");
   }
 
   @Test
@@ -139,8 +128,7 @@ public class MisbehavingServerTest {
 
   @Test
   public void testAsciiWrongResponseType() throws Throwable {
-    testAsciiGet(
-        "1234\r\n", "Unexpected response type: NUMERIC_VALUE");
+    testAsciiGet("1234\r\n", "Unexpected response type: NUMERIC_VALUE");
   }
 
   @Test
@@ -155,14 +143,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiGet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
+    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+    expectedError += ", memcached node:" + address.toString();
     try {
       client.get("key").toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
-      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
@@ -172,14 +160,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiTouch(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
+    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+    expectedError += ", memcached node:" + address.toString();
     try {
       client.touch("key", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
-      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
@@ -189,14 +177,14 @@ public class MisbehavingServerTest {
 
   private void testAsciiSet(String response, String expectedError) throws Exception {
     MemcacheClient<String> client = setupAscii(response);
+    final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
+    expectedError += ", memcached node:" + address.toString();
     try {
       client.set("key", "value", 123).toCompletableFuture().get();
       fail();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       assertEquals(MemcacheClosedException.class, cause.getClass());
-      final HostAndPort address = HostAndPort.fromParts(HOST, server.port);
-      expectedError+=", memcached node:" + address.toString();
       assertEquals(expectedError, cause.getMessage());
     } finally {
       client.shutdown();
