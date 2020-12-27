@@ -63,11 +63,6 @@ public class YammerMetrics implements Metrics {
   private final Timer touches;
   private final Meter touchSuccesses;
   private final Meter touchFailures;
-
-  private final Timer requests;
-  private final Meter requestSuccesses;
-  private final Meter requestFailures;
-
   private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
 
   public YammerMetrics(final MetricsRegistry registry) {
@@ -96,10 +91,6 @@ public class YammerMetrics implements Metrics {
     this.touches = registry.newTimer(name("touch", "requests"), SECONDS, SECONDS);
     this.touchSuccesses = registry.newMeter(name("touch", "successes"), "Successes", SECONDS);
     this.touchFailures = registry.newMeter(name("touch", "failures"), "Failures", SECONDS);
-
-    this.requests = registry.newTimer(name("request", "requests"), SECONDS, SECONDS);
-    this.requestSuccesses = registry.newMeter(name("request", "successes"), "Successes", SECONDS);
-    this.requestFailures = registry.newMeter(name("request", "failures"), "Failures", SECONDS);
 
     final MetricName gaugeName = name("outstandingRequests", "count");
 
@@ -238,17 +229,7 @@ public class YammerMetrics implements Metrics {
 
   @Override
   public <T> void measureFuture(CompletionStage<T> future, String hostName) {
-    final TimerContext ctx = requests.time();
-
-    future.whenComplete(
-        (result, t) -> {
-          ctx.stop();
-          if (t == null) {
-            requestSuccesses.mark();
-          } else {
-            requestFailures.mark();
-          }
-        });
+    throw new UnsupportedOperationException();
   }
 
   @Override

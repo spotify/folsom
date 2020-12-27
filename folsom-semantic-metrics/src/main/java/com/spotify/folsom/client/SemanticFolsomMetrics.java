@@ -69,10 +69,6 @@ public class SemanticFolsomMetrics implements Metrics {
   private final Meter touchSuccesses;
   private final Meter touchFailures;
 
-  private final Timer requests;
-  private final Meter requestSuccesses;
-  private final Meter requestFailures;
-
   private final SemanticMetricRegistry registry;
   private final MetricId id;
 
@@ -145,12 +141,6 @@ public class SemanticFolsomMetrics implements Metrics {
     MetricId touchMetersId = MetricId.join(touchId, meterId);
     this.touchSuccesses = registry.meter(touchMetersId.tagged("result", "success"));
     this.touchFailures = registry.meter(touchMetersId.tagged("result", "failure"));
-
-    MetricId requestId = id.tagged("operation", "request");
-    this.requests = registry.timer(requestId);
-    MetricId requestMetersId = MetricId.join(requestId, meterId);
-    this.requestSuccesses = registry.meter(requestMetersId.tagged("result", "success"));
-    this.requestFailures = registry.meter(requestMetersId.tagged("result", "failure"));
 
     final MetricId outstandingRequestGauge =
         id.tagged(
@@ -273,17 +263,7 @@ public class SemanticFolsomMetrics implements Metrics {
 
   @Override
   public <T> void measureFuture(CompletionStage<T> future, String hostName) {
-    final Timer.Context ctx = requests.time();
-
-    future.whenComplete(
-        (result, t) -> {
-          ctx.stop();
-          if (t == null) {
-            requestSuccesses.mark();
-          } else {
-            requestFailures.mark();
-          }
-        });
+    throw new UnsupportedOperationException();
   }
 
   public Timer getGets() {
