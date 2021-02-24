@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -180,4 +181,9 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @return the underlying raw memcache client.
    */
   RawMemcacheClient getRawMemcacheClient();
+
+  /** @return a snapshot of the currently connected nodes. */
+  default Map<String, ? extends MemcacheClient<V>> getAllNodes() {
+    return Collections.emptyMap();
+  }
 }

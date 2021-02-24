@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.spotify.folsom.AsciiMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.MemcacheEncoder;
@@ -30,6 +31,7 @@ import com.spotify.folsom.transcoder.StringTranscoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -122,5 +124,13 @@ public class RoundRobinMemcacheClientTest {
     } catch (ExecutionException e) {
       throw e.getCause();
     }
+  }
+
+  @Test
+  public void testGetAllNodesSameAddress() {
+    final Map<String, AsciiMemcacheClient<String>> nodes = memcacheClient.getAllNodes();
+    assertEquals(1, nodes.size());
+    final AsciiMemcacheClient<String> client = nodes.get("address");
+    assertEquals(roundRobinMemcacheClient, client.getRawMemcacheClient());
   }
 }

@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -291,6 +292,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return isConnected() ? 1 : 0;
+  }
+
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    map.put(address.getHostText() + ":" + address.getPort(), this);
   }
 
   /** Handles a channel connected to the address specified in the constructor. */

@@ -20,6 +20,7 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
+import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -42,13 +43,19 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   private boolean connected = true;
   private final Map<ByteBuffer, byte[]> map = new HashMap<>();
   private int outstanding = 0;
+  private final String address;
 
   public FakeRawMemcacheClient() {
     this(new NoopMetrics());
   }
 
-  public FakeRawMemcacheClient(Metrics metrics) {
+  public FakeRawMemcacheClient(final Metrics metrics) {
+    this(metrics, "address");
+  }
+
+  public FakeRawMemcacheClient(final Metrics metrics, final String address) {
     metrics.registerOutstandingRequestsGauge(() -> outstanding);
+    this.address = address;
   }
 
   @Override
@@ -137,11 +144,21 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
     return connected ? 1 : 0;
   }
 
+  @Override
+  public void addNodesToMap(Map<String, RawMemcacheClient> map) {
+    map.put(address, this);
+  }
+
   public Map<ByteBuffer, byte[]> getMap() {
     return map;
   }
 
   public void setOutstandingRequests(int outstanding) {
     this.outstanding = outstanding;
+  }
+
+  @Override
+  public String toString() {
+    return "FakeRawMemcacheClient{" + "address='" + address + '\'' + '}';
   }
 }

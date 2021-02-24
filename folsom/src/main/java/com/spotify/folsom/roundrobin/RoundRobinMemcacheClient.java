@@ -20,7 +20,9 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,5 +59,19 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
       }
     }
     return NotConnectedClient.INSTANCE;
+  }
+
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    final Map<String, RawMemcacheClient> map2 = new HashMap<>();
+    for (final RawMemcacheClient client : clients) {
+      client.addNodesToMap(map2);
+    }
+    if (map2.size() == 1) {
+      final Map.Entry<String, RawMemcacheClient> entry = map2.entrySet().iterator().next();
+      map.put(entry.getKey(), this);
+    } else {
+      map.putAll(map2);
+    }
   }
 }

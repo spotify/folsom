@@ -30,6 +30,7 @@ import com.spotify.folsom.guava.HostAndPort;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -150,6 +151,11 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return client.numActiveConnections();
+  }
+
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    client.addNodesToMap(map);
   }
 
   private void retry() {

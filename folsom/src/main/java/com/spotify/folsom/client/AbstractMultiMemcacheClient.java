@@ -22,6 +22,7 @@ import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
 import java.util.Collection;
+import java.util.Map;
 
 public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheClient
     implements ConnectionChangeListener {
@@ -69,6 +70,13 @@ public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheCli
       sum += client.numActiveConnections();
     }
     return sum;
+  }
+
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    for (final RawMemcacheClient client : clients) {
+      client.addNodesToMap(map);
+    }
   }
 
   @Override

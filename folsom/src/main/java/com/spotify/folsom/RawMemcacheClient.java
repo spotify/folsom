@@ -17,6 +17,8 @@
 package com.spotify.folsom;
 
 import com.spotify.folsom.client.Request;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 /** A raw memcache client, mostly useful internally */
@@ -43,4 +45,15 @@ public interface RawMemcacheClient extends ObservableClient {
    * @return the number of active connections
    */
   int numActiveConnections();
+
+  default Map<String, RawMemcacheClient> getAllNodes() {
+    final Map<String, RawMemcacheClient> map = new HashMap<>();
+    addNodesToMap(map);
+    return map;
+  }
+
+  /** Intended for internal usage. Consumers should use {@link getAllNodes()} instead. */
+  default void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    throw new RuntimeException("This client does not implement finding nodes");
+  }
 }

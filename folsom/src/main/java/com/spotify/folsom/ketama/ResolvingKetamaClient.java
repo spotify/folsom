@@ -189,6 +189,11 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
     return currentClient.numActiveConnections();
   }
 
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    currentClient.addNodesToMap(map);
+  }
+
   public interface Connector {
     RawMemcacheClient connect(HostAndPort input);
   }

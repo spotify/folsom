@@ -22,6 +22,7 @@ import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.futures.CompletableFutures;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -80,6 +81,11 @@ public class RetryingClient implements RawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return delegate.numActiveConnections();
+  }
+
+  @Override
+  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+    delegate.addNodesToMap(map);
   }
 
   @Override
