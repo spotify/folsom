@@ -28,6 +28,8 @@ import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -36,19 +38,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
   private boolean connected = true;
   private final Map<ByteBuffer, byte[]> map = new HashMap<>();
   private int outstanding = 0;
+  private final String address;
 
   public FakeRawMemcacheClient() {
     this(new NoopMetrics());
   }
 
-  public FakeRawMemcacheClient(Metrics metrics) {
+  public FakeRawMemcacheClient(final Metrics metrics) {
+    this(metrics, "address:123");
+  }
+
+  public FakeRawMemcacheClient(final Metrics metrics, final String address) {
     metrics.registerOutstandingRequestsGauge(() -> outstanding);
+    this.address = address;
   }
 
   @Override
@@ -137,11 +146,21 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
     return connected ? 1 : 0;
   }
 
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    return Stream.of(new AddressAndClient(HostAndPort.fromString(address), this));
+  }
+
   public Map<ByteBuffer, byte[]> getMap() {
     return map;
   }
 
   public void setOutstandingRequests(int outstanding) {
     this.outstanding = outstanding;
+  }
+
+  @Override
+  public String toString() {
+    return "FakeRawMemcacheClient{" + "address='" + address + '\'' + '}';
   }
 }

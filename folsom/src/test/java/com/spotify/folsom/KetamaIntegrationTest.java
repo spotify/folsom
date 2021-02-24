@@ -233,6 +233,23 @@ public class KetamaIntegrationTest {
   }
 
   @Test
+  public void testGetAllNodes() throws Throwable {
+    for (MemcachedServer server : servers.getServers()) {
+      server
+          .getClient()
+          .set("identity", server.getHost() + ":" + server.getPort(), 0)
+          .toCompletableFuture()
+          .get();
+    }
+    final Map<String, ? extends MemcacheClient<String>> allNodes = client.getAllNodes();
+    assertEquals(servers.getServers().size(), allNodes.size());
+    allNodes.forEach(
+        (name, client) -> {
+          assertEquals(name, client.get("identity").toCompletableFuture().join());
+        });
+  }
+
+  @Test
   public void testGetStats() throws InterruptedException, ExecutionException, TimeoutException {
     Map<String, MemcachedStats> allStats =
         client.getStats("").toCompletableFuture().get(1, TimeUnit.SECONDS);

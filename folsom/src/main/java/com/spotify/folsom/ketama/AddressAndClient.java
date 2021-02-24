@@ -18,6 +18,7 @@ package com.spotify.folsom.ketama;
 
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
+import java.util.function.Function;
 
 public class AddressAndClient {
 
@@ -33,7 +34,15 @@ public class AddressAndClient {
     return address;
   }
 
+  public String getAddressString() {
+    return address.getHostText() + ":" + address.getPort();
+  }
+
   public RawMemcacheClient getClient() {
     return client;
+  }
+
+  public AddressAndClient mapClient(final Function<RawMemcacheClient, RawMemcacheClient> function) {
+    return new AddressAndClient(address, function.apply(client));
   }
 }

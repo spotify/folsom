@@ -21,7 +21,9 @@ import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.ObservableClient;
 import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.ketama.AddressAndClient;
 import java.util.Collection;
+import java.util.stream.Stream;
 
 public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheClient
     implements ConnectionChangeListener {
@@ -69,6 +71,11 @@ public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheCli
       sum += client.numActiveConnections();
     }
     return sum;
+  }
+
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    return clients.stream().flatMap(RawMemcacheClient::streamNodes);
   }
 
   @Override

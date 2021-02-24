@@ -20,9 +20,14 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.AbstractMultiMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.AddressAndClient;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A client that tries to distribute requests equally to all delegate clients. This would typically
@@ -57,5 +62,25 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
       }
     }
     return NotConnectedClient.INSTANCE;
+  }
+
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    final List<AddressAndClient> childNodes =
+        clients.stream().flatMap(RawMemcacheClient::streamNodes).collect(Collectors.toList());
+
+    final Set<HostAndPort> allAddresses =
+        childNodes.stream().map((AddressAndClient::getAddress)).collect(Collectors.toSet());
+
+    if (allAddresses.size() == 1) {
+      final List<RawMemcacheClient> allClients =
+          childNodes.stream().map(AddressAndClient::getClient).collect(Collectors.toList());
+      return Stream.of(
+          new AddressAndClient(
+              allAddresses.iterator().next(), new RoundRobinMemcacheClient(allClients)));
+    } else {
+      // Edge-case: we have to abandon the round-robin abstraction here
+      return childNodes.stream();
+    }
   }
 }

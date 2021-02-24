@@ -27,6 +27,7 @@ import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.AddressAndClient;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import java.nio.charset.Charset;
@@ -36,6 +37,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +152,11 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return client.numActiveConnections();
+  }
+
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    return client.streamNodes();
   }
 
   private void retry() {

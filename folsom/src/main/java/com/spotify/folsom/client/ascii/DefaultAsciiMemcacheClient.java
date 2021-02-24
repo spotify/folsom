@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 /**
  * The default implementation of {@link com.spotify.folsom.AsciiMemcacheClient}
@@ -57,11 +58,12 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   private final Charset charset;
   private final int maxKeyLength;
 
-  public DefaultAsciiMemcacheClient(
+  private DefaultAsciiMemcacheClient(
       final RawMemcacheClient rawMemcacheClient,
       final Metrics metrics,
       final Tracer tracer,
       final Transcoder<V> valueTranscoder,
+      final TransformerUtil<V> transformerUtil,
       final Charset charset,
       final int maxKeyLength) {
     this.rawMemcacheClient = rawMemcacheClient;
@@ -69,8 +71,25 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     this.tracer = tracer;
     this.valueTranscoder = valueTranscoder;
     this.charset = charset;
-    this.transformerUtil = new TransformerUtil<>(valueTranscoder);
+    this.transformerUtil = transformerUtil;
     this.maxKeyLength = maxKeyLength;
+  }
+
+  public DefaultAsciiMemcacheClient(
+      final RawMemcacheClient rawMemcacheClient,
+      final Metrics metrics,
+      final Tracer tracer,
+      final Transcoder<V> valueTranscoder,
+      final Charset charset,
+      final int maxKeyLength) {
+    this(
+        rawMemcacheClient,
+        metrics,
+        tracer,
+        valueTranscoder,
+        new TransformerUtil<>(valueTranscoder),
+        charset,
+        maxKeyLength);
   }
 
   @Override
@@ -318,6 +337,20 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
   @Override
   public RawMemcacheClient getRawMemcacheClient() {
     return rawMemcacheClient;
+  }
+
+  @Override
+  public Map<String, AsciiMemcacheClient<V>> getAllNodes() {
+    return rawMemcacheClient
+        .getAllNodes()
+        .entrySet()
+        .stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> withClient(entry.getValue())));
+  }
+
+  private DefaultAsciiMemcacheClient<V> withClient(final RawMemcacheClient client) {
+    return new DefaultAsciiMemcacheClient<>(
+        client, metrics, tracer, valueTranscoder, transformerUtil, charset, maxKeyLength);
   }
 
   @Override

@@ -1,3 +1,6 @@
+### 1.8.0
+* Add new method getAllNodes() to support advanced custom use cases for multi-node setups.
+
 ### 1.7.4
 * Minor bugfix: metrics for outstanding requests could sometimes return the wrong value after
   connection is closed

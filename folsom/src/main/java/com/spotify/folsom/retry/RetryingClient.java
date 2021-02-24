@@ -21,8 +21,10 @@ import com.spotify.folsom.ConnectionChangeListener;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 /**
  * A simple wrapping client that retries once (but only for MemcacheClosedException's). This helps
@@ -80,6 +82,13 @@ public class RetryingClient implements RawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return delegate.numActiveConnections();
+  }
+
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    return delegate
+        .streamNodes()
+        .map(addressAndClient -> addressAndClient.mapClient(RetryingClient::new));
   }
 
   @Override

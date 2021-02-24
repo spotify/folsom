@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,6 +188,11 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
   @Override
   public int numActiveConnections() {
     return currentClient.numActiveConnections();
+  }
+
+  @Override
+  public Stream<AddressAndClient> streamNodes() {
+    return currentClient.streamNodes();
   }
 
   public interface Connector {
