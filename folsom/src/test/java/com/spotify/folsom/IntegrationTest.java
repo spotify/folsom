@@ -604,6 +604,17 @@ public class IntegrationTest {
     assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
   }
 
+  @Test
+  public void testGetAllNodes() {
+    final Map<String, ? extends MemcacheClient<String>> nodes = client.getAllNodes();
+    assertEquals(1, nodes.size());
+    final MemcacheClient<String> client2 = nodes.get(server.getHost() + ":" + server.getPort());
+    assertNotNull(client2);
+
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().join());
+    assertEquals(VALUE1, client2.get(KEY1).toCompletableFuture().join());
+  }
+
   private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)
       throws InterruptedException, ExecutionException, TimeoutException {
     Map<String, MemcachedStats> statsMap =
