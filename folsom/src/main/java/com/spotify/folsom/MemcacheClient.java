@@ -182,7 +182,22 @@ public interface MemcacheClient<V> extends ObservableClient {
    */
   RawMemcacheClient getRawMemcacheClient();
 
-  /** @return a snapshot of the currently connected nodes. */
+  /**
+   * Returns a snapshot of the individual nodes that are part of the cluster right now. This can be
+   * an empty map for a completely disconnected client, or a map with a single entry, or map of the
+   * currently connected nodes for a Ketama based cluster.
+   *
+   * <p>The keys of the map are in the format "host:port" and the values are regular memcached
+   * clients.
+   *
+   * <p>Note that changes to the topology will not be reflected this snapshot. The snapshot should
+   * be considered short-lived.
+   *
+   * <p>The clients from the snapshot should not be closed after use since they are references to
+   * the actual clients in the cluster.
+   *
+   * @return a snapshot of the currently connected nodes.
+   */
   default Map<String, ? extends MemcacheClient<V>> getAllNodes() {
     return Collections.emptyMap();
   }
