@@ -128,9 +128,15 @@ public class RoundRobinMemcacheClientTest {
 
   @Test
   public void testGetAllNodesSameAddress() {
+    memcacheClient.set("key", "value1", 0).toCompletableFuture().join();
+    memcacheClient.set("key", "value2", 0).toCompletableFuture().join();
+    memcacheClient.set("key", "value3", 0).toCompletableFuture().join();
+
     final Map<String, AsciiMemcacheClient<String>> nodes = memcacheClient.getAllNodes();
     assertEquals(1, nodes.size());
-    final AsciiMemcacheClient<String> client = nodes.get("address");
-    assertEquals(roundRobinMemcacheClient, client.getRawMemcacheClient());
+    final AsciiMemcacheClient<String> client = nodes.get("address:123");
+    assertEquals("value1", client.get("key").toCompletableFuture().join());
+    assertEquals("value2", client.get("key").toCompletableFuture().join());
+    assertEquals("value3", client.get("key").toCompletableFuture().join());
   }
 }

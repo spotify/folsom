@@ -17,10 +17,10 @@ package com.spotify.folsom.client;
 
 import com.spotify.folsom.AbstractRawMemcacheClient;
 import com.spotify.folsom.MemcacheClosedException;
-import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 public class NotConnectedClient extends AbstractRawMemcacheClient {
 
@@ -59,7 +59,9 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public void addNodesToMap(Map<String, RawMemcacheClient> map) {}
+  public Stream<AddressAndClient> streamNodes() {
+    return Stream.empty();
+  }
 
   private <T> CompletionStage<T> fail() {
     return CompletableFutures.exceptionallyCompletedFuture(

@@ -20,7 +20,6 @@ import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheClosedException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.Metrics;
-import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.GetRequest;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.NoopMetrics;
@@ -29,6 +28,8 @@ import com.spotify.folsom.client.SetRequest;
 import com.spotify.folsom.client.ascii.DeleteRequest;
 import com.spotify.folsom.client.ascii.IncrRequest;
 import com.spotify.folsom.client.ascii.TouchRequest;
+import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
@@ -50,7 +52,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   public FakeRawMemcacheClient(final Metrics metrics) {
-    this(metrics, "address");
+    this(metrics, "address:123");
   }
 
   public FakeRawMemcacheClient(final Metrics metrics, final String address) {
@@ -145,8 +147,8 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public void addNodesToMap(Map<String, RawMemcacheClient> map) {
-    map.put(address, this);
+  public Stream<AddressAndClient> streamNodes() {
+    return Stream.of(new AddressAndClient(HostAndPort.fromString(address), this));
   }
 
   public Map<ByteBuffer, byte[]> getMap() {

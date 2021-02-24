@@ -17,9 +17,11 @@
 package com.spotify.folsom;
 
 import com.spotify.folsom.client.Request;
-import java.util.HashMap;
+import com.spotify.folsom.ketama.AddressAndClient;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** A raw memcache client, mostly useful internally */
 public interface RawMemcacheClient extends ObservableClient {
@@ -47,13 +49,12 @@ public interface RawMemcacheClient extends ObservableClient {
   int numActiveConnections();
 
   default Map<String, RawMemcacheClient> getAllNodes() {
-    final Map<String, RawMemcacheClient> map = new HashMap<>();
-    addNodesToMap(map);
-    return map;
+    return streamNodes()
+        .collect(Collectors.toMap(AddressAndClient::getAddressString, AddressAndClient::getClient));
   }
 
   /** Intended for internal usage. Consumers should use {@link getAllNodes()} instead. */
-  default void addNodesToMap(final Map<String, RawMemcacheClient> map) {
+  default Stream<AddressAndClient> streamNodes() {
     throw new RuntimeException("This client does not implement finding nodes");
   }
 }

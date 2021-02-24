@@ -44,9 +44,9 @@ public class RoundRobinGetAllNodesTest {
 
   @Before
   public void setUp() throws Exception {
-    client1 = new FakeRawMemcacheClient(new NoopMetrics(), "address1:port");
-    client2 = new FakeRawMemcacheClient(new NoopMetrics(), "address2:port");
-    client3 = new FakeRawMemcacheClient(new NoopMetrics(), "address3:port");
+    client1 = new FakeRawMemcacheClient(new NoopMetrics(), "address1:123");
+    client2 = new FakeRawMemcacheClient(new NoopMetrics(), "address2:123");
+    client3 = new FakeRawMemcacheClient(new NoopMetrics(), "address3:123");
     clientList = Arrays.<RawMemcacheClient>asList(client1, client2, client3);
     roundRobinMemcacheClient = new RoundRobinMemcacheClient(clientList);
     memcacheClient =
@@ -67,9 +67,9 @@ public class RoundRobinGetAllNodesTest {
     final Map<String, AsciiMemcacheClient<String>> nodes = memcacheClient.getAllNodes();
 
     assertEquals(3, nodes.size());
-    assertNode(nodes, "address1:port", "key", "value3");
-    assertNode(nodes, "address2:port", "key", "value1");
-    assertNode(nodes, "address3:port", "key", "value2");
+    assertNode(nodes, "address1:123", "key", "value3");
+    assertNode(nodes, "address2:123", "key", "value1");
+    assertNode(nodes, "address3:123", "key", "value2");
   }
 
   private void assertNode(

@@ -31,6 +31,7 @@ import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
 import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -56,7 +57,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -65,6 +65,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,8 +296,8 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
-  public void addNodesToMap(final Map<String, RawMemcacheClient> map) {
-    map.put(address.getHostText() + ":" + address.getPort(), this);
+  public Stream<AddressAndClient> streamNodes() {
+    return Stream.of(new AddressAndClient(address, this));
   }
 
   /** Handles a channel connected to the address specified in the constructor. */
