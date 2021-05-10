@@ -1,3 +1,10 @@
+### 1.9.0
+* Add new utility methods for multigets to return maps instead of lists:
+  * `BinaryMemcacheClient.getAndTouchAsMap`
+  * `MemcacheClient.getAsMap`
+  * `MemcacheClient.casGetAsMap`
+* Bump guava from 28.0-android to 29.0-android
+
 ### 1.8.0
 * Add new method getAllNodes() to support advanced custom use cases for multi-node setups.
 
