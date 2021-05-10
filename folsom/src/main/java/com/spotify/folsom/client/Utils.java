@@ -18,7 +18,9 @@ package com.spotify.folsom.client;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -71,5 +73,32 @@ public final class Utils {
       return future;
     }
     return future.whenCompleteAsync((t, throwable) -> {}, executor);
+  }
+
+  /**
+   * Zip together a list of keys and a list of values to a map. Entries where either key or value is
+   * null are excluded.
+   *
+   * @param keys the list of keys
+   * @param values the list of values
+   * @param <K> the type of keys
+   * @param <V> the type of values
+   * @throws IllegalArgumentException if the lists are note equal in length.
+   * @return a map of key-value pairs
+   */
+  public static <K, V> Map<K, V> zipToMap(final List<K> keys, final List<V> values) {
+    final int size = keys.size();
+    if (values.size() != size) {
+      throw new IllegalArgumentException("Expected " + size + " values but got " + values.size());
+    }
+    final Map<K, V> map = new HashMap<>(size);
+    for (int i = 0; i < size; i++) {
+      final K key = keys.get(i);
+      final V value = values.get(i);
+      if (key != null && value != null) {
+        map.put(key, value);
+      }
+    }
+    return map;
   }
 }
