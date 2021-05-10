@@ -15,7 +15,9 @@
  */
 package com.spotify.folsom;
 
+import com.spotify.folsom.client.Utils;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -68,6 +70,18 @@ public interface BinaryMemcacheClient<V> extends MemcacheClient<V> {
    *     values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<V>> getAndTouch(List<String> keys, int ttl);
+
+  /**
+   * Get the values for the provided keys and sets the expiration
+   *
+   * @param keys Keys, must not be null, nor must any key in the list
+   * @param ttl The TTL in seconds
+   * @return A future representing completion of the request, with a map of keys to values. Missing
+   *     values will be excluded from the map.
+   */
+  default CompletionStage<Map<String, V>> getAndTouchAsMap(List<String> keys, int ttl) {
+    return getAndTouch(keys, ttl).thenApply(values -> Utils.zipToMap(keys, values));
+  }
 
   /**
    * Get the value for the provided key, including the CAS value, and sets the expiration

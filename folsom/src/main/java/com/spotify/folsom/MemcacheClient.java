@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom;
 
+import com.spotify.folsom.client.Utils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -126,10 +127,32 @@ public interface MemcacheClient<V> extends ObservableClient {
    * Get the value for the provided keys
    *
    * @param keys Keys, must not be null, nor must any key in the list
+   * @return A future representing completion of the request, with a map of keys to values. Missing
+   *     values will be excluded from the map.
+   */
+  default CompletionStage<Map<String, V>> getAsMap(final List<String> keys) {
+    return get(keys).thenApply(values -> Utils.zipToMap(keys, values));
+  }
+
+  /**
+   * Get the value for the provided keys
+   *
+   * @param keys Keys, must not be null, nor must any key in the list
    * @return A future representing completion of the request, with the values, including the CAS
    *     value. Any non existing values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<GetResult<V>>> casGet(List<String> keys);
+
+  /**
+   * Get the value for the provided keys
+   *
+   * @param keys Keys, must not be null, nor must any key in the list
+   * @return A future representing completion of the request, with a map of keys to values,
+   *     including the CAS value. Missing values will be excluded from the map.
+   */
+  default CompletionStage<Map<String, GetResult<V>>> casGetAsMap(final List<String> keys) {
+    return casGet(keys).thenApply(values -> Utils.zipToMap(keys, values));
+  }
 
   /**
    * Sets the expiration for the provided key

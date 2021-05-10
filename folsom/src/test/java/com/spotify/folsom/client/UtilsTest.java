@@ -2,7 +2,9 @@ package com.spotify.folsom.client;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -69,5 +71,23 @@ public class UtilsTest {
           future.completeExceptionally(new RuntimeException());
         });
     assertEquals("thread-B-0", future2.get());
+  }
+
+  @Test
+  public void testZipToMap() {
+    assertEquals(
+        ImmutableMap.of("a", 1, "b", 2),
+        Utils.zipToMap(Arrays.asList("a", "b"), Arrays.asList(1, 2)));
+    assertEquals(
+        ImmutableMap.of("a", 1, "b", 2),
+        Utils.zipToMap(Arrays.asList("a", "b", "c"), Arrays.asList(1, 2, null)));
+    assertEquals(
+        ImmutableMap.of("a", 1, "b", 2),
+        Utils.zipToMap(Arrays.asList("a", "b", null), Arrays.asList(1, 2, 3)));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testZipToMapThrows() {
+    Utils.zipToMap(Arrays.asList("a", "b"), Arrays.asList(1));
   }
 }
