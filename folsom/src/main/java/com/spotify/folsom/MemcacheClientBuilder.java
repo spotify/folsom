@@ -91,7 +91,7 @@ public class MemcacheClientBuilder<V> {
 
   private final List<HostAndPort> addresses = new ArrayList<>();
   private int maxOutstandingRequests = DEFAULT_MAX_OUTSTANDING;
-  private int batchSize = Settings.DEFAULT_BATCH_SIZE;
+  private int eventLoopThreadFlushMaxBatchSize = Settings.DEFAULT_BATCH_SIZE;
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
   private Tracer tracer = NoopTracer.INSTANCE;
@@ -320,7 +320,40 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * Specify the maximum number of operations that will be batched together in one network request.
+   * Specify the maximum number of requests that will be written to a connection in a single
+   * operation when sending requests on the {@link EventLoopGroup} thread that is handling the
+   * connection.
+   *
+   * <p>Note: The name of this configuration property is misleading.
+   *
+   * <p>Configuring this is only useful in specific circumstances when also using {@link
+   * #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used to send
+   * requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming network IO
+   * and sending memcache requests in a service.
+   *
+   * @see #withEventLoopThreadFlushMaxBatchSize(int)
+   * @param eventLoopThreadFlushMaxBatchSize the maximum number of requests that will be written to
+   *     a connection in a single operation when sending requests on the {@link EventLoopGroup}
+   *     thread that is handling the connection. Default is {@value Settings#DEFAULT_BATCH_SIZE}.
+   * @return itself
+   * @deprecated Most users should prefer {@link #withMaxOutstandingRequests(int)}. Some users that
+   *     also configure {@link #withEventLoopGroup(EventLoopGroup)} might want to configure {@link
+   *     #withEventLoopThreadFlushMaxBatchSize(int)}.
+   */
+  @Deprecated
+  public MemcacheClientBuilder<V> withRequestBatchSize(final int eventLoopThreadFlushMaxBatchSize) {
+    return withEventLoopThreadFlushMaxBatchSize(eventLoopThreadFlushMaxBatchSize);
+  }
+
+  /**
+   * Specify the maximum number of requests that will be written to a connection in a single
+   * operation when sending requests on the {@link EventLoopGroup} thread that is handling the
+   * connection.
+   *
+   * <p>Configuring this can be useful in specific circumstances when also using {@link
+   * #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used to send
+   * requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming network IO
+   * and sending memcache requests in a service.
    *
    * <p>If the client's batch-size is larger than your memcached server's value, you may experience
    * an increase in `conn_yields` on your memcached server's stats...which indicates your server is
@@ -332,13 +365,15 @@ public class MemcacheClientBuilder<V> {
    * <p>The optimal value should be matched to your workload and roughly the same value as your
    * memcached server's `-R` argument, which defaults to 20.
    *
-   * @param batchSize the maximum number of operations per batched client request. Default is
-   *     {@value Settings#DEFAULT_BATCH_SIZE}.
+   * @param eventLoopThreadFlushMaxBatchSize the maximum number of requests that will be written to
+   *     a connection in a single operation when sending requests on the {@link EventLoopGroup}
+   *     thread that is handling the connection. Default is {@value Settings#DEFAULT_BATCH_SIZE}.
    * @return itself
    */
-  public MemcacheClientBuilder<V> withRequestBatchSize(final int batchSize) {
-    checkArgument(batchSize > 0, "batch size must be > 0");
-    this.batchSize = batchSize;
+  public MemcacheClientBuilder<V> withEventLoopThreadFlushMaxBatchSize(
+      final int eventLoopThreadFlushMaxBatchSize) {
+    checkArgument(eventLoopThreadFlushMaxBatchSize > 0, "batch size must be > 0");
+    this.eventLoopThreadFlushMaxBatchSize = eventLoopThreadFlushMaxBatchSize;
     return this;
   }
 
@@ -645,7 +680,7 @@ public class MemcacheClientBuilder<V> {
         ReconnectingClient.singletonExecutor(),
         address,
         maxOutstandingRequests,
-        batchSize,
+        eventLoopThreadFlushMaxBatchSize,
         binary,
         authenticator,
         executor.get(),
