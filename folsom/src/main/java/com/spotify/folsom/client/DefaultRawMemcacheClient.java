@@ -104,7 +104,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
       final int outstandingRequestLimit,
-      final int batchSize,
+      final int eventLoopThreadFlushMaxBatchSize,
       final boolean binary,
       final Executor executor,
       final long connectionTimeoutMillis,
@@ -167,7 +167,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
                         address,
                         channel,
                         outstandingRequestLimit,
-                        batchSize,
+                        eventLoopThreadFlushMaxBatchSize,
                         executor,
                         connectionTimeoutMillis,
                         metrics,
@@ -190,7 +190,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final HostAndPort address,
       final Channel channel,
       final int outstandingRequestLimit,
-      final int batchSize,
+      final int eventLoopThreadFlushMaxBatchSize,
       final Executor executor,
       final long connectionTimeoutMillis,
       final Metrics metrics,
@@ -201,7 +201,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     this.metrics = metrics;
     this.maxSetLength = maxSetLength;
     this.channel = requireNonNull(channel, "channel");
-    this.flusher = new BatchFlusher(channel, batchSize);
+    this.flusher = new BatchFlusher(channel, eventLoopThreadFlushMaxBatchSize);
     this.outstandingRequestLimit = outstandingRequestLimit;
 
     // Since we are reusing the pendingCounter to detect disconnects, set the limit to something
