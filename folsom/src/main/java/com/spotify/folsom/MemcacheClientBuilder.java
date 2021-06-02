@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.spotify.folsom.client.MemcacheEncoder.MAX_KEY_LEN;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -327,37 +326,34 @@ public class MemcacheClientBuilder<V> {
    *
    * <p>Note: The name of this configuration property is misleading.
    *
-   * <p>Configuring this is only useful in specific circumstances when also using
-   * {@link #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used
-   * to send requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming
-   * network IO and sending memcache requests in a service.
+   * <p>Configuring this is only useful in specific circumstances when also using {@link
+   * #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used to send
+   * requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming network IO
+   * and sending memcache requests in a service.
    *
    * @see #withEventLoopThreadFlushMaxBatchSize(int)
    * @param eventLoopThreadFlushMaxBatchSize the maximum number of requests that will be written to
-   *                                         a connection in a single operation when sending
-   *                                         requests on the {@link EventLoopGroup} thread that is
-   *                                         handling the connection. Default is
-   *                                         {@value Settings#DEFAULT_BATCH_SIZE}.
+   *     a connection in a single operation when sending requests on the {@link EventLoopGroup}
+   *     thread that is handling the connection. Default is {@value Settings#DEFAULT_BATCH_SIZE}.
    * @return itself
    * @deprecated Most users should prefer {@link #withMaxOutstandingRequests(int)}. Some users that
-   *     also configure {@link #withEventLoopGroup(EventLoopGroup)} might want to configure
-   *     {@link #withEventLoopThreadFlushMaxBatchSize(int)}.
+   *     also configure {@link #withEventLoopGroup(EventLoopGroup)} might want to configure {@link
+   *     #withEventLoopThreadFlushMaxBatchSize(int)}.
    */
   @Deprecated
   public MemcacheClientBuilder<V> withRequestBatchSize(final int eventLoopThreadFlushMaxBatchSize) {
     return withEventLoopThreadFlushMaxBatchSize(eventLoopThreadFlushMaxBatchSize);
   }
 
-
   /**
    * Specify the maximum number of requests that will be written to a connection in a single
    * operation when sending requests on the {@link EventLoopGroup} thread that is handling the
    * connection.
    *
-   * <p>Configuring this can be useful in specific circumstances when also using
-   * {@link #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used
-   * to send requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming
-   * network IO and sending memcache requests in a service.
+   * <p>Configuring this can be useful in specific circumstances when also using {@link
+   * #withEventLoopGroup(EventLoopGroup)} to configure an IO thread pool that is also used to send
+   * requests. E.g. when reusing the same {@link EventLoopGroup} for handling incoming network IO
+   * and sending memcache requests in a service.
    *
    * <p>If the client's batch-size is larger than your memcached server's value, you may experience
    * an increase in `conn_yields` on your memcached server's stats...which indicates your server is
@@ -370,13 +366,12 @@ public class MemcacheClientBuilder<V> {
    * memcached server's `-R` argument, which defaults to 20.
    *
    * @param eventLoopThreadFlushMaxBatchSize the maximum number of requests that will be written to
-   *                                         a connection in a single operation when sending requests
-   *                                         on the {@link EventLoopGroup} thread that is handling the
-   *                                         connection. Default is
-   *                                         {@value Settings#DEFAULT_BATCH_SIZE}.
+   *     a connection in a single operation when sending requests on the {@link EventLoopGroup}
+   *     thread that is handling the connection. Default is {@value Settings#DEFAULT_BATCH_SIZE}.
    * @return itself
    */
-  public MemcacheClientBuilder<V> withEventLoopThreadFlushMaxBatchSize(final int eventLoopThreadFlushMaxBatchSize) {
+  public MemcacheClientBuilder<V> withEventLoopThreadFlushMaxBatchSize(
+      final int eventLoopThreadFlushMaxBatchSize) {
     checkArgument(eventLoopThreadFlushMaxBatchSize > 0, "batch size must be > 0");
     this.eventLoopThreadFlushMaxBatchSize = eventLoopThreadFlushMaxBatchSize;
     return this;
