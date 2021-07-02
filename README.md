@@ -6,8 +6,7 @@ API.
 
 ### Build status
 
-[![Travis](https://api.travis-ci.org/spotify/folsom.svg?branch=master)](https://travis-ci.org/spotify/folsom)
-[![Coverage Status](http://img.shields.io/coveralls/spotify/folsom/master.svg)](https://coveralls.io/r/spotify/folsom?branch=master)
+![Build status](https://github.com/spotify/folsom/actions/workflows/maven.yml/badge.svg)
 
 ### Maven central
 
