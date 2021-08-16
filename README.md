@@ -156,7 +156,7 @@ CompletableFuture<T> future = client.get(...)
   .whenCompleteAsync((v, e) -> {}, executor);
 ```
 
-Note that in case of timeouts, the futures from orTimeout would all be completed on a singleton thread, which may cause contention.
+Note that in case of timeouts, the futures from `orTimeout` would all be completed on a singleton thread, which may cause contention.
 To avoid problems with that, we add `whenCompleteAsync` to ensure that
 the work is moved to an executor that has sufficient threads.
 
