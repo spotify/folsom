@@ -150,8 +150,15 @@ request latencies.
 A better way of setting timeouts on individual requests (in Java 9+) is something like this:
 
 ```java
-CompletableFuture<T> future = client.get(...).toCompletableFuture().orTimeout(...);
+CompletableFuture<T> future = client.get(...)
+  .toCompletableFuture()
+  .orTimeout(...)
+  .whenCompleteAsync((v, e) -> {}, executor);
 ```
+
+Note that in case of timeouts, the futures from orTimeout would all be completed on a singleton thread, which may cause contention.
+To avoid problems with that, we add `whenCompleteAsync` to ensure that
+the work is moved to an executor that has sufficient threads.
 
 ### Protocol
 
