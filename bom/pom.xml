@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.spotify</groupId>
-    <artifactId>folsom-parent</artifactId>
-    <version>1.9.1-SNAPSHOT</version>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>9</version>
   </parent>
 
   <groupId>com.spotify</groupId>
@@ -17,6 +17,17 @@
     The Folsom BOM project helps set a compatible set of folsom artifact versions.
   </description>
   <url>https://github.com/spotify/folsom/</url>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>
@@ -48,4 +59,3 @@
     </dependencies>
   </dependencyManagement>
 </project>
-
