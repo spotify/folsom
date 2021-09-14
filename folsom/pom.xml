@@ -73,7 +73,7 @@
     </dependency>
     <dependency>
       <groupId>junit</groupId>
-      <artifacftId>junit</artifactId>
+      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
