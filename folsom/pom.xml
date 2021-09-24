@@ -60,9 +60,8 @@
 
     <!-- Tests -->
     <dependency>
-      <artifactId>mockito-core</artifactId>
       <groupId>org.mockito</groupId>
-      <version>2.21.0</version>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
