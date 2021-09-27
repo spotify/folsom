@@ -1,3 +1,12 @@
+### 1.9.3
+* Stop using Guava EventBus for internal listeners to avoid blocking calls.
+
+### 1.9.2
+* Minor maven related changes
+
+### 1.9.1
+* Minor maven related changes
+
 ### 1.9.0
 * Add new utility methods for multigets to return maps instead of lists:
   * `BinaryMemcacheClient.getAndTouchAsMap`
