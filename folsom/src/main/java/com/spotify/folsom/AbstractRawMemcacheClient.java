@@ -15,23 +15,30 @@
  */
 package com.spotify.folsom;
 
-import com.google.common.eventbus.EventBus;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractRawMemcacheClient implements RawMemcacheClient {
-  private final EventBus eventBus = new EventBus("folsom eventbus");
+  private final Set<ConnectionChangeListener> listeners = ConcurrentHashMap.newKeySet();
 
   @Override
-  public void registerForConnectionChanges(ConnectionChangeListener listener) {
-    eventBus.register(listener);
+  public void registerForConnectionChanges(final ConnectionChangeListener listener) {
+    listeners.add(listener);
     listener.connectionChanged(this);
   }
 
   @Override
-  public void unregisterForConnectionChanges(ConnectionChangeListener listener) {
-    eventBus.unregister(listener);
+  public void unregisterForConnectionChanges(final ConnectionChangeListener listener) {
+    listeners.remove(listener);
   }
 
   protected void notifyConnectionChange() {
-    eventBus.post(this);
+    for (final ConnectionChangeListener listener : listeners) {
+      try {
+        listener.connectionChanged(this);
+      } catch (Exception e) {
+        // We can't really do anything about this
+      }
+    }
   }
 }

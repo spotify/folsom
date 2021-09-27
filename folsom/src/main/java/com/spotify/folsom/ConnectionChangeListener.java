@@ -15,10 +15,7 @@
  */
 package com.spotify.folsom;
 
-import com.google.common.eventbus.Subscribe;
-
 public interface ConnectionChangeListener {
 
-  @Subscribe
   void connectionChanged(ObservableClient client);
 }
