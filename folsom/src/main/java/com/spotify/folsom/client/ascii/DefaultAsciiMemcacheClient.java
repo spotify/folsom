@@ -306,6 +306,11 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
     rawMemcacheClient.unregisterForConnectionChanges(listener);
   }
 
+  @Override
+  public void notifyConnectionChange() {
+    rawMemcacheClient.notifyConnectionChange();
+  }
+
   /*
    * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
    */

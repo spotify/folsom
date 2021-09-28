@@ -387,6 +387,11 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
     rawMemcacheClient.registerForConnectionChanges(listener);
   }
 
+  @Override
+  public void notifyConnectionChange() {
+    rawMemcacheClient.notifyConnectionChange();
+  }
+
   /*
    * @see com.spotify.folsom.BinaryMemcacheClient#isConnected()
    */
