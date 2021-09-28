@@ -62,6 +62,7 @@ public class ConnectFuture extends CompletableFuture<Void> implements Connection
     final Throwable failure = client.getConnectionFailure();
     if (failure != null) {
       completeExceptionally(failure);
+      return;
     }
     if (requireAll) {
       final int expectedConnections = awaitConnected ? client.numTotalConnections() : 0;
