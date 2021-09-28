@@ -384,7 +384,12 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
   @Override
   public void unregisterForConnectionChanges(ConnectionChangeListener listener) {
-    rawMemcacheClient.registerForConnectionChanges(listener);
+    rawMemcacheClient.unregisterForConnectionChanges(listener);
+  }
+
+  @Override
+  public void notifyConnectionChange() {
+    rawMemcacheClient.notifyConnectionChange();
   }
 
   /*

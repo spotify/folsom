@@ -127,4 +127,6 @@ public interface ObservableClient {
    * @return the number of active connections
    */
   int numActiveConnections();
+
+  default void notifyConnectionChange() {}
 }

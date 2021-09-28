@@ -32,7 +32,8 @@ public abstract class AbstractRawMemcacheClient implements RawMemcacheClient {
     listeners.remove(listener);
   }
 
-  protected void notifyConnectionChange() {
+  @Override
+  public final void notifyConnectionChange() {
     for (final ConnectionChangeListener listener : listeners) {
       try {
         listener.connectionChanged(this);

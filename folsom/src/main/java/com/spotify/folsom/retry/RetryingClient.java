@@ -102,6 +102,11 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
+  public void notifyConnectionChange() {
+    delegate.notifyConnectionChange();
+  }
+
+  @Override
   public String toString() {
     return "Retrying(" + delegate + ")";
   }

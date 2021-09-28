@@ -16,6 +16,7 @@
 
 package com.spotify.folsom;
 
+import static com.spotify.folsom.AbstractRawMemcacheClientTest.verifyClientNotifications;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -132,6 +133,11 @@ public class IntegrationTest {
   public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3, KEY4);
 
   protected static final int TTL = (int) Duration.ofMinutes(10).getSeconds();
+
+  @Test
+  public void testRegisterAndUnregister() {
+    verifyClientNotifications(client);
+  }
 
   @Test
   public void testSetGet() throws Exception {
