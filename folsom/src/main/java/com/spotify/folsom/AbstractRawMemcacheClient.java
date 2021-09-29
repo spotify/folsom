@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,5 +42,10 @@ public abstract class AbstractRawMemcacheClient implements RawMemcacheClient {
         // We can't really do anything about this
       }
     }
+  }
+
+  @VisibleForTesting
+  protected int numListeners() {
+    return listeners.size();
   }
 }

@@ -46,6 +46,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   private final Map<ByteBuffer, byte[]> map = new HashMap<>();
   private int outstanding = 0;
   private final String address;
+  private Throwable failure;
 
   public FakeRawMemcacheClient() {
     this(new NoopMetrics());
@@ -126,6 +127,15 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
     notifyConnectionChange();
   }
 
+  public void setConnected() {
+    connected = true;
+    notifyConnectionChange();
+  }
+
+  public void setFailure(Throwable failure) {
+    this.failure = failure;
+  }
+
   @Override
   public boolean isConnected() {
     return connected;
@@ -133,7 +143,7 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
 
   @Override
   public Throwable getConnectionFailure() {
-    return null;
+    return failure;
   }
 
   @Override
