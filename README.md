@@ -97,7 +97,7 @@ to wait for the initial connection to succeed, as can be seen in the example bel
 final MemcacheClient<String> client = MemcacheClientBuilder.newStringClient()
     .withAddress(hostname)
     .connectAscii();
-// make we wait until the client has connected to the server
+// make it wait until the client has connected to the server
 ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
 client.set("key", "value", 10000).toCompletableFuture().get();
@@ -185,6 +185,17 @@ Folsom support Ketama for sharing across a set of memcache servers. Note that
 the caching algorithm (currently) doesn't attempt to provide compatibility with
 other memcache clients, and thus when switching client implementation you will
 get a period of low cache hit ratio.
+
+#### Micrometer metrics
+
+You can optionally choose to track performance using
+[Micrometer metrics](https://micrometer.io/).
+You will need to include the `folsom-micrometer-metrics` dependency and initialize
+using MemcacheClientBuilder. (Optionally add additional tags):
+
+```
+builder.withMetrics(new MicrometerMetrics(metricsRegistry));
+```
 
 #### Yammer metrics
 

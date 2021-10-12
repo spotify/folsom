@@ -23,6 +23,7 @@
     <module>folsom</module>
     <module>folsom-semantic-metrics</module>
     <module>folsom-yammer-metrics</module>
+    <module>folsom-micrometer-metrics</module>
     <module>folsom-opencensus</module>
     <module>folsom-elasticache</module>
     <module>bom</module>
