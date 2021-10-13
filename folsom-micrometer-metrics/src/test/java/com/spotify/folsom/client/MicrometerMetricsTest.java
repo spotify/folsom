@@ -23,14 +23,12 @@ import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.transcoder.StringTranscoder;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,20 +46,20 @@ public class MicrometerMetricsTest {
 
   private void setupComponents(String... tags) throws Exception {
     meterRegistry = new SimpleMeterRegistry();
-    if(tags.length == 0) {
+    if (tags.length == 0) {
       metrics = new MicrometerMetrics(meterRegistry);
     } else {
       metrics = new MicrometerMetrics(meterRegistry, tags);
     }
     fakeRawMemcacheClient = new FakeRawMemcacheClient(metrics);
     client =
-            new DefaultAsciiMemcacheClient<>(
-                    fakeRawMemcacheClient,
-                    metrics,
-                    NoopTracer.INSTANCE,
-                    StringTranscoder.UTF8_INSTANCE,
-                    StandardCharsets.UTF_8,
-                    MemcacheEncoder.MAX_KEY_LEN);
+        new DefaultAsciiMemcacheClient<>(
+            fakeRawMemcacheClient,
+            metrics,
+            NoopTracer.INSTANCE,
+            StringTranscoder.UTF8_INSTANCE,
+            StandardCharsets.UTF_8,
+            MemcacheEncoder.MAX_KEY_LEN);
     client.awaitConnected(10, TimeUnit.SECONDS);
   }
 
@@ -70,14 +68,16 @@ public class MicrometerMetricsTest {
     setupComponents("client", "a");
 
     assertNull(client.get("key-miss").toCompletableFuture().get());
-    Timer getMisses = meterRegistry.find("memcache.requests")
+    Timer getMisses =
+        meterRegistry
+            .find("memcache.requests")
             .tag("operation", "get")
             .tag("result", "misses")
-            .tag("client", "a").timer();
+            .tag("client", "a")
+            .timer();
     assert getMisses != null;
     awaitCount(1, getMisses);
   }
-
 
   @Test
   public void testGetMiss() throws Exception {
@@ -200,63 +200,122 @@ public class MicrometerMetricsTest {
   }
 
   private Timer getGetHits() {
-    return meterRegistry.find("memcache.requests").tag("operation", "get").tag("result", "hits").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "get")
+        .tag("result", "hits")
+        .timer();
   }
 
   private Timer getGetMisses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "get").tag("result", "misses").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "get")
+        .tag("result", "misses")
+        .timer();
   }
 
   private Timer getGetFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "get").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "get")
+        .tag("result", "failures")
+        .timer();
   }
 
   private Timer getMultigetCalls() {
-    return meterRegistry.find("memcache.requests").tag("operation", "multiget").tag("result", "hitsOrMisses").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "multiget")
+        .tag("result", "hitsOrMisses")
+        .timer();
   }
 
   private Counter getMultigetHits() {
-    return meterRegistry.find("memcache.requests").tag("operation", "multiget").tag("result", "hits").counter();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "multiget")
+        .tag("result", "hits")
+        .counter();
   }
 
   private Counter getMultigetMisses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "multiget").tag("result", "misses").counter();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "multiget")
+        .tag("result", "misses")
+        .counter();
   }
 
   private Timer getMultigetFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "multiget").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "multiget")
+        .tag("result", "failures")
+        .timer();
   }
 
   private Timer getSetSuccesses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "set").tag("result", "successes").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "set")
+        .tag("result", "successes")
+        .timer();
   }
 
   private Timer getSetFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "set").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "set")
+        .tag("result", "failures")
+        .timer();
   }
 
   private Timer getDeleteSuccesses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "delete").tag("result", "successes").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "delete")
+        .tag("result", "successes")
+        .timer();
   }
 
   private Timer getDeleteFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "delete").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "delete")
+        .tag("result", "failures")
+        .timer();
   }
 
   private Timer getIncrDecrSuccesses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "incrdecr").tag("result", "successes").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "incrdecr")
+        .tag("result", "successes")
+        .timer();
   }
 
   private Timer getIncrDecrFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "incrdecr").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "incrdecr")
+        .tag("result", "failures")
+        .timer();
   }
 
   private Timer getTouchSuccesses() {
-    return meterRegistry.find("memcache.requests").tag("operation", "touch").tag("result", "successes").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "touch")
+        .tag("result", "successes")
+        .timer();
   }
 
   private Timer getTouchFailures() {
-    return meterRegistry.find("memcache.requests").tag("operation", "touch").tag("result", "failures").timer();
+    return meterRegistry
+        .find("memcache.requests")
+        .tag("operation", "touch")
+        .tag("result", "failures")
+        .timer();
   }
-
 }
