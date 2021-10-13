@@ -70,7 +70,7 @@ public class MicrometerMetrics implements Metrics {
      * @param registry MeterRegistry
      * @param tags Additional tags that will be added to each meter
      */
-    public MicrometerMetrics(final MeterRegistry registry, String... tags) {
+    public MicrometerMetrics(final MeterRegistry registry, final String... tags) {
         this(registry, Tags.of(tags));
     }
 
@@ -79,7 +79,7 @@ public class MicrometerMetrics implements Metrics {
      * @param registry MeterRegistry
      * @param tags Additional tags that will be added to each meter
      */
-    public MicrometerMetrics(final MeterRegistry registry, Tags tags) {
+    public MicrometerMetrics(final MeterRegistry registry, final Tags tags) {
         String meterName = "memcache.requests";
         this.getHits = registry.timer(meterName, tags.and("operation", "get", "result", "hits"));
         this.getMisses = registry.timer(meterName, tags.and("operation", "get", "result", "misses"));

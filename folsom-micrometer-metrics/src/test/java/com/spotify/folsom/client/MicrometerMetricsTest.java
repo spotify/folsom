@@ -199,10 +199,6 @@ public class MicrometerMetricsTest {
     }
   }
 
-//        registry.gauge("memcache.outstandingRequests", tags, this, MicrometerMetrics::getOutstandingRequests);
-//        registry.gauge("memcache.global.connections", tags, this, o -> Utils.getGlobalConnectionCount());
-
-
   private Timer getGetHits() {
     return meterRegistry.find("memcache.requests").tag("operation", "get").tag("result", "hits").timer();
   }
