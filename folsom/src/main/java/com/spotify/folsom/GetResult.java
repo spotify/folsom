@@ -18,22 +18,21 @@ package com.spotify.folsom;
 
 import static java.util.Objects.requireNonNull;
 
-import com.spotify.folsom.client.Flags;
 import java.util.Objects;
 
 public class GetResult<V> {
 
   private final V value;
   private final long cas;
-  private final Flags flags;
+  private final int flags;
 
-  private GetResult(final V value, final long cas, final Flags flags) {
+  private GetResult(final V value, final long cas, final int flags) {
     this.value = requireNonNull(value);
     this.cas = cas;
     this.flags = flags;
   }
 
-  public static <V> GetResult<V> success(final V value, final long cas, final Flags flags) {
+  public static <V> GetResult<V> success(final V value, final long cas, final int flags) {
     requireNonNull(value, "value");
     return new GetResult<>(value, cas, flags);
   }
@@ -46,7 +45,7 @@ public class GetResult<V> {
     return cas;
   }
 
-  public Flags getFlags() {
+  public int getFlags() {
     return flags;
   }
 
@@ -59,7 +58,7 @@ public class GetResult<V> {
 
     if (cas != getResult.cas) return false;
     if (!value.equals(getResult.value)) return false;
-    if (!flags.equals(getResult.flags)) return false;
+    if (flags != getResult.flags) return false;
 
     return true;
   }

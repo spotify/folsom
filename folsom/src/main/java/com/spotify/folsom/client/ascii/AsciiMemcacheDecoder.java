@@ -16,7 +16,6 @@
 
 package com.spotify.folsom.client.ascii;
 
-import com.spotify.folsom.client.Flags;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -43,7 +42,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   private byte[] key = null;
   private byte[] value = null;
   private long cas = 0;
-  private Flags flags = Flags.DEFAULT;
+  private int flags = 0;
   private int valueOffset;
 
   public AsciiMemcacheDecoder(Charset charset) {
@@ -80,7 +79,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
         key = null;
         value = null;
         cas = 0;
-        flags = Flags.DEFAULT;
+        flags = 0;
       } else {
         final ByteBuffer line = readLine(buf, readableBytes);
         if (line == null) {
@@ -183,7 +182,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             this.value = new byte[size];
             this.valueOffset = 0;
             this.cas = cas;
-            this.flags = new Flags(flags);
+            this.flags = flags;
           }
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"

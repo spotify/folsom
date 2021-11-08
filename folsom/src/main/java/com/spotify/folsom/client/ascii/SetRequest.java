@@ -19,7 +19,6 @@ package com.spotify.folsom.client.ascii;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.spotify.folsom.MemcacheStatus;
-import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -47,7 +46,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   private final byte[] value;
   private final int ttl;
   private final long cas;
-  private final Flags flags;
+  private final int flags;
 
   private SetRequest(
       final Operation operation,
@@ -55,7 +54,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
       final byte[] value,
       final int ttl,
       final long cas,
-      final Flags flags) {
+      final int flags) {
     super(key);
     this.operation = operation;
     this.value = value;
@@ -65,7 +64,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   }
 
   public static SetRequest casSet(
-      final byte[] key, final byte[] value, final int ttl, final long cas, final Flags flags) {
+      final byte[] key, final byte[] value, final int ttl, final long cas, final int flags) {
     return new SetRequest(Operation.CAS, key, value, ttl, cas, flags);
   }
 
@@ -74,7 +73,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
       final byte[] key,
       final byte[] value,
       final int ttl,
-      final Flags flags) {
+      final int flags) {
     if (operation == null || operation == Operation.CAS) {
       throw new IllegalArgumentException("Invalid operation: " + operation);
     }
@@ -114,8 +113,8 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     return buffer;
   }
 
-  private static byte[] toFlags(Flags flags) {
-    return (" " + flags.asInt() + " ").getBytes(US_ASCII);
+  private static byte[] toFlags(int flags) {
+    return (" " + flags + " ").getBytes(US_ASCII);
   }
 
   @Override

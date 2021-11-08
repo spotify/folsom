@@ -18,23 +18,22 @@ package com.spotify.folsom;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.spotify.folsom.client.Flags;
 import org.junit.Test;
 
 public class GetResultTest {
 
   @Test(expected = NullPointerException.class)
   public void testCstrNullValue() {
-    GetResult.success(null, 123, Flags.DEFAULT);
+    GetResult.success(null, 123, 0);
   }
 
   @Test
   public void testEqualsHashCode() {
-    GetResult<Long> result1 = GetResult.success(123L, 456, Flags.DEFAULT);
-    GetResult<Long> result2 = GetResult.success(123L, 456, Flags.DEFAULT);
-    GetResult<Long> result3 = GetResult.success(999L, 999, Flags.DEFAULT);
-    GetResult<Long> result4 = GetResult.success(123L, 999, Flags.DEFAULT);
-    GetResult<Long> result5 = GetResult.success(999L, 456, Flags.DEFAULT);
+    GetResult<Long> result1 = GetResult.success(123L, 456, 0);
+    GetResult<Long> result2 = GetResult.success(123L, 456, 0);
+    GetResult<Long> result3 = GetResult.success(999L, 999, 0);
+    GetResult<Long> result4 = GetResult.success(123L, 999, 0);
+    GetResult<Long> result5 = GetResult.success(999L, 456, 0);
 
     assertTrue(result1.equals(result1));
     assertTrue(result1.equals(result2));

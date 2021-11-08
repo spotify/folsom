@@ -27,7 +27,6 @@ import static org.junit.Assume.assumeTrue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.spotify.futures.CompletableFutures;
@@ -345,15 +344,15 @@ public class IntegrationTest {
 
     List<GetResult<String>> expected =
         asList(
-            GetResult.success(VALUE1, cas1, Flags.DEFAULT),
-            GetResult.success(VALUE2, cas2, Flags.DEFAULT));
+            GetResult.success(VALUE1, cas1, 0),
+            GetResult.success(VALUE2, cas2, 0));
     assertEquals(expected, client.casGet(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
   @Test
   public void testMultiGetWithFlags() throws Throwable {
-    Flags flags1 = new Flags(42);
-    Flags flags2 = new Flags(43);
+    int flags1 = 42;
+    int flags2 = 43;
     client.set(KEY1, VALUE1, TTL, flags1).toCompletableFuture().get();
     client.set(KEY2, VALUE2, TTL, flags2).toCompletableFuture().get();
 
@@ -607,7 +606,7 @@ public class IntegrationTest {
 
   @Test
   public void testFlags() throws Exception {
-    Flags flags = new Flags(42);
+    int flags = 42;
     assertEquals(
         MemcacheStatus.OK, client.set(KEY1, VALUE1, TTL, flags).toCompletableFuture().get());
     GetResult<String> result = client.getWithFlags(KEY1).toCompletableFuture().get();

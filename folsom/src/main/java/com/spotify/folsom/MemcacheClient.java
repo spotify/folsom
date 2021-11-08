@@ -15,7 +15,6 @@
  */
 package com.spotify.folsom;
 
-import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.Utils;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +41,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, Flags flags);
+  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, int flags);
 
   /**
    * Compare and set a key in memcache to the provided value, with the specified TTL
@@ -65,7 +64,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request.
    */
-  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, Flags flags);
+  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, int flags);
 
   /**
    * Delete the provided key
@@ -114,7 +113,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> add(String key, V value, int ttl, Flags flags);
+  CompletionStage<MemcacheStatus> add(String key, V value, int ttl, int flags);
 
   /**
    * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
@@ -137,7 +136,7 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, Flags flags);
+  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, int flags);
 
   CompletionStage<MemcacheStatus> append(String key, V value);
 
@@ -180,6 +179,18 @@ public interface MemcacheClient<V> extends ObservableClient {
    *     values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<V>> get(List<String> keys);
+
+  /**
+   * Get the value for the provided keys
+   *
+   * @param keys Keys, must not be null, nor must any key in the list
+   * @return A future representing completion of the request, with the values, including the CAS
+   *     value and flags. Any non existing values will be null. Order will be maintained
+   *     from the input keys.
+   */
+  default CompletionStage<List<GetResult<V>>> getWithFlags(List<String> keys) {
+    return casGet(keys);
+  }
 
   /**
    * Get the value for the provided keys

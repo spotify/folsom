@@ -18,7 +18,6 @@ package com.spotify.folsom.client.binary;
 
 import static org.junit.Assert.assertEquals;
 
-import com.spotify.folsom.client.Flags;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
@@ -48,7 +47,7 @@ public class SetRequestTest extends RequestTestTemplate {
 
   @Test
   public void testFlags() throws Exception {
-    verifySetRequest(1000, 258, new Flags(42));
+    verifySetRequest(1000, 258, 42);
   }
 
   private void verifySetRequest(long cas) throws Exception {
@@ -56,10 +55,10 @@ public class SetRequestTest extends RequestTestTemplate {
   }
 
   private void verifySetRequest(int ttl, long cas) throws Exception {
-    verifySetRequest(ttl, cas, Flags.DEFAULT);
+    verifySetRequest(ttl, cas, 0);
   }
 
-  private void verifySetRequest(int ttl, long cas, Flags flags) throws Exception {
+  private void verifySetRequest(int ttl, long cas, int flags) throws Exception {
     SetRequest req =
         new SetRequest(
             OpCode.SET,
@@ -76,7 +75,7 @@ public class SetRequestTest extends RequestTestTemplate {
 
     final int keyLen = KEY.length();
     assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.opaque, cas);
-    assertEquals(flags.asInt(), b.readInt());
+    assertEquals(flags, b.readInt());
     assertEquals(ttl, b.readInt());
     assertString(KEY, b);
     assertString(VALUE, b);
