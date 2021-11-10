@@ -31,6 +31,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     implements com.spotify.folsom.client.SetRequest {
 
   private static final EnumMap<Operation, byte[]> CMD;
+  private static final byte[] NO_FLAGS;
 
   static {
     CMD = new EnumMap<>(Operation.class);
@@ -40,6 +41,8 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     CMD.put(Operation.APPEND, "append ".getBytes(US_ASCII));
     CMD.put(Operation.PREPEND, "prepend ".getBytes(US_ASCII));
     CMD.put(Operation.CAS, "cas ".getBytes(US_ASCII));
+
+    NO_FLAGS = "0".getBytes(US_ASCII);
   }
 
   private final Operation operation;
@@ -114,6 +117,11 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   }
 
   private static byte[] toFlags(int flags) {
+    // Optimize for the common case when no flags are set
+    if (flags == 0) {
+      return NO_FLAGS;
+    }
+
     return (" " + flags + " ").getBytes(US_ASCII);
   }
 

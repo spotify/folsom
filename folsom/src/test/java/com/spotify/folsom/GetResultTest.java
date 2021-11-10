@@ -24,16 +24,16 @@ public class GetResultTest {
 
   @Test(expected = NullPointerException.class)
   public void testCstrNullValue() {
-    GetResult.success(null, 123, 0);
+    GetResult.success(null, 123);
   }
 
   @Test
   public void testEqualsHashCode() {
-    GetResult<Long> result1 = GetResult.success(123L, 456, 0);
-    GetResult<Long> result2 = GetResult.success(123L, 456, 0);
-    GetResult<Long> result3 = GetResult.success(999L, 999, 0);
-    GetResult<Long> result4 = GetResult.success(123L, 999, 0);
-    GetResult<Long> result5 = GetResult.success(999L, 456, 0);
+    GetResult<Long> result1 = GetResult.success(123L, 456);
+    GetResult<Long> result2 = GetResult.success(123L, 456);
+    GetResult<Long> result3 = GetResult.success(999L, 999);
+    GetResult<Long> result4 = GetResult.success(123L, 999);
+    GetResult<Long> result5 = GetResult.success(999L, 456);
 
     assertTrue(result1.equals(result1));
     assertTrue(result1.equals(result2));

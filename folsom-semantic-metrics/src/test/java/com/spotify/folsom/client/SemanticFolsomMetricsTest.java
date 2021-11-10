@@ -52,7 +52,7 @@ public class SemanticFolsomMetricsTest {
 
   @Test
   public void testGetHit() {
-    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {}, 0, 0)));
+    metrics.measureGetFuture(completedFuture(GetResult.success(new byte[] {}, 0)));
 
     assertEquals(1, metrics.getGets().getCount());
     assertEquals(0, metrics.getGetMisses().getCount());
@@ -93,7 +93,7 @@ public class SemanticFolsomMetricsTest {
     metrics.measureMultigetFuture(
         completedFuture(
             ImmutableList.of(
-                GetResult.success(new byte[] {1}, 0, 0), GetResult.success(new byte[] {1}, 0, 0))));
+                GetResult.success(new byte[] {1}, 0), GetResult.success(new byte[] {1}, 0))));
 
     assertEquals(1, metrics.getMultigets().getCount());
     assertEquals(1, metrics.getMultigetSuccesses().getCount());
