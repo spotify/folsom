@@ -32,6 +32,10 @@ public class GetResult<V> {
     this.flags = flags;
   }
 
+  public static <V> GetResult<V> success(final V value, final long cas) {
+    return GetResult.success(value, cas, 0);
+  }
+
   public static <V> GetResult<V> success(final V value, final long cas, final int flags) {
     requireNonNull(value, "value");
     return new GetResult<>(value, cas, flags);

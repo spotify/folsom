@@ -67,7 +67,7 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
       }
 
       int flags = 0;
-      if (extrasLength > 0) {
+      if (extrasLength >= 4) {
         flags = buf.readInt();
         final int extrasBytesLeft = extrasLength - 4; // 4 bytes for the flags
         buf.skipBytes(extrasBytesLeft);

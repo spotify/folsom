@@ -41,7 +41,10 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, int flags);
+  default CompletionStage<MemcacheStatus> set(String key, V value, int ttl, int flags) {
+    // B/C for existing implementations without flags handling
+    return set(key, value, ttl);
+  }
 
   /**
    * Compare and set a key in memcache to the provided value, with the specified TTL
@@ -64,7 +67,10 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request.
    */
-  CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, int flags);
+  default CompletionStage<MemcacheStatus> set(String key, V value, int ttl, long cas, int flags) {
+    // B/C for existing implementations without flags handling
+    return set(key, value, ttl, cas);
+  }
 
   /**
    * Delete the provided key
@@ -113,7 +119,10 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> add(String key, V value, int ttl, int flags);
+  default CompletionStage<MemcacheStatus> add(String key, V value, int ttl, int flags) {
+    // B/C for existing implementations without flags handling
+    return add(key, value, ttl);
+  }
 
   /**
    * Replace a key in memcache with the provided value, with the specified TTL. Key must exist in
@@ -136,7 +145,10 @@ public interface MemcacheClient<V> extends ObservableClient {
    * @param flags Memcached flags
    * @return A future representing completion of the request
    */
-  CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, int flags);
+  default CompletionStage<MemcacheStatus> replace(String key, V value, int ttl, int flags) {
+    // B/C for existing implementations without flags handling
+    return replace(key, value, ttl, flags);
+  }
 
   CompletionStage<MemcacheStatus> append(String key, V value);
 
@@ -161,17 +173,6 @@ public interface MemcacheClient<V> extends ObservableClient {
   CompletionStage<GetResult<V>> casGet(String key);
 
   /**
-   * Get the value for the provided key, including the CAS value and flags
-   *
-   * @param key First key, must not be null
-   * @return A future representing completion of the request, with the value, including the CAS
-   *     value and flags, or null if the value does not exists.
-   */
-  default CompletionStage<GetResult<V>> getWithFlags(String key) {
-    return casGet(key);
-  }
-
-  /**
    * Get the value for the provided keys
    *
    * @param keys Keys, must not be null, nor must any key in the list
@@ -179,18 +180,6 @@ public interface MemcacheClient<V> extends ObservableClient {
    *     values will be null. Order will be maintained from the input keys
    */
   CompletionStage<List<V>> get(List<String> keys);
-
-  /**
-   * Get the value for the provided keys
-   *
-   * @param keys Keys, must not be null, nor must any key in the list
-   * @return A future representing completion of the request, with the values, including the CAS
-   *     value and flags. Any non existing values will be null. Order will be maintained
-   *     from the input keys.
-   */
-  default CompletionStage<List<GetResult<V>>> getWithFlags(List<String> keys) {
-    return casGet(keys);
-  }
 
   /**
    * Get the value for the provided keys

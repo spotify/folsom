@@ -180,7 +180,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
   @Override
   public CompletionStage<MemcacheStatus> replace(
       final String key, final V value, final int ttl, final long cas) {
-    return casSetInternal(OpCode.REPLACE, key, value, ttl, cas,0);
+    return casSetInternal(OpCode.REPLACE, key, value, ttl, cas, 0);
   }
 
   /*
