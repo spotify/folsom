@@ -42,6 +42,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   private byte[] key = null;
   private byte[] value = null;
   private long cas = 0;
+  private int flags = 0;
   private int valueOffset;
 
   public AsciiMemcacheDecoder(Charset charset) {
@@ -74,10 +75,11 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
         if (line.remaining() > 0) {
           throw new IOException(String.format("Unexpected end of data block: %s", toString(line)));
         }
-        valueResponse.addGetResult(key, value, cas);
+        valueResponse.addGetResult(key, value, cas, flags);
         key = null;
         value = null;
         cas = 0;
+        flags = 0;
       } else {
         final ByteBuffer line = readLine(buf, readableBytes);
         if (line == null) {
@@ -158,6 +160,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             if (flagLen <= 0) {
               throw fail();
             }
+            int flags = (int) parseLong(token.get(), token);
 
             // size
             readNextToken();
@@ -179,6 +182,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
             this.value = new byte[size];
             this.valueOffset = 0;
             this.cas = cas;
+            this.flags = flags;
           }
         } else if (valueMode) {
           // when in valueMode, the only valid responses are "END" and "VALUE"

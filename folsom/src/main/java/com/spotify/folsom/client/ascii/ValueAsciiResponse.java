@@ -27,8 +27,8 @@ public class ValueAsciiResponse extends AsciiResponse {
     super(Type.VALUE);
   }
 
-  public void addGetResult(byte[] key, byte[] value, long cas) {
-    values.add(new ValueResponse(key, value, cas));
+  public void addGetResult(byte[] key, byte[] value, long cas, int flags) {
+    values.add(new ValueResponse(key, value, cas, flags));
   }
 
   public boolean isEmpty() {

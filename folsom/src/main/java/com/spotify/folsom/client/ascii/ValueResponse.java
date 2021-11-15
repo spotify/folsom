@@ -19,10 +19,12 @@ public class ValueResponse {
   public final byte[] key;
   public final byte[] value;
   public final long cas;
+  public final int flags;
 
-  public ValueResponse(byte[] key, byte[] value, long cas) {
+  public ValueResponse(byte[] key, byte[] value, long cas, int flags) {
     this.cas = cas;
     this.value = value;
     this.key = key;
+    this.flags = flags;
   }
 }

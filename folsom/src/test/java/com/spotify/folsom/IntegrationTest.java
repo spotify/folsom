@@ -343,7 +343,7 @@ public class IntegrationTest {
     long cas2 = client.casGet(KEY2).toCompletableFuture().get().getCas();
 
     List<GetResult<String>> expected =
-        asList(GetResult.success(VALUE1, cas1), GetResult.success(VALUE2, cas2));
+        asList(GetResult.success(VALUE1, cas1, 0), GetResult.success(VALUE2, cas2, 0));
     assertEquals(expected, client.casGet(asList(KEY1, KEY2)).toCompletableFuture().get());
   }
 
@@ -464,7 +464,7 @@ public class IntegrationTest {
 
     client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
 
-    checkStatus(client.set(KEY1, VALUE2, TTL, 666), MemcacheStatus.KEY_EXISTS);
+    checkStatus(client.set(KEY1, VALUE2, TTL, 666L), MemcacheStatus.KEY_EXISTS);
   }
 
   @Test

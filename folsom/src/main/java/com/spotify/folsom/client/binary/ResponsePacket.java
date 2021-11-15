@@ -24,6 +24,7 @@ public class ResponsePacket {
   public final MemcacheStatus status;
   public final int opaque;
   public final long cas;
+  public final int flags;
   public final byte[] key;
   public final byte[] value;
 
@@ -32,12 +33,14 @@ public class ResponsePacket {
       final MemcacheStatus status,
       final int opaque,
       final long cas,
+      final int flags,
       final byte[] key,
       final byte[] value) {
     this.opcode = opcode;
     this.status = status;
     this.opaque = opaque;
     this.cas = cas;
+    this.flags = flags;
     this.key = key;
     this.value = value;
   }

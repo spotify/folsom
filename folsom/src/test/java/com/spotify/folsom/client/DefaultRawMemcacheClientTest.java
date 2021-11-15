@@ -406,7 +406,7 @@ public class DefaultRawMemcacheClientTest {
 
       RawMemcacheClient rawClient =
           DefaultRawMemcacheClient.connect(
-                  HostAndPort.fromParts("127.0.0.12", port),
+                  HostAndPort.fromParts("127.0.0.1", port),
                   5000,
                   BATCH_SIZE,
                   false,

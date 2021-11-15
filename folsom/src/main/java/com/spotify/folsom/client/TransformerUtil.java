@@ -87,7 +87,8 @@ public class TransformerUtil<T> {
       if (input == null) {
         return null;
       }
-      return GetResult.success(transcoder.decode(input.getValue()), input.getCas());
+      return GetResult.success(
+          transcoder.decode(input.getValue()), input.getCas(), input.getFlags());
     }
   }
 

@@ -45,14 +45,28 @@ public class SetRequestTest extends RequestTestTemplate {
     verifySetRequest(0, 258);
   }
 
+  @Test
+  public void testFlags() throws Exception {
+    verifySetRequest(1000, 258, 42);
+  }
+
   private void verifySetRequest(long cas) throws Exception {
     verifySetRequest(1000, cas);
   }
 
   private void verifySetRequest(int ttl, long cas) throws Exception {
+    verifySetRequest(ttl, cas, 0);
+  }
+
+  private void verifySetRequest(int ttl, long cas, int flags) throws Exception {
     SetRequest req =
         new SetRequest(
-            OpCode.SET, KEY.getBytes(StandardCharsets.UTF_8), TRANSCODER.encode(VALUE), ttl, cas);
+            OpCode.SET,
+            KEY.getBytes(StandardCharsets.UTF_8),
+            TRANSCODER.encode(VALUE),
+            ttl,
+            cas,
+            flags);
 
     MemcacheEncoder memcacheEncoder = new MemcacheEncoder();
     List<Object> out = new ArrayList<>();
@@ -61,7 +75,7 @@ public class SetRequestTest extends RequestTestTemplate {
 
     final int keyLen = KEY.length();
     assertHeader(b, OpCode.SET, keyLen, 8, keyLen + 8 + VALUE.length(), req.opaque, cas);
-    assertZeros(b, 4);
+    assertEquals(flags, b.readInt());
     assertEquals(ttl, b.readInt());
     assertString(KEY, b);
     assertString(VALUE, b);

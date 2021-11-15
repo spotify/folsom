@@ -32,14 +32,21 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
   private final byte[] value;
   private final int ttl;
   private final long cas;
+  private final int flags;
 
   public SetRequest(
-      final OpCode opcode, final byte[] key, final byte[] value, final int ttl, final long cas) {
+      final OpCode opcode,
+      final byte[] key,
+      final byte[] value,
+      final int ttl,
+      final long cas,
+      final int flags) {
     super(key);
     this.opcode = opcode;
     this.value = value;
     this.ttl = ttl;
     this.cas = cas;
+    this.flags = flags;
   }
 
   @Override
@@ -55,7 +62,7 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
 
     writeHeader(dst, opcode, extraLength, valueLength, cas);
     if (hasExtra) {
-      dst.putInt(0); // byte 24-27, flags
+      dst.putInt(flags); // byte 24-27, flags
       dst.putInt(expiration); // byte 28-31, expiration
     }
     dst.put(key);

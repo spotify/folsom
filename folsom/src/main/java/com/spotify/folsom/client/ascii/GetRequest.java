@@ -71,7 +71,7 @@ public class GetRequest extends AsciiRequest<GetResult<byte[]>>
       throw new IOException(message);
     }
 
-    succeed(GetResult.success(valueResponse.value, valueResponse.cas));
+    succeed(GetResult.success(valueResponse.value, valueResponse.cas, valueResponse.flags));
   }
 
   private String decodeKey(byte[] key1) {

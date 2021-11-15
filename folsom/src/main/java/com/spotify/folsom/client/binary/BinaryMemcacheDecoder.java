@@ -66,7 +66,12 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
         return;
       }
 
-      buf.skipBytes(extrasLength);
+      int flags = 0;
+      if (extrasLength >= 4) {
+        flags = buf.readInt();
+        final int extrasBytesLeft = extrasLength - 4; // 4 bytes for the flags
+        buf.skipBytes(extrasBytesLeft);
+      }
 
       byte[] keyBytes;
       if (keyLength == 0) {
@@ -93,10 +98,10 @@ public class BinaryMemcacheDecoder extends ByteToMessageDecoder {
           replies = new BinaryResponse();
         } else {
           // Skip end packet
-          replies.add(new ResponsePacket(opcode, status, opaque, cas, keyBytes, valueBytes));
+          replies.add(new ResponsePacket(opcode, status, opaque, cas, flags, keyBytes, valueBytes));
         }
       } else {
-        replies.add(new ResponsePacket(opcode, status, opaque, cas, keyBytes, valueBytes));
+        replies.add(new ResponsePacket(opcode, status, opaque, cas, flags, keyBytes, valueBytes));
         if ((opaque & 0xFF) == 0) {
           out.add(replies);
           replies = new BinaryResponse();

@@ -18,19 +18,27 @@ package com.spotify.folsom;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Objects;
+
 public class GetResult<V> {
 
   private final V value;
   private final long cas;
+  private final int flags;
 
-  private GetResult(final V value, final long cas) {
+  private GetResult(final V value, final long cas, final int flags) {
     this.value = requireNonNull(value);
     this.cas = cas;
+    this.flags = flags;
   }
 
   public static <V> GetResult<V> success(final V value, final long cas) {
+    return GetResult.success(value, cas, 0);
+  }
+
+  public static <V> GetResult<V> success(final V value, final long cas, final int flags) {
     requireNonNull(value, "value");
-    return new GetResult<>(value, cas);
+    return new GetResult<>(value, cas, flags);
   }
 
   public V getValue() {
@@ -39,6 +47,10 @@ public class GetResult<V> {
 
   public long getCas() {
     return cas;
+  }
+
+  public int getFlags() {
+    return flags;
   }
 
   @Override
@@ -50,14 +62,13 @@ public class GetResult<V> {
 
     if (cas != getResult.cas) return false;
     if (!value.equals(getResult.value)) return false;
+    if (flags != getResult.flags) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = value.hashCode();
-    result = 31 * result + (int) (cas ^ (cas >>> 32));
-    return result;
+    return Objects.hash(value, cas, flags);
   }
 }
