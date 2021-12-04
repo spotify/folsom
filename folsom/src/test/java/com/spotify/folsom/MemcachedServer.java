@@ -16,6 +16,9 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
+import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
+import java.io.File;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,19 +35,58 @@ public class MemcachedServer {
       Suppliers.memoize(MemcachedServer::new)::get;
   private final String username;
   private final String password;
+  private final boolean secure;
 
   public MemcachedServer() {
     this(null, null);
   }
 
-  public MemcachedServer(String username, String password) {
-    this(username, password, Optional.empty());
+  public MemcachedServer(boolean secure) {
+    this(null, null, Optional.empty(), secure);
   }
 
-  public MemcachedServer(String username, String password, Optional<Integer> fixedPort) {
+  public MemcachedServer(String username, String password) {
+    this(username, password, Optional.empty(), false);
+  }
+
+  private MemcachedServer(String username, String password, Optional<Integer> fixedPort, boolean secure) {
+    // Use self-signed test certs
+    String currentDirectory = System.getProperty("user.dir");
+    System.setProperty("javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+    System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+    System.setProperty("javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
+    System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+
     this.username = username;
     this.password = password;
-    container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
+    this.secure = secure;
+
+    if(secure) {
+      if(username != null || password != null) {
+        throw new RuntimeException("username and password are not currently supported with the secure container");
+      }
+      container = new FixedHostPortGenericContainer("memcached:1.6.15");
+
+      // mount volume with test certs required for connecting
+      File pkiVolumeFile = new File("src/test/resources/pki");
+      container.withFileSystemBind(pkiVolumeFile.getAbsolutePath(), "/test-certs");
+
+      // Run memcached with TLS
+      container.withCommand(
+              "memcached",
+              "-vv",
+              "-Z", // enable TLS
+              "-o",
+              "ssl_chain_cert=/test-certs/test.pem," + // Use self-signed test certs
+                      "ssl_key=/test-certs/test.key," +
+                      "ssl_verify_mode=3," +
+                      "ssl_ca_cert=/test-certs/test.pem"
+      );
+    } else {
+      container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
+    }
     if (fixedPort.isPresent()) {
       container.withFixedExposedPort(11211, fixedPort.get());
     } else {
@@ -78,6 +120,16 @@ public class MemcachedServer {
       if (username != null && password != null) {
         builder.withUsernamePassword(username, password);
       }
+
+      if(secure) {
+        try {
+
+          builder.withSSLEngineFactory(new DefaultSSLEngineFactory());
+        } catch(NoSuchAlgorithmException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
       client = builder.connectBinary();
       try {
         client.awaitConnected(10, TimeUnit.SECONDS);

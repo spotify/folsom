@@ -1,0 +1,5 @@
+These test certificates were generated as follows:
+
+openssl req -x509 -newkey rsa:4096 -keyout test.key -out test.pem -sha256 -days 365 -nodes -subj '/CN=localhost'
+openssl pkcs12 -export -inkey test.key -in test.pem -out test.p12 -password pass:changeit
+
