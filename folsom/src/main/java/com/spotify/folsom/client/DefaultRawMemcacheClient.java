@@ -30,6 +30,7 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
@@ -52,6 +53,7 @@ import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -66,6 +68,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +116,34 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final int maxSetLength,
       final EventLoopGroup eventLoopGroup,
       final Class<? extends Channel> channelClass) {
+    return connect(
+        address,
+        outstandingRequestLimit,
+        eventLoopThreadFlushMaxBatchSize,
+        binary,
+        executor,
+        connectionTimeoutMillis,
+        charset,
+        metrics,
+        maxSetLength,
+        eventLoopGroup,
+        channelClass,
+        null);
+  }
+
+  public static CompletionStage<RawMemcacheClient> connect(
+      final HostAndPort address,
+      final int outstandingRequestLimit,
+      final int eventLoopThreadFlushMaxBatchSize,
+      final boolean binary,
+      final Executor executor,
+      final long connectionTimeoutMillis,
+      final Charset charset,
+      final Metrics metrics,
+      final int maxSetLength,
+      final EventLoopGroup eventLoopGroup,
+      final Class<? extends Channel> channelClass,
+      final SSLEngineFactory sslEngineFactory) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -125,13 +156,71 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         new ChannelInitializer<Channel>() {
           @Override
           protected void initChannel(final Channel ch) throws Exception {
-            ch.pipeline()
-                .addLast(
+            //            SSLEngine sslEngine;
+            //            try {
+            //              final SSLContext sslContext = SSLContext.getInstance("TLS");
+            //              sslContext.init(
+            //                  null, // keyManagerFactory.getKeyManagers(),
+            //                  null, // new TrustManager[]{trustManager},
+            //                  SecureRandom.getInstanceStrong()
+            //              );
+            //              sslEngine = sslContext.createSSLEngine(); // TODO - do we need host &
+            // port hints?
+            //              sslEngine.setUseClientMode(true);
+            //            } catch(Exception e) {
+            //              sslEngine = null;
+            //            }
+
+            final SSLEngine sslEngine;
+            if (sslEngineFactory != null) {
+              sslEngine =
+                  sslEngineFactory.createSSLEngine(address.getHostText(), address.getPort());
+            } else {
+              sslEngine = null;
+            }
+
+            final ChannelHandler[] handlers;
+            if (sslEngine != null) {
+              handlers =
+                  new ChannelHandler[] {
+                    new TcpTuningHandler(),
+                    new SslHandler(sslEngine),
+                    decoder,
+                    // Downstream
+                    new MemcacheEncoder()
+                  };
+            } else {
+              handlers =
+                  new ChannelHandler[] {
                     new TcpTuningHandler(),
                     decoder,
-
                     // Downstream
-                    new MemcacheEncoder());
+                    new MemcacheEncoder()
+                  };
+            }
+
+            ch.pipeline().addLast(handlers);
+
+            //            if(sslEngine != null) {
+            //              ch.pipeline()
+            //                  .addLast(
+            //                      new TcpTuningHandler(),
+            //                      new SslHandler(sslEngine),
+            //                      decoder,
+            //
+            //                      // Downstream
+            //                      new MemcacheEncoder());
+            //            } else {
+            //              ch.pipeline()
+            //                  .addLast(
+            //                      new TcpTuningHandler(),
+            //                      decoder,
+            //
+            //                      // Downstream
+            //                      new MemcacheEncoder());
+            //
+            //            }
+
           }
         };
 
