@@ -156,21 +156,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
         new ChannelInitializer<Channel>() {
           @Override
           protected void initChannel(final Channel ch) throws Exception {
-            //            SSLEngine sslEngine;
-            //            try {
-            //              final SSLContext sslContext = SSLContext.getInstance("TLS");
-            //              sslContext.init(
-            //                  null, // keyManagerFactory.getKeyManagers(),
-            //                  null, // new TrustManager[]{trustManager},
-            //                  SecureRandom.getInstanceStrong()
-            //              );
-            //              sslEngine = sslContext.createSSLEngine(); // TODO - do we need host &
-            // port hints?
-            //              sslEngine.setUseClientMode(true);
-            //            } catch(Exception e) {
-            //              sslEngine = null;
-            //            }
-
             final SSLEngine sslEngine;
             if (sslEngineFactory != null) {
               sslEngine =
@@ -200,27 +185,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
             }
 
             ch.pipeline().addLast(handlers);
-
-            //            if(sslEngine != null) {
-            //              ch.pipeline()
-            //                  .addLast(
-            //                      new TcpTuningHandler(),
-            //                      new SslHandler(sslEngine),
-            //                      decoder,
-            //
-            //                      // Downstream
-            //                      new MemcacheEncoder());
-            //            } else {
-            //              ch.pipeline()
-            //                  .addLast(
-            //                      new TcpTuningHandler(),
-            //                      decoder,
-            //
-            //                      // Downstream
-            //                      new MemcacheEncoder());
-            //
-            //            }
-
           }
         };
 
