@@ -19,6 +19,7 @@ package com.spotify.folsom.client.binary;
 import com.google.common.primitives.Longs;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -53,6 +54,11 @@ public class IncrRequest extends BinaryRequest<Long> {
     dst.putInt(expiration);
     dst.put(key);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<Long> duplicate() {
+    return new IncrRequest(key, opcode, by, initial, ttl);
   }
 
   @Override

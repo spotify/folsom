@@ -18,6 +18,7 @@ package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -44,6 +45,11 @@ public class TouchRequest extends BinaryRequest<MemcacheStatus> {
     dst.put(key);
 
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new TouchRequest(key, ttl);
   }
 
   @Override

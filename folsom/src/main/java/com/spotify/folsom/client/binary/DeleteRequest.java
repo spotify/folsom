@@ -18,6 +18,7 @@ package com.spotify.folsom.client.binary;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -39,6 +40,11 @@ public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
     writeHeader(dst, OpCode.DELETE, (byte) 0, 0, cas);
     dst.put(key);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new DeleteRequest(key, cas);
   }
 
   @Override
