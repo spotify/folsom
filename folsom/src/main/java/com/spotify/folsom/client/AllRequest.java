@@ -43,6 +43,4 @@ public interface AllRequest<T> extends Request<T> {
     results.forEach(builder::putAll);
     return builder.build();
   }
-
-  Request<T> duplicate();
 }

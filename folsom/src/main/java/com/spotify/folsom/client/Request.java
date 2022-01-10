@@ -17,4 +17,6 @@ public interface Request<V> {
   ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer workingBuffer);
 
   void handle(Object msg, HostAndPort address) throws IOException;
+
+  Request<V> duplicate();
 }
