@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.ascii;
 
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -55,6 +56,11 @@ public class IncrRequest extends AsciiRequest<Long> {
     dst.put(String.valueOf(by).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<Long> duplicate() {
+    return new IncrRequest(operation, key, by);
   }
 
   @Override

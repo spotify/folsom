@@ -21,6 +21,7 @@ import static java.util.Objects.requireNonNull;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -57,6 +58,11 @@ public class GetRequest extends BinaryRequest<GetResult<byte[]>>
     }
     dst.put(key);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<GetResult<byte[]>> duplicate() {
+    return new GetRequest(key, opcode, ttl);
   }
 
   @Override

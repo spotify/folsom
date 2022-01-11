@@ -19,6 +19,7 @@ package com.spotify.folsom.client.ascii;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -104,6 +105,11 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     } else {
       return toBufferWithValueAndNewLine(alloc, dst, value);
     }
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new SetRequest(operation, key, value, ttl, cas, flags);
   }
 
   private static ByteBuf toBufferWithValueAndNewLine(

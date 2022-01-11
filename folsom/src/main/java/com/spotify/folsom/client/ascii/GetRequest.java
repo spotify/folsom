@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -45,6 +46,11 @@ public class GetRequest extends AsciiRequest<GetResult<byte[]>>
     dst.put(key);
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<GetResult<byte[]>> duplicate() {
+    return new GetRequest(key, this.cmd == CAS_GET);
   }
 
   @Override

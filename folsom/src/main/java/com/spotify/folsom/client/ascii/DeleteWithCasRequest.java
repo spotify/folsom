@@ -19,6 +19,7 @@ package com.spotify.folsom.client.ascii;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -53,6 +54,11 @@ public class DeleteWithCasRequest extends AsciiRequest<MemcacheStatus> {
     dst.put(String.valueOf(cas).getBytes());
     dst.put(VALUE_BYTES);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new DeleteWithCasRequest(key, cas);
   }
 
   @Override

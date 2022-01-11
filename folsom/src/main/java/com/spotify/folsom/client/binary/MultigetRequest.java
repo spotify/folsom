@@ -94,6 +94,11 @@ public class MultigetRequest extends BinaryRequest<List<GetResult<byte[]>>>
   }
 
   @Override
+  public Request<List<GetResult<byte[]>>> duplicate() {
+    return new MultigetRequest(keys, ttl);
+  }
+
+  @Override
   public void handle(BinaryResponse replies, final HostAndPort server) throws IOException {
     final int size = keys.size();
 

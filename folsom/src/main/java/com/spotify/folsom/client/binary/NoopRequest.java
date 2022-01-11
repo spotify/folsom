@@ -19,6 +19,7 @@ package com.spotify.folsom.client.binary;
 import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -48,6 +49,11 @@ public class NoopRequest extends BinaryRequest<Void> {
     dst.putInt(opaque); // byte 12-15, Opaque
     dst.putLong((long) 0); // byte 16-23, CAS
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<Void> duplicate() {
+    return new NoopRequest();
   }
 
   @Override

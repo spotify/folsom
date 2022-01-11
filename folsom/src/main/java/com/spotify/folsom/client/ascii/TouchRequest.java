@@ -16,6 +16,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
@@ -41,6 +42,11 @@ public class TouchRequest extends AsciiRequest<MemcacheStatus> {
     dst.put(String.valueOf(Utils.ttlToExpiration(ttl)).getBytes());
     dst.put(NEWLINE_BYTES);
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new TouchRequest(key, ttl);
   }
 
   @Override

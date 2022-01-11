@@ -67,6 +67,11 @@ public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
   }
 
   @Override
+  public Request<List<GetResult<byte[]>>> duplicate() {
+    return new MultigetRequest(keys, cmd);
+  }
+
+  @Override
   public void handle(AsciiResponse response, final HostAndPort server) throws IOException {
     final int size = keys.size();
     final List<GetResult<byte[]>> result = new ArrayList<>(size);

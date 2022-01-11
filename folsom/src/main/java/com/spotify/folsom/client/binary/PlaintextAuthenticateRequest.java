@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.OpCode;
+import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -61,6 +62,11 @@ public class PlaintextAuthenticateRequest extends BinaryRequest<MemcacheStatus> 
     dst.put(password.getBytes(StandardCharsets.US_ASCII));
 
     return toBuffer(alloc, dst);
+  }
+
+  @Override
+  public Request<MemcacheStatus> duplicate() {
+    return new PlaintextAuthenticateRequest(username, password);
   }
 
   @Override

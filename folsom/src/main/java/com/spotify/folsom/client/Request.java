@@ -17,4 +17,8 @@ public interface Request<V> {
   ByteBuf writeRequest(ByteBufAllocator alloc, ByteBuffer workingBuffer);
 
   void handle(Object msg, HostAndPort address) throws IOException;
+
+  default Request<V> duplicate() {
+    throw new RuntimeException("duplicate not implemented");
+  }
 }
