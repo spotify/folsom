@@ -18,5 +18,7 @@ public interface Request<V> {
 
   void handle(Object msg, HostAndPort address) throws IOException;
 
-  Request<V> duplicate();
+  default Request<V> duplicate() {
+    throw new RuntimeException("duplicate not implemented");
+  }
 }

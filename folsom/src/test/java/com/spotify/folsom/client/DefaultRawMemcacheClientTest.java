@@ -155,11 +155,6 @@ public class DefaultRawMemcacheClientTest {
                   dst.put(NEWLINE_BYTES);
                   return toBuffer(alloc, dst);
                 }
-
-                @Override
-                public Request<String> duplicate() {
-                  return this;
-                }
               })
           .toCompletableFuture()
           .get();
