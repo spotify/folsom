@@ -467,11 +467,19 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return GLOBAL_CONNECTION_COUNT.get();
   }
 
+  @Override
   public int numPendingRequests() {
+    /*
+    setDisconnected flow is:
+    1. disconnectReason = reason
+    2. pendingCounter = limit
+
+    so we must read the counter value before we check the disconnect reason here.
+     */
+    final int pending = pendingCounter.get();
     if (disconnectReason.get() != null) {
       return 0; // Disconnected implies no pending requests
     }
-
-    return pendingCounter.get();
+    return pending;
   }
 }
