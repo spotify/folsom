@@ -50,11 +50,6 @@ public class RoundRobinMemcacheClient extends AbstractMultiMemcacheClient {
     return getClient().send(request);
   }
 
-  @Override
-  public int numPendingRequests() {
-    return this.clients.stream().mapToInt(RawMemcacheClient::numPendingRequests).sum();
-  }
-
   private RawMemcacheClient getClient() {
     for (int i = 0; i < numClients; i++) {
       // Make sure it stays positive
