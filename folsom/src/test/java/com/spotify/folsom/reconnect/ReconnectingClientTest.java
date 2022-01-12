@@ -203,6 +203,11 @@ public class ReconnectingClientTest {
     }
 
     @Override
+    public int numPendingRequests() {
+      return 0;
+    }
+
+    @Override
     public void registerForConnectionChanges(ConnectionChangeListener listener) {
       super.registerForConnectionChanges(listener);
       if (disconnectImmediately) {

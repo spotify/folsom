@@ -467,7 +467,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     return GLOBAL_CONNECTION_COUNT.get();
   }
 
-  private int numPendingRequests() {
+  public int numPendingRequests() {
     if (disconnectReason.get() != null) {
       return 0; // Disconnected implies no pending requests
     }

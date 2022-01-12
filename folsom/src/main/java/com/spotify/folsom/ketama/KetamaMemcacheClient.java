@@ -78,6 +78,11 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     return getClient(request.getKey()).send(request);
   }
 
+  @Override
+  public int numPendingRequests() {
+    return this.clients.stream().mapToInt(RawMemcacheClient::numPendingRequests).sum();
+  }
+
   private <T> CompletionStage<T> sendToAll(final AllRequest<T> request) {
     final List<CompletionStage<T>> futures =
         clients

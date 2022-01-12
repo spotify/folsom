@@ -158,6 +158,11 @@ public class FakeRawMemcacheClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public int numPendingRequests() {
+    return outstanding;
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return Stream.of(new AddressAndClient(HostAndPort.fromString(address), this));
   }

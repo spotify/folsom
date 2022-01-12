@@ -58,5 +58,10 @@ public class AbstractRawMemcacheClientTest {
     public int numActiveConnections() {
       return 0;
     }
+
+    @Override
+    public int numPendingRequests() {
+      return 0;
+    }
   }
 }

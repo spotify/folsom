@@ -85,6 +85,11 @@ public class RetryingClient implements RawMemcacheClient {
   }
 
   @Override
+  public int numPendingRequests() {
+    return this.delegate.numPendingRequests();
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return delegate
         .streamNodes()

@@ -48,6 +48,10 @@ public interface RawMemcacheClient extends ObservableClient {
    */
   int numActiveConnections();
 
+  default int numPendingRequests() {
+    throw new RuntimeException("numPendingRequests not implemented");
+  }
+
   default Map<String, RawMemcacheClient> getAllNodes() {
     return streamNodes()
         .collect(Collectors.toMap(AddressAndClient::getAddressString, AddressAndClient::getClient));
