@@ -74,6 +74,11 @@ public abstract class AbstractMultiMemcacheClient extends AbstractRawMemcacheCli
   }
 
   @Override
+  public int numPendingRequests() {
+    return this.clients.stream().mapToInt(RawMemcacheClient::numPendingRequests).sum();
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return clients.stream().flatMap(RawMemcacheClient::streamNodes);
   }

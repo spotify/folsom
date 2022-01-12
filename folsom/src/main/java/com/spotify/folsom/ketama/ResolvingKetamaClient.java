@@ -191,6 +191,11 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public int numPendingRequests() {
+    return this.currentClient.numPendingRequests();
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return currentClient.streamNodes();
   }

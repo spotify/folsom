@@ -59,6 +59,11 @@ public class NotConnectedClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public int numPendingRequests() {
+    return 0;
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return Stream.empty();
   }

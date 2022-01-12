@@ -155,6 +155,11 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   }
 
   @Override
+  public int numPendingRequests() {
+    return this.client.numPendingRequests();
+  }
+
+  @Override
   public Stream<AddressAndClient> streamNodes() {
     return client.streamNodes();
   }
