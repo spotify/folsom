@@ -66,8 +66,18 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   }
 
   public static SetRequest casSet(
+      final byte[] key, final byte[] value, final int ttl, final long cas) {
+    return casSet(key, value, ttl, cas, 0);
+  }
+
+  public static SetRequest casSet(
       final byte[] key, final byte[] value, final int ttl, final long cas, final int flags) {
     return new SetRequest(Operation.CAS, key, value, ttl, cas, flags);
+  }
+
+  public static SetRequest create(
+      final Operation operation, final byte[] key, final byte[] value, final int ttl) {
+    return create(operation, key, value, ttl, 0);
   }
 
   public static SetRequest create(

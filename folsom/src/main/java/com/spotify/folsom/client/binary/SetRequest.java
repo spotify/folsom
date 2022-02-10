@@ -36,6 +36,11 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
   private final int flags;
 
   public SetRequest(
+      final OpCode opcode, final byte[] key, final byte[] value, final int ttl, final long cas) {
+    this(opcode, key, value, ttl, cas, 0);
+  }
+
+  public SetRequest(
       final OpCode opcode,
       final byte[] key,
       final byte[] value,
