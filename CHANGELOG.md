@@ -1,3 +1,19 @@
+### 1.12.1
+* Re-add public methods that were accidentally removed
+
+### 1.12.0
+* Expose numPendingRequests in RawMemcacheClient
+
+### 1.11.0
+* Move duplicate method to the Request interface
+
+### 1.10.0
+* Add support for flags
+* Add micrometer metrics
+
+### 1.9.4
+* Fix minor internal bug related to event listeners
+
 ### 1.9.3
 * Stop using Guava EventBus for internal listeners to avoid blocking calls.
 
