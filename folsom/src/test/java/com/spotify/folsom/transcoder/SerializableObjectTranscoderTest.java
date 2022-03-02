@@ -36,9 +36,10 @@ public class SerializableObjectTranscoderTest {
     b.value2 = "world";
     b.value3 = 5;
 
-    final byte[] encoded = SerializableObjectTranscoder.INSTANCE.encode(b);
-    final SerializableTestObject testObject =
-        (SerializableTestObject) SerializableObjectTranscoder.INSTANCE.decode(encoded);
+    SerializableObjectTranscoder<SerializableTestObject> instance =
+        SerializableObjectTranscoder.createInstance();
+    final byte[] encoded = instance.encode(b);
+    final SerializableTestObject testObject = instance.decode(encoded);
 
     assertEquals("hello", testObject.value1);
     assertEquals("world", testObject.value2);

@@ -59,7 +59,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class MemcacheClientBuilder<V> {
+public class MemcacheClientBuilder<V extends Serializable> {
 
   private static final int DEFAULT_MAX_SET_LENGTH = 1024 * 1024;
 
@@ -151,8 +151,8 @@ public class MemcacheClientBuilder<V> {
    *
    * @return The builder
    */
-  public static MemcacheClientBuilder<Serializable> newSerializableObjectClient() {
-    return new MemcacheClientBuilder<>(SerializableObjectTranscoder.INSTANCE);
+  public static <T extends Serializable> MemcacheClientBuilder<T> newSerializableObjectClient() {
+    return new MemcacheClientBuilder<>(SerializableObjectTranscoder.createInstance());
   }
 
   /**
