@@ -37,7 +37,7 @@ public class SerializableObjectTranscoderTest {
     b.value3 = 5;
 
     SerializableObjectTranscoder<SerializableTestObject> instance =
-        SerializableObjectTranscoder.createInstance();
+        SerializableObjectTranscoder.getInstance();
     final byte[] encoded = instance.encode(b);
     final SerializableTestObject testObject = instance.decode(encoded);
 

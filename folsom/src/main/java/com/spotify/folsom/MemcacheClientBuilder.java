@@ -152,7 +152,7 @@ public class MemcacheClientBuilder<V> {
    * @return The builder
    */
   public static <T extends Serializable> MemcacheClientBuilder<T> newSerializableObjectClient() {
-    return new MemcacheClientBuilder<>(SerializableObjectTranscoder.createInstance());
+    return new MemcacheClientBuilder<>(SerializableObjectTranscoder.getInstance());
   }
 
   /**

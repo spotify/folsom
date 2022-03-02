@@ -24,7 +24,7 @@ public final class SerializableObjectTranscoder<T extends Serializable> implemen
 
   public static final SerializableObjectTranscoder INSTANCE = new SerializableObjectTranscoder<>();
 
-  public static <T extends Serializable> SerializableObjectTranscoder<T> createInstance() {
+  public static <T extends Serializable> SerializableObjectTranscoder<T> getInstance() {
     return INSTANCE;
   }
 
