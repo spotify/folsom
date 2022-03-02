@@ -36,7 +36,7 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-bom</artifactId>
-      <version>1.9.0</version>
+      <version>1.12.2</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -108,6 +108,27 @@ client.shutdown();
 
 Clients are single use, after `shutdown` has been invoked the client can no
 longer be used.
+
+#### To work with generic `Serializable` types
+
+One can simply use `MemcacheClientBuilder.<T>newSerializableObjectClient()`
+method to create a client that works for a specific Java type that implements `Serializable`.
+
+```java
+public record Student(String name, int age) implements Serializable { }
+
+public static void main(String[] args) throws Exception {
+  MemcacheClient<Student> client =
+      MemcacheClientBuilder.<Student>newSerializableObjectClient()
+      .withAddress("localhost")
+      .connectAscii();
+  // make it wait until the client has connected to the server
+  ConnectFuture.connectFuture(client).toCompletableFuture().get();
+
+  client.set("s1", new Student("Elon", 28), 10000).toCompletableFuture().get();
+  Student value = client.get("s1").toCompletableFuture().get();
+}
+```
 
 ### Java 7 usage
 

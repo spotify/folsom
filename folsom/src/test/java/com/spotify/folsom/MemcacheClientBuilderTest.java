@@ -23,9 +23,11 @@ import static org.junit.Assert.fail;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadFactory;
@@ -146,6 +148,25 @@ public class MemcacheClientBuilderTest {
   }
 
   @Test
+  public void testNewSerializableObjectClient() throws Exception {
+    AsciiMemcacheClient<SerializableThing> client =
+        MemcacheClientBuilder.<SerializableThing>newSerializableObjectClient()
+            .withAddress(server.getHost(), server.getPort())
+            .connectAscii();
+    SerializableThing serializableThing = new SerializableThing("Fish");
+
+    try {
+      client.awaitConnected(10, TimeUnit.SECONDS);
+      client.set("s1", serializableThing, 3600);
+      assertNull(client.get("Räksmörgås").toCompletableFuture().get());
+      assertEquals(serializableThing, client.get("s1").toCompletableFuture().get());
+    } finally {
+      client.shutdown();
+      client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
   public void testShouldExecuteInEventLoopGroup() throws Exception {
     AsciiMemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
@@ -214,6 +235,35 @@ public class MemcacheClientBuilderTest {
       assertTrue("Callback ran on unexpected thread: " + thread, thread == Thread.currentThread());
 
       // We lost the race, the future was already completed when thenApply was called. Try again.
+    }
+  }
+
+  private static class SerializableThing implements Serializable {
+    private final String name;
+
+    public SerializableThing(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SerializableThing that = (SerializableThing) o;
+      return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name);
     }
   }
 }
