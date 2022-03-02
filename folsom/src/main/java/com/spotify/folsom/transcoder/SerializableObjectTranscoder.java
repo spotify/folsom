@@ -21,8 +21,11 @@ import java.io.Serializable;
 import org.apache.commons.lang.SerializationUtils;
 
 public final class SerializableObjectTranscoder<T extends Serializable> implements Transcoder<T> {
+
+  public static final SerializableObjectTranscoder INSTANCE = new SerializableObjectTranscoder<>();
+
   public static <T extends Serializable> SerializableObjectTranscoder<T> createInstance() {
-    return new SerializableObjectTranscoder<>();
+    return INSTANCE;
   }
 
   private SerializableObjectTranscoder() {}
