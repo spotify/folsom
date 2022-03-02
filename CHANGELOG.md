@@ -1,3 +1,6 @@
+### 1.13.0
+* Ergonomic feature: Add support for generics when using Serializable transcoder
+
 ### 1.12.1
 * Re-add public methods that were accidentally removed
 
