@@ -121,7 +121,7 @@ public static void main(String[] args) throws Exception {
   MemcacheClient<Student> client =
       MemcacheClientBuilder.<Student>newSerializableObjectClient()
       .withAddress("localhost")
-      .connectAscii();
+      .connectBinary();
   // make it wait until the client has connected to the server
   ConnectFuture.connectFuture(client).toCompletableFuture().get();
 
