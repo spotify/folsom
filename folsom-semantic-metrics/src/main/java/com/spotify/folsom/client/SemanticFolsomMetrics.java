@@ -51,12 +51,6 @@ public class SemanticFolsomMetrics implements Metrics {
   private final Meter multigetSuccesses;
   private final Meter multigetFailures;
 
-  /**
-   * {@link #multigets} keeps track of the rate of multiget requests, this tracks the rate of total
-   * elements inside the multiget request. Used in {@link #hitRatio}
-   */
-  private final Meter multigetItems;
-
   private final Timer deletes;
   private final Meter deleteSuccesses;
   private final Meter deleteFailures;
@@ -100,9 +94,9 @@ public class SemanticFolsomMetrics implements Metrics {
         new RatioGauge() {
           @Override
           protected Ratio getRatio() {
-            return Ratio.of(
-                getHits.getFiveMinuteRate(),
-                gets.getFiveMinuteRate() + multigetItems.getFiveMinuteRate());
+            final double hitRate = getHits.getFiveMinuteRate();
+            final double missRate = getMisses.getFiveMinuteRate();
+            return Ratio.of(hitRate, hitRate + missRate);
           }
         };
     // overwrite the 'what' as this metric doesn't make sense to be aggregated against any of the
@@ -120,9 +114,6 @@ public class SemanticFolsomMetrics implements Metrics {
     MetricId multigetMetersId = MetricId.join(multigetId, meterId);
     this.multigetSuccesses = registry.meter(multigetMetersId.tagged("result", "success"));
     this.multigetFailures = registry.meter(multigetMetersId.tagged("result", "failure"));
-
-    // doesn't seem useful to export
-    this.multigetItems = new Meter();
 
     MetricId deleteId = id.tagged("operation", "delete");
     this.deletes = registry.timer(deleteId);
@@ -209,7 +200,6 @@ public class SemanticFolsomMetrics implements Metrics {
             }
             getHits.mark(hits);
             getMisses.mark(total - hits);
-            multigetItems.mark(total);
           } else {
             multigetFailures.mark();
           }
