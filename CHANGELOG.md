@@ -1,3 +1,6 @@
+### 1.13.1
+* folsom-semantic-metrics: Bug-fix for the memcache-hit-ratio gauge
+
 ### 1.13.0
 * Ergonomic feature: Add support for generics when using Serializable transcoder
 

@@ -36,7 +36,7 @@ To import it with maven, use this:
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>folsom-bom</artifactId>
-      <version>1.13.0</version>
+      <version>1.13.1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
