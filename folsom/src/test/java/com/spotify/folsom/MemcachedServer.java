@@ -21,12 +21,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 
 public class MemcachedServer {
 
   private final FixedHostPortGenericContainer container;
   private MemcacheClient<String> client;
+  private static final Logger logger = LoggerFactory.getLogger(MemcachedServer.class);
 
   public static final Supplier<MemcachedServer> SIMPLE_INSTANCE =
       Suppliers.memoize(MemcachedServer::new)::get;
@@ -38,13 +41,17 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(String username, String password) {
-    this(username, password, Optional.empty());
+    this(username, password, Optional.empty(), Optional.empty());
   }
 
-  public MemcachedServer(String username, String password, Optional<Integer> fixedPort) {
+  public MemcachedServer(
+      String username,
+      String password,
+      Optional<Integer> fixedPort,
+      Optional<Integer> maxItemSize) {
     this.username = username;
     this.password = password;
-    container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
+    container = new FixedHostPortGenericContainer("bitnami/memcached:1.6.14");
     if (fixedPort.isPresent()) {
       container.withFixedExposedPort(11211, fixedPort.get());
     } else {
@@ -53,6 +60,9 @@ public class MemcachedServer {
     if (username != null && password != null) {
       container.withEnv("MEMCACHED_USERNAME", username);
       container.withEnv("MEMCACHED_PASSWORD", password);
+    }
+    if (maxItemSize.isPresent()) {
+      container.withEnv("MEMCACHED_MAX_ITEM_SIZE", Integer.toString(maxItemSize.get()));
     }
     start();
   }

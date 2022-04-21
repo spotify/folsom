@@ -60,10 +60,7 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
     final int expiration = Utils.ttlToExpiration(ttl);
 
     final int valueLength = value.length;
-
-    final boolean hasExtra =
-        (opcode == OpCode.SET || opcode == OpCode.ADD || opcode == OpCode.REPLACE);
-
+    final boolean hasExtra = hasExtraLength();
     final int extraLength = hasExtra ? 8 : 0;
 
     writeHeader(dst, opcode, extraLength, valueLength, cas);
@@ -78,6 +75,10 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
     } else {
       return toBufferWithValue(alloc, dst, value);
     }
+  }
+
+  private boolean hasExtraLength() {
+    return opcode == OpCode.SET || opcode == OpCode.ADD || opcode == OpCode.REPLACE;
   }
 
   @Override
@@ -115,5 +116,14 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
   @Override
   public byte[] getValue() {
     return value;
+  }
+
+  @Override
+  public int size() {
+    // this size must be consistent with the number of bytes written by writeRequest
+    return BinaryRequest.HEADER_SIZE
+        + (hasExtraLength() ? 2 * Integer.BYTES : 0)
+        + key.length
+        + value.length;
   }
 }

@@ -176,4 +176,21 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   public byte[] getValue() {
     return value;
   }
+
+  @Override
+  public int size() {
+    // this size must be consistent with the number of bytes written by writeRequest
+    int size = CMD.get(operation).length;
+    size += key.length;
+    size += toFlags(flags).length;
+    size += String.valueOf(Utils.ttlToExpiration(ttl)).getBytes().length + 1;
+    size += String.valueOf(value.length).getBytes().length;
+    if (operation == Operation.CAS) {
+      size += String.valueOf(cas).getBytes().length + 1;
+    }
+    size += NEWLINE_BYTES.length;
+    size += value.length;
+    size += NEWLINE_BYTES.length;
+    return size;
+  }
 }

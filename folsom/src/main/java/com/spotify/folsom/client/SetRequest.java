@@ -17,4 +17,6 @@ package com.spotify.folsom.client;
 
 public interface SetRequest {
   byte[] getValue();
+
+  int size();
 }
