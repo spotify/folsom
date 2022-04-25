@@ -148,6 +148,12 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
       case NOT_STORED:
         succeed(MemcacheStatus.ITEM_NOT_STORED);
         return;
+      case VALUE_TOO_LARGE:
+        succeed(MemcacheStatus.VALUE_TOO_LARGE);
+        return;
+      case OUT_OF_MEMORY:
+        succeed(MemcacheStatus.OUT_OF_MEMORY);
+        return;
       case EXISTS:
         succeed(MemcacheStatus.KEY_EXISTS);
         return;

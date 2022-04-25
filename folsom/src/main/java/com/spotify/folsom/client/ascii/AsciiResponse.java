@@ -25,6 +25,8 @@ public class AsciiResponse {
   public static final AsciiResponse OK = new AsciiResponse(Type.OK);
   public static final AsciiResponse EMPTY_LIST = new AsciiResponse(Type.EMPTY_LIST);
   public static final AsciiResponse ERROR = new AsciiResponse(Type.ERROR);
+  public static final AsciiResponse VALUE_TOO_LARGE = new AsciiResponse(Type.VALUE_TOO_LARGE);
+  public static final AsciiResponse OUT_OF_MEMORY = new AsciiResponse(Type.OUT_OF_MEMORY);
 
   public final Type type;
 
@@ -44,6 +46,8 @@ public class AsciiResponse {
     OK,
     STATS,
     EMPTY_LIST,
-    ERROR
+    ERROR,
+    VALUE_TOO_LARGE,
+    OUT_OF_MEMORY
   }
 }

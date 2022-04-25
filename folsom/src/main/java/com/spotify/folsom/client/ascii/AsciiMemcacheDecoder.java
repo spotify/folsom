@@ -216,7 +216,17 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           out.add(AsciiResponse.NOT_STORED);
           return;
         } else {
-          throw fail();
+          final String lineStr = toString(line);
+          switch (lineStr) {
+            case "SERVER_ERROR object too large for cache":
+              out.add(AsciiResponse.VALUE_TOO_LARGE);
+              return;
+            case "SERVER_ERROR out of memory storing object":
+              out.add(AsciiResponse.OUT_OF_MEMORY);
+              return;
+            default:
+              throw new IOException("Unexpected line: " + lineStr);
+          }
         }
       }
     }

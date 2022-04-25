@@ -17,6 +17,7 @@
 package com.spotify.folsom;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
@@ -151,6 +152,30 @@ public class MisbehavingServerTest {
     } finally {
       client.shutdown();
       client.awaitDisconnected(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void testServerErrorOutOfMemory1() throws Throwable {
+    testAsciiSetSuccess(
+        "SERVER_ERROR out of memory storing object\r\n", MemcacheStatus.OUT_OF_MEMORY);
+  }
+
+  @Test
+  public void testServerErrorOutOfMemory2() throws Throwable {
+    testAsciiSetSuccess(
+        "SERVER_ERROR object too large for cache\r\n", MemcacheStatus.VALUE_TOO_LARGE);
+  }
+
+  private void testAsciiSetSuccess(String response, MemcacheStatus expectedStatus)
+      throws Exception {
+    MemcacheClient<String> client = setupAscii(response);
+    try {
+      final MemcacheStatus status = client.set("key", "value", 0).toCompletableFuture().get();
+      assertEquals(expectedStatus, status);
+      assertTrue(client.isConnected());
+    } finally {
+      client.shutdown();
     }
   }
 
