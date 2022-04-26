@@ -1,3 +1,7 @@
+### 1.14.0
+* core: The Ascii client will behave more similar to Binary client for
+  the case of server returning out-of-memory or value-too-large.
+
 ### 1.13.1
 * folsom-semantic-metrics: Bug-fix for the memcache-hit-ratio gauge
 
