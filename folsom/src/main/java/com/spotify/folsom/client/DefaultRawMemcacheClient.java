@@ -59,6 +59,8 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -164,27 +166,15 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
               sslEngine = null;
             }
 
-            final ChannelHandler[] handlers;
-            if (sslEngine != null) {
-              handlers =
-                  new ChannelHandler[] {
-                    new TcpTuningHandler(),
-                    new SslHandler(sslEngine),
-                    decoder,
-                    // Downstream
-                    new MemcacheEncoder()
-                  };
-            } else {
-              handlers =
-                  new ChannelHandler[] {
-                    new TcpTuningHandler(),
-                    decoder,
-                    // Downstream
-                    new MemcacheEncoder()
-                  };
+            final List<ChannelHandler> handlersList = new ArrayList<>();
+            handlersList.add(new TcpTuningHandler());
+            if(sslEngine != null) {
+              handlersList.add(new SslHandler(sslEngine));
             }
+            handlersList.add(decoder);
+            handlersList.add(new MemcacheEncoder()); // Downstream
 
-            ch.pipeline().addLast(handlers);
+            ch.pipeline().addLast(handlersList.toArray(new ChannelHandler[handlersList.size()]));
           }
         };
 

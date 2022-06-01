@@ -82,7 +82,8 @@ public class MemcachedServer {
               "ssl_chain_cert=/test-certs/test.pem," + // Use self-signed test certs
                       "ssl_key=/test-certs/test.key," +
                       "ssl_verify_mode=3," +
-                      "ssl_ca_cert=/test-certs/test.pem"
+                      "ssl_ca_cert=/test-certs/test.pem," +
+                      "ssl_session_cache=shared:SSL:50m"
       );
     } else {
       container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
@@ -124,7 +125,7 @@ public class MemcachedServer {
       if(secure) {
         try {
 
-          builder.withSSLEngineFactory(new DefaultSSLEngineFactory());
+          builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
         } catch(NoSuchAlgorithmException e) {
           throw new RuntimeException(e);
         }
