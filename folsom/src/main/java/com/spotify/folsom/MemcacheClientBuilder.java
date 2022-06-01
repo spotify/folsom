@@ -559,7 +559,7 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
-  public MemcacheClientBuilder<V> withSSLEngineFactory(SSLEngineFactory sslEngineFactory) {
+  public MemcacheClientBuilder<V> withSSLEngineFactory(final SSLEngineFactory sslEngineFactory) {
     this.sslEngineFactory = sslEngineFactory;
     return this;
   }
