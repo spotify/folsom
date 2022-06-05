@@ -168,7 +168,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
 
             final List<ChannelHandler> handlersList = new ArrayList<>();
             handlersList.add(new TcpTuningHandler());
-            if(sslEngine != null) {
+            if (sslEngine != null) {
               handlersList.add(new SslHandler(sslEngine));
             }
             handlersList.add(decoder);

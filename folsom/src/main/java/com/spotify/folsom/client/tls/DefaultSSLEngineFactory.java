@@ -1,8 +1,8 @@
 package com.spotify.folsom.client.tls;
 
+import java.security.NoSuchAlgorithmException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import java.security.NoSuchAlgorithmException;
 
 public class DefaultSSLEngineFactory implements SSLEngineFactory {
   final SSLContext sslContext;
@@ -21,7 +21,7 @@ public class DefaultSSLEngineFactory implements SSLEngineFactory {
   public SSLEngine createSSLEngine(String hostname, int port) {
     final SSLEngine sslEngine;
 
-    if(reuseSession) {
+    if (reuseSession) {
       sslEngine = sslContext.createSSLEngine(hostname, port);
     } else {
       sslEngine = sslContext.createSSLEngine();
