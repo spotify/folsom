@@ -16,31 +16,28 @@
 
 package com.spotify.folsom;
 
+import static com.spotify.folsom.AbstractRawMemcacheClientTest.verifyClientNotifications;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
 import com.spotify.futures.CompletableFutures;
-import junit.framework.AssertionFailedError;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static com.spotify.folsom.AbstractRawMemcacheClientTest.verifyClientNotifications;
-import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import junit.framework.AssertionFailedError;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractIntegrationTestBase {

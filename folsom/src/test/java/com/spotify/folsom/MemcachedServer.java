@@ -49,13 +49,16 @@ public class MemcachedServer {
     this(username, password, Optional.empty(), false);
   }
 
-  private MemcachedServer(String username, String password, Optional<Integer> fixedPort, boolean secure) {
+  private MemcachedServer(
+      String username, String password, Optional<Integer> fixedPort, boolean secure) {
     // Use self-signed test certs
     String currentDirectory = System.getProperty("user.dir");
-    System.setProperty("javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty(
+        "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
     System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
     System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-    System.setProperty("javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty(
+        "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
     System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
     System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
 
@@ -63,9 +66,10 @@ public class MemcachedServer {
     this.password = password;
     this.secure = secure;
 
-    if(secure) {
-      if(username != null || password != null) {
-        throw new RuntimeException("username and password are not currently supported with the secure container");
+    if (secure) {
+      if (username != null || password != null) {
+        throw new RuntimeException(
+            "username and password are not currently supported with the secure container");
       }
       container = new FixedHostPortGenericContainer("memcached:1.6.15");
 
@@ -75,16 +79,16 @@ public class MemcachedServer {
 
       // Run memcached with TLS
       container.withCommand(
-              "memcached",
-              "-vv",
-              "-Z", // enable TLS
-              "-o",
-              "ssl_chain_cert=/test-certs/test.pem," + // Use self-signed test certs
-                      "ssl_key=/test-certs/test.key," +
-                      "ssl_verify_mode=3," +
-                      "ssl_ca_cert=/test-certs/test.pem," +
-                      "ssl_session_cache=shared:SSL:50m"
-      );
+          "memcached",
+          "-vv",
+          "-Z", // enable TLS
+          "-o",
+          "ssl_chain_cert=/test-certs/test.pem,"
+              + // Use self-signed test certs
+              "ssl_key=/test-certs/test.key,"
+              + "ssl_verify_mode=3,"
+              + "ssl_ca_cert=/test-certs/test.pem,"
+              + "ssl_session_cache=shared:SSL:50m");
     } else {
       container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
     }
@@ -122,11 +126,11 @@ public class MemcachedServer {
         builder.withUsernamePassword(username, password);
       }
 
-      if(secure) {
+      if (secure) {
         try {
 
           builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
-        } catch(NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
           throw new RuntimeException(e);
         }
       }
