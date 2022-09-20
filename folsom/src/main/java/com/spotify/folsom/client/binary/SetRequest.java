@@ -111,4 +111,9 @@ public class SetRequest extends BinaryRequest<MemcacheStatus>
   public byte[] getValue() {
     return value;
   }
+
+  @Override
+  public OpCode getOpCode() {
+    return opcode;
+  }
 }

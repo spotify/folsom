@@ -19,6 +19,7 @@ package com.spotify.folsom.client.ascii;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import com.spotify.folsom.MemcacheStatus;
+import com.spotify.folsom.client.OpCode;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.Utils;
 import com.spotify.folsom.guava.HostAndPort;
@@ -165,5 +166,20 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   @Override
   public byte[] getValue() {
     return value;
+  }
+
+  public OpCode getOpCode() {
+    switch (operation) {
+      case ADD:
+        return OpCode.ADD;
+      case REPLACE:
+        return OpCode.REPLACE;
+      case APPEND:
+        return OpCode.APPEND;
+      case PREPEND:
+        return OpCode.PREPEND;
+      default:
+        return OpCode.SET;
+    }
   }
 }
