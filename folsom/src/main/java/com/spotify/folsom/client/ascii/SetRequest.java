@@ -170,6 +170,9 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
 
   public OpCode getOpCode() {
     switch (operation) {
+      case CAS:
+      case SET:
+        return OpCode.SET;
       case ADD:
         return OpCode.ADD;
       case REPLACE:
@@ -179,7 +182,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
       case PREPEND:
         return OpCode.PREPEND;
       default:
-        return OpCode.SET;
+        return OpCode.NOOP;
     }
   }
 }
