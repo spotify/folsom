@@ -19,4 +19,6 @@ public interface SetRequest {
   byte[] getValue();
 
   OpCode getOpCode();
+
+  boolean withCas();
 }

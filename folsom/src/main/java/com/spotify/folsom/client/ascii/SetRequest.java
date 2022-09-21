@@ -168,6 +168,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
     return value;
   }
 
+  @Override
   public OpCode getOpCode() {
     switch (operation) {
       case CAS:
@@ -184,5 +185,9 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
       default:
         return OpCode.NOOP;
     }
+  }
+
+  public boolean withCas() {
+    return operation.equals(Operation.CAS) && cas != 0;
   }
 }
