@@ -18,7 +18,9 @@ package com.spotify.folsom.client;
 public interface SetRequest {
   byte[] getValue();
 
-  OpCode getOpCode();
+  default OpCode getOpCode() {
+    return OpCode.NOOP;
+  };
 
   boolean withCas();
 }
