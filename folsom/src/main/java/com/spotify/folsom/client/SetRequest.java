@@ -20,9 +20,9 @@ public interface SetRequest {
 
   default OpCode getOpCode() {
     return OpCode.NOOP;
-  };
+  }
 
   default boolean withCas() {
     return false;
-  };
+  }
 }
