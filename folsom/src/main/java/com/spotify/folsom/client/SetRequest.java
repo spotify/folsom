@@ -22,5 +22,7 @@ public interface SetRequest {
     return OpCode.NOOP;
   };
 
-  boolean withCas();
+  default boolean withCas() {
+    return false;
+  };
 }
