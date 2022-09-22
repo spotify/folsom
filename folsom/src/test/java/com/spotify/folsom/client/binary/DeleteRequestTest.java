@@ -16,6 +16,9 @@
 
 package com.spotify.folsom.client.binary;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.OpCode;
 import io.netty.buffer.ByteBuf;
@@ -52,5 +55,14 @@ public class DeleteRequestTest extends RequestTestTemplate {
     List<Object> out = new ArrayList<>();
     memcacheEncoder.encode(ctx, req, out);
     return (ByteBuf) out.get(0);
+  }
+
+  @Test
+  public void testWithCas() {
+    DeleteRequest notWithCas = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8), 0L);
+    DeleteRequest withCas = new DeleteRequest(KEY.getBytes(StandardCharsets.UTF_8), 100L);
+
+    assertFalse(notWithCas.withCas());
+    assertTrue(withCas.withCas());
   }
 }

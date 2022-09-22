@@ -53,4 +53,8 @@ public class DeleteRequest extends BinaryRequest<MemcacheStatus> {
 
     succeed(reply.status);
   }
+
+  public boolean withCas() {
+    return cas != 0;
+  }
 }

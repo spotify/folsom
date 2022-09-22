@@ -17,4 +17,12 @@ package com.spotify.folsom.client;
 
 public interface SetRequest {
   byte[] getValue();
+
+  default OpCode getOpCode() {
+    return OpCode.NOOP;
+  }
+
+  default boolean withCas() {
+    return false;
+  }
 }
