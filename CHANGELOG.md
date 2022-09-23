@@ -1,3 +1,7 @@
+### 1.15.0
+* Expose opcode and withCas in SetRequest
+* Expose withCas in binary DeleteRequest
+
 ### 1.14.0
 * core: The Ascii client will behave more similar to Binary client for
   the case of server returning out-of-memory or value-too-large.
