@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>folsom-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version>
+    <version>1.15.0</version>
   </parent>
 
   <artifactId>folsom-yammer-metrics</artifactId>
