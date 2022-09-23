@@ -28,7 +28,21 @@ Optional:
     </profile>
   </profiles>
 
+Ensure that jdk8 is the locally available jdk. Check with:
+
+$ java -version
+openjdk version "1.8.0_332"
+
+Something like sdkman can be used to simplify switching:
+$ sdk use java <the specific version>
+
+Then prepare the release version. Keep the snapshot suffix - the release
+process will remove it.
+If the change breaks compatibility, bump the major version, rename all packages,
+rename artifact id.
+If the change introduces a new feature, bump the minor version.
+If the change fixes a bug, the version should already be correct.
+
 $ mvn versions:set -DnewVersion=$NEW_VERSION
-$ mvn -B release:clean release:prepare
-$ mvn -B release:perform
+$ mvn release:clean release:prepare release:perform
 
