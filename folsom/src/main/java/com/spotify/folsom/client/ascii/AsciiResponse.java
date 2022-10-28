@@ -50,4 +50,9 @@ public class AsciiResponse {
     VALUE_TOO_LARGE,
     OUT_OF_MEMORY
   }
+
+  @Override
+  public String toString() {
+    return "AsciiResponse{type=" + this.type + "}";
+  }
 }

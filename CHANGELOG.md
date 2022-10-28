@@ -1,4 +1,7 @@
 ### 1.15.0
+* Override AsciiResponse#toString() to include type information
+
+### 1.15.0
 * Expose opcode and withCas in SetRequest
 * Expose withCas in binary DeleteRequest
 
