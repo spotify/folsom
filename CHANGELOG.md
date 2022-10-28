@@ -1,4 +1,4 @@
-### 1.15.0
+### 1.15.1
 * Override AsciiResponse#toString() to include type information
 
 ### 1.15.0
