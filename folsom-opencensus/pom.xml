@@ -17,7 +17,7 @@
   </developers>
 
   <properties>
-    <opencensus.version>0.22.1</opencensus.version>
+    <opencensus.version>0.31.1</opencensus.version>
   </properties>
 
   <dependencies>
