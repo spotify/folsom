@@ -215,6 +215,10 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           expect(firstChar, "NOT_STORED");
           out.add(AsciiResponse.NOT_STORED);
           return;
+        } else if (tokenLength == 12) {
+          expect(firstChar, "CLIENT_ERROR");
+          out.add(AsciiResponse.CLIENT_ERROR);
+          return;
         } else {
           final String lineStr = toString(line);
           switch (lineStr) {
