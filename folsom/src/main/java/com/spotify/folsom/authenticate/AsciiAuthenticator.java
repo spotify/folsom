@@ -16,48 +16,44 @@
 
 package com.spotify.folsom.authenticate;
 
-import static com.spotify.folsom.client.Utils.unwrap;
+import static java.util.Objects.requireNonNull;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
+import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.client.ascii.GetRequest;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletionException;
+import com.spotify.folsom.client.ascii.AsciiAuthenticateRequest;
 import java.util.concurrent.CompletionStage;
 
-/**
- * If SASL is enabled then ascii protocol won't be allowed at all, so we simply expect a connection
- * closed.
- */
-public class AsciiAuthenticationValidator implements Authenticator {
+public class AsciiAuthenticator implements Authenticator {
 
-  private static final AsciiAuthenticationValidator INSTANCE = new AsciiAuthenticationValidator();
+  private final String username;
+  private final String password;
 
-  public static AsciiAuthenticationValidator getInstance() {
-    return INSTANCE;
+  public AsciiAuthenticator(final String username, final String password) {
+    this.username = requireNonNull(username);
+    this.password = requireNonNull(password);
   }
-
-  private static final byte[] EXAMPLE_KEY =
-      "folsom_authentication_validation".getBytes(StandardCharsets.US_ASCII);
-
-  private AsciiAuthenticationValidator() {}
 
   @Override
   public CompletionStage<RawMemcacheClient> authenticate(final RawMemcacheClient client) {
 
-    final GetRequest request = new GetRequest(EXAMPLE_KEY, false);
+    final AsciiAuthenticateRequest asciiAuthenticateRequest =
+        new AsciiAuthenticateRequest(username, password);
 
     return client
         .connectFuture()
         .thenCompose(
             ignored ->
                 client
-                    .send(request)
-                    .handle(
-                        (status, throwable) -> {
-                          if (throwable == null) {
+                    .send(asciiAuthenticateRequest)
+                    .thenApply(
+                        status -> {
+                          if (status == MemcacheStatus.OK) {
                             return client;
+                          } else if (status == MemcacheStatus.UNAUTHORIZED) {
+                            throw new MemcacheAuthenticationException("Authentication failed");
                           } else {
-                            throw new CompletionException(unwrap(throwable));
+                            throw new RuntimeException("Unexpected status: " + status.name());
                           }
                         }));
   }

@@ -21,7 +21,7 @@ public class KetamaServers {
 
   public void setup() {
     for (MemcachedServer server : servers) {
-      server.start();
+      server.start(MemcachedServer.AuthenticationMode.NONE);
     }
   }
 
