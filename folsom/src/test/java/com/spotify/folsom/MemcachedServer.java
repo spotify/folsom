@@ -16,20 +16,28 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 
 public class MemcachedServer {
+
+  public enum AuthenticationMode {
+    NONE,
+    SASL,
+    ASCII
+  }
 
   private final FixedHostPortGenericContainer container;
   private MemcacheClient<String> client;
 
   public static final Supplier<MemcachedServer> SIMPLE_INSTANCE =
       Suppliers.memoize(MemcachedServer::new)::get;
+
+  public static int DEFAULT_PORT = 11211;
   private final String username;
   private final String password;
 
@@ -38,23 +46,39 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(String username, String password) {
-    this(username, password, Optional.empty());
+    this(username, password, DEFAULT_PORT, AuthenticationMode.NONE);
   }
 
-  public MemcachedServer(String username, String password, Optional<Integer> fixedPort) {
+  public MemcachedServer(String username, String password, AuthenticationMode authenticationMode) {
+    this(username, password, DEFAULT_PORT, authenticationMode);
+  }
+
+  public MemcachedServer(
+      String username, String password, int port, AuthenticationMode authenticationMode) {
     this.username = username;
     this.password = password;
-    container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
-    if (fixedPort.isPresent()) {
-      container.withFixedExposedPort(11211, fixedPort.get());
+    container = new FixedHostPortGenericContainer("bitnami/memcached:1.6.21");
+    if (port != DEFAULT_PORT) {
+      container.withFixedExposedPort(DEFAULT_PORT, port);
     } else {
-      container.withExposedPorts(11211);
+      container.withExposedPorts(DEFAULT_PORT);
     }
-    if (username != null && password != null) {
-      container.withEnv("MEMCACHED_USERNAME", username);
-      container.withEnv("MEMCACHED_PASSWORD", password);
+    switch (authenticationMode) {
+      case NONE:
+        break;
+      case SASL:
+        if (username != null && password != null) {
+          container.withEnv("MEMCACHED_USERNAME", username);
+          container.withEnv("MEMCACHED_PASSWORD", password);
+        }
+        break;
+      case ASCII:
+        container.withClasspathResourceMapping("/auth.file", "/tmp/auth.file", BindMode.READ_ONLY);
+        container.setCommand("/opt/bitnami/scripts/memcached/run.sh -Y /tmp/auth.file");
+        break;
     }
-    start();
+
+    start(authenticationMode);
   }
 
   public void stop() {
@@ -68,7 +92,7 @@ public class MemcachedServer {
     container.stop();
   }
 
-  public void start() {
+  public void start(AuthenticationMode authenticationMode) {
     if (!container.isRunning()) {
       container.start();
     }
@@ -78,7 +102,16 @@ public class MemcachedServer {
       if (username != null && password != null) {
         builder.withUsernamePassword(username, password);
       }
-      client = builder.connectBinary();
+      switch (authenticationMode) {
+        case NONE:
+        case SASL:
+          client = builder.connectBinary();
+          break;
+        case ASCII:
+          client = builder.connectAscii();
+          break;
+      }
+
       try {
         client.awaitConnected(10, TimeUnit.SECONDS);
       } catch (InterruptedException | TimeoutException e) {
@@ -88,7 +121,7 @@ public class MemcachedServer {
   }
 
   public int getPort() {
-    return container.getMappedPort(11211);
+    return container.getMappedPort(DEFAULT_PORT);
   }
 
   public String getHost() {

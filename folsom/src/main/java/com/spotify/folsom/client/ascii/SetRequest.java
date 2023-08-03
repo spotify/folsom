@@ -51,7 +51,7 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
   private final long cas;
   private final int flags;
 
-  private SetRequest(
+  SetRequest(
       final Operation operation,
       final byte[] key,
       final byte[] value,
