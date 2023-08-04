@@ -1,3 +1,6 @@
+### 1.16.0
+* Add support for ASCII authentication
+
 ### 1.15.0
 * Expose opcode and withCas in SetRequest
 * Expose withCas in binary DeleteRequest
