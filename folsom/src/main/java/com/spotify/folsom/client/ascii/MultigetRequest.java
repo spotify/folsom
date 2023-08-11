@@ -17,6 +17,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.spotify.folsom.GetResult;
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.client.MemcacheEncoder;
 import com.spotify.folsom.client.MultiRequest;
 import com.spotify.folsom.client.Request;
@@ -81,6 +82,14 @@ public class MultigetRequest extends AsciiRequest<List<GetResult<byte[]>>>
 
     if (response.type == AsciiResponse.Type.EMPTY_LIST) {
       succeed(result);
+      return;
+    }
+
+    if (response.type == AsciiResponse.Type.CLIENT_ERROR) {
+      MemcacheAuthenticationException exception =
+          new MemcacheAuthenticationException(
+              "Authentication required by server. Client not authenticated.");
+      fail(exception, server);
       return;
     }
 
