@@ -16,6 +16,7 @@
 
 package com.spotify.folsom.client.ascii;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.client.ascii.AsciiResponse.Type;
 import com.spotify.folsom.guava.HostAndPort;
@@ -69,6 +70,11 @@ public class IncrRequest extends AsciiRequest<Long> {
       succeed(((NumericAsciiResponse) response).numericValue);
     } else if (response.type == Type.NOT_FOUND) {
       succeed(null);
+    } else if (response.type == AsciiResponse.Type.CLIENT_ERROR) {
+      MemcacheAuthenticationException exception =
+          new MemcacheAuthenticationException(
+              "Authentication required by server. Client not authenticated.");
+      fail(exception, server);
     } else {
       throw new IOException("Unexpected response type: " + response.type);
     }

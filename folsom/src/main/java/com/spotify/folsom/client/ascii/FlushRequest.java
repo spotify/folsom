@@ -15,6 +15,7 @@
  */
 package com.spotify.folsom.client.ascii;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.Request;
@@ -51,6 +52,11 @@ public class FlushRequest extends AsciiRequest<MemcacheStatus>
     AsciiResponse.Type type = response.type;
     if (type == AsciiResponse.Type.OK) {
       succeed(MemcacheStatus.OK);
+    } else if (type == AsciiResponse.Type.CLIENT_ERROR) {
+      MemcacheAuthenticationException exception =
+          new MemcacheAuthenticationException(
+              "Authentication required by server. Client not authenticated.");
+      fail(exception, server);
     } else {
       throw new IOException("Unexpected line: " + type);
     }

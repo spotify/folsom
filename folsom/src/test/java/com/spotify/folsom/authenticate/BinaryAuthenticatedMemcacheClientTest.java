@@ -33,7 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class DefaultAuthenticatedMemcacheClientTest {
+public class BinaryAuthenticatedMemcacheClientTest {
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static final String USERNAME = "theuser";

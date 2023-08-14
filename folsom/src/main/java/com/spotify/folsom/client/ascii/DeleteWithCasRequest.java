@@ -18,6 +18,7 @@ package com.spotify.folsom.client.ascii;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcacheStatus;
 import com.spotify.folsom.client.Request;
 import com.spotify.folsom.guava.HostAndPort;
@@ -72,6 +73,12 @@ public class DeleteWithCasRequest extends AsciiRequest<MemcacheStatus> {
         return;
       case NOT_FOUND:
         succeed(MemcacheStatus.KEY_NOT_FOUND);
+        return;
+      case CLIENT_ERROR:
+        MemcacheAuthenticationException exception =
+            new MemcacheAuthenticationException(
+                "Authentication required by server. Client not authenticated.");
+        fail(exception, server);
         return;
       default:
         throw new IOException("Unexpected line: " + response.type);
