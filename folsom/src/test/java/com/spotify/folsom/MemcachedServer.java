@@ -19,20 +19,28 @@ import com.google.common.base.Suppliers;
 import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
 import java.io.File;
 import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 
 public class MemcachedServer {
+
+  public enum AuthenticationMode {
+    NONE,
+    SASL,
+    ASCII
+  }
 
   private final FixedHostPortGenericContainer container;
   private MemcacheClient<String> client;
 
   public static final Supplier<MemcachedServer> SIMPLE_INSTANCE =
       Suppliers.memoize(MemcachedServer::new)::get;
+
+  public static int DEFAULT_PORT = 11211;
   private final String username;
   private final String password;
   private final boolean secure;
@@ -41,24 +49,28 @@ public class MemcachedServer {
     this(null, null);
   }
 
-  public MemcachedServer(boolean secure) {
-    this(null, null, Optional.empty(), secure);
-  }
-
   public MemcachedServer(String username, String password) {
-    this(username, password, Optional.empty(), false);
+    this(username, password, DEFAULT_PORT, AuthenticationMode.NONE, false);
   }
 
-  private MemcachedServer(
-      String username, String password, Optional<Integer> fixedPort, boolean secure) {
+  public MemcachedServer(String username, String password, AuthenticationMode authenticationMode) {
+    this(username, password, DEFAULT_PORT, authenticationMode, false);
+  }
+
+  public MemcachedServer(boolean secure) {
+    this(null, null, DEFAULT_PORT, AuthenticationMode.NONE, secure);
+  }
+
+  public MemcachedServer(
+          String username, String password, int port, AuthenticationMode authenticationMode, boolean secure) {
     // Use self-signed test certs
     String currentDirectory = System.getProperty("user.dir");
     System.setProperty(
-        "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
+            "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
     System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
     System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
     System.setProperty(
-        "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
+            "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
     System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
     System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
 
@@ -66,12 +78,13 @@ public class MemcachedServer {
     this.password = password;
     this.secure = secure;
 
+    container = new FixedHostPortGenericContainer("memcached:1.6.21");
+
     if (secure) {
       if (username != null || password != null) {
         throw new RuntimeException(
-            "username and password are not currently supported with the secure container");
+                "username and password are not currently supported with the secure container");
       }
-      container = new FixedHostPortGenericContainer("memcached:1.6.15");
 
       // mount volume with test certs required for connecting
       File pkiVolumeFile = new File("src/test/resources/pki");
@@ -79,29 +92,39 @@ public class MemcachedServer {
 
       // Run memcached with TLS
       container.withCommand(
-          "memcached",
-          "-vv",
-          "-Z", // enable TLS
-          "-o",
-          "ssl_chain_cert=/test-certs/test.pem,"
-              + // Use self-signed test certs
-              "ssl_key=/test-certs/test.key,"
-              + "ssl_verify_mode=3,"
-              + "ssl_ca_cert=/test-certs/test.pem,"
-              + "ssl_session_cache=shared:SSL:50m");
+              "memcached",
+              "-vv",
+              "-Z", // enable TLS
+              "-o",
+              "ssl_chain_cert=/test-certs/test.pem,"
+                      + // Use self-signed test certs
+                      "ssl_key=/test-certs/test.key,"
+                      + "ssl_verify_mode=3,"
+                      + "ssl_ca_cert=/test-certs/test.pem,"
+                      + "ssl_session_cache=shared:SSL:50m");
+    }
+
+    if (port != DEFAULT_PORT) {
+      container.withFixedExposedPort(DEFAULT_PORT, port);
     } else {
-      container = new FixedHostPortGenericContainer("bitnami/memcached:1.5.12");
+      container.withExposedPorts(DEFAULT_PORT);
     }
-    if (fixedPort.isPresent()) {
-      container.withFixedExposedPort(11211, fixedPort.get());
-    } else {
-      container.withExposedPorts(11211);
+    switch (authenticationMode) {
+      case NONE:
+        break;
+      case SASL:
+        if (username != null && password != null) {
+          container.withEnv("MEMCACHED_USERNAME", username);
+          container.withEnv("MEMCACHED_PASSWORD", password);
+        }
+        break;
+      case ASCII:
+        container.withClasspathResourceMapping("/auth.file", "/tmp/auth.file", BindMode.READ_ONLY);
+        container.setCommand("/opt/bitnami/scripts/memcached/run.sh -Y /tmp/auth.file");
+        break;
     }
-    if (username != null && password != null) {
-      container.withEnv("MEMCACHED_USERNAME", username);
-      container.withEnv("MEMCACHED_PASSWORD", password);
-    }
-    start();
+
+    start(authenticationMode);
   }
 
   public void stop() {
@@ -115,7 +138,7 @@ public class MemcachedServer {
     container.stop();
   }
 
-  public void start() {
+  public void start(AuthenticationMode authenticationMode) {
     if (!container.isRunning()) {
       container.start();
     }
@@ -128,14 +151,22 @@ public class MemcachedServer {
 
       if (secure) {
         try {
-
           builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
         } catch (NoSuchAlgorithmException e) {
           throw new RuntimeException(e);
         }
       }
 
-      client = builder.connectBinary();
+      switch (authenticationMode) {
+        case NONE:
+        case SASL:
+          client = builder.connectBinary();
+          break;
+        case ASCII:
+          client = builder.connectAscii();
+          break;
+      }
+
       try {
         client.awaitConnected(10, TimeUnit.SECONDS);
       } catch (InterruptedException | TimeoutException e) {
@@ -145,7 +176,7 @@ public class MemcachedServer {
   }
 
   public int getPort() {
-    return container.getMappedPort(11211);
+    return container.getMappedPort(DEFAULT_PORT);
   }
 
   public String getHost() {

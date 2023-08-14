@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>folsom-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version>
+    <version>1.16.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>folsom-opencensus</artifactId>
@@ -17,7 +17,7 @@
   </developers>
 
   <properties>
-    <opencensus.version>0.22.1</opencensus.version>
+    <opencensus.version>0.31.1</opencensus.version>
   </properties>
 
   <dependencies>

@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>folsom-parent</artifactId>
-    <version>1.14.1-SNAPSHOT</version>
+    <version>1.16.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>folsom</artifactId>
@@ -13,7 +13,7 @@
   <name>folsom</name>
 
   <properties>
-    <netty.version>4.1.68.Final</netty.version>
+    <netty.version>4.1.87.Final</netty.version>
   </properties>
 
   <dependencies>
@@ -30,7 +30,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.5</version>
+      <version>1.7.36</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>dns</artifactId>
-      <version>3.1.4</version>
+      <version>3.1.5</version>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>

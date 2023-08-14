@@ -279,7 +279,9 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       // to get better performance in the happy case.
       String disconnectReason = this.disconnectReason.get();
       if (disconnectReason != null) {
-        MemcacheClosedException exception = new MemcacheClosedException(disconnectReason);
+        MemcacheClosedException exception =
+            new MemcacheClosedException(
+                String.format("%s, memcached=%s", disconnectReason, address.getHostText()));
         return onExecutor(CompletableFutures.exceptionallyCompletedFuture(exception));
       }
 
