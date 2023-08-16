@@ -43,7 +43,7 @@ public class MemcachedServer {
   public static int DEFAULT_PORT = 11211;
   private final String username;
   private final String password;
-  private final boolean secure;
+  private final boolean useTLS;
 
   public MemcachedServer() {
     this(null, null);
@@ -57,12 +57,12 @@ public class MemcachedServer {
     this(username, password, DEFAULT_PORT, authenticationMode, false);
   }
 
-  public MemcachedServer(boolean secure) {
-    this(null, null, DEFAULT_PORT, AuthenticationMode.NONE, secure);
+  public MemcachedServer(boolean useTLS) {
+    this(null, null, DEFAULT_PORT, AuthenticationMode.NONE, useTLS);
   }
 
   public MemcachedServer(
-          String username, String password, int port, AuthenticationMode authenticationMode, boolean secure) {
+          String username, String password, int port, AuthenticationMode authenticationMode, boolean useTLS) {
     // Use self-signed test certs
     String currentDirectory = System.getProperty("user.dir");
     System.setProperty(
@@ -76,14 +76,14 @@ public class MemcachedServer {
 
     this.username = username;
     this.password = password;
-    this.secure = secure;
+    this.useTLS = useTLS;
 
-    container = new FixedHostPortGenericContainer("memcached:1.6.21");
+    container = new FixedHostPortGenericContainer("bitnami/memcached:1.6.21");
 
-    if (secure) {
+    if (useTLS) {
       if (username != null || password != null) {
         throw new RuntimeException(
-                "username and password are not currently supported with the secure container");
+                "username and password are not currently supported with the TLS-enabled container");
       }
 
       // mount volume with test certs required for connecting
@@ -149,7 +149,7 @@ public class MemcachedServer {
         builder.withUsernamePassword(username, password);
       }
 
-      if (secure) {
+      if (useTLS) {
         try {
           builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
         } catch (NoSuchAlgorithmException e) {
