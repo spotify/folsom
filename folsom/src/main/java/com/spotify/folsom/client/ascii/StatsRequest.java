@@ -16,6 +16,7 @@
 package com.spotify.folsom.client.ascii;
 
 import com.google.common.collect.ImmutableMap;
+import com.spotify.folsom.MemcacheAuthenticationException;
 import com.spotify.folsom.MemcachedStats;
 import com.spotify.folsom.client.AllRequest;
 import com.spotify.folsom.client.Request;
@@ -58,6 +59,11 @@ public class StatsRequest extends AsciiRequest<Map<String, MemcachedStats>>
       succeed(ImmutableMap.of(host, new MemcachedStats(statsResponse.values)));
     } else if (type == AsciiResponse.Type.ERROR) {
       succeed(ImmutableMap.of(host, new MemcachedStats(ImmutableMap.of())));
+    } else if (type == AsciiResponse.Type.CLIENT_ERROR) {
+      MemcacheAuthenticationException exception =
+          new MemcacheAuthenticationException(
+              "Authentication required by server. Client not authenticated.");
+      fail(exception, server);
     } else {
       throw new IOException("Unexpected response type: " + type);
     }

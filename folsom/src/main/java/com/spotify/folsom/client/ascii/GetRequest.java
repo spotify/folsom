@@ -66,6 +66,7 @@ public class GetRequest extends AsciiRequest<GetResult<byte[]>>
           new MemcacheAuthenticationException(
               "Authentication required by server. Client not authenticated.");
       fail(exception, server);
+      return;
     }
 
     if (!(response instanceof ValueAsciiResponse)) {
