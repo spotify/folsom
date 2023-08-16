@@ -16,15 +16,24 @@
 
 package com.spotify.folsom;
 
-
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
-import java.util.*;
 import org.junit.BeforeClass;
 
 public class TlsIntegrationTest extends AbstractIntegrationTestBase {
   @BeforeClass
-  public static void setUpClass() throws Exception {
+  public static void setUpClass() {
+    // Use self-signed test certs
+    String currentDirectory = System.getProperty("user.dir");
+    System.setProperty(
+        "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+    System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+    System.setProperty(
+        "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
+    System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
+    System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+
     server = new MemcachedServer(true);
   }
 

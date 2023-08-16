@@ -16,7 +16,6 @@
 
 package com.spotify.folsom;
 
-
 import com.spotify.folsom.client.NoopMetrics;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;

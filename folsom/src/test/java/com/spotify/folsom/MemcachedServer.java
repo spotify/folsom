@@ -17,7 +17,6 @@ package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
 import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
-import java.io.File;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +40,8 @@ public class MemcachedServer {
       Suppliers.memoize(MemcachedServer::new)::get;
 
   public static int DEFAULT_PORT = 11211;
+
+  private static final String MEMCACHED_VERSION = "1.6.21";
   private final String username;
   private final String password;
   private final boolean useTLS;
@@ -62,46 +63,24 @@ public class MemcachedServer {
   }
 
   public MemcachedServer(
-          String username, String password, int port, AuthenticationMode authenticationMode, boolean useTLS) {
-    // Use self-signed test certs
-    String currentDirectory = System.getProperty("user.dir");
-    System.setProperty(
-            "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
-    System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
-    System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-    System.setProperty(
-            "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
-    System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
-    System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-
+      String username,
+      String password,
+      int port,
+      AuthenticationMode authenticationMode,
+      boolean useTLS) {
     this.username = username;
     this.password = password;
     this.useTLS = useTLS;
 
-    container = new FixedHostPortGenericContainer("bitnami/memcached:1.6.21");
-
     if (useTLS) {
-      if (username != null || password != null) {
+      if (authenticationMode != AuthenticationMode.NONE) {
         throw new RuntimeException(
-                "username and password are not currently supported with the TLS-enabled container");
+            "Authentication is not currently supported with the TLS-enabled container");
       }
 
-      // mount volume with test certs required for connecting
-      File pkiVolumeFile = new File("src/test/resources/pki");
-      container.withFileSystemBind(pkiVolumeFile.getAbsolutePath(), "/test-certs");
-
-      // Run memcached with TLS
-      container.withCommand(
-              "memcached",
-              "-vv",
-              "-Z", // enable TLS
-              "-o",
-              "ssl_chain_cert=/test-certs/test.pem,"
-                      + // Use self-signed test certs
-                      "ssl_key=/test-certs/test.key,"
-                      + "ssl_verify_mode=3,"
-                      + "ssl_ca_cert=/test-certs/test.pem,"
-                      + "ssl_session_cache=shared:SSL:50m");
+      container = setupTLSContainer();
+    } else {
+      container = setupContainer(username, password, authenticationMode);
     }
 
     if (port != DEFAULT_PORT) {
@@ -109,9 +88,16 @@ public class MemcachedServer {
     } else {
       container.withExposedPorts(DEFAULT_PORT);
     }
+
+    start(authenticationMode);
+  }
+
+  private FixedHostPortGenericContainer setupContainer(
+      String username, String password, AuthenticationMode authenticationMode) {
+    final FixedHostPortGenericContainer container =
+        new FixedHostPortGenericContainer("bitnami/memcached" + ":" + MEMCACHED_VERSION);
+
     switch (authenticationMode) {
-      case NONE:
-        break;
       case SASL:
         if (username != null && password != null) {
           container.withEnv("MEMCACHED_USERNAME", username);
@@ -124,7 +110,30 @@ public class MemcachedServer {
         break;
     }
 
-    start(authenticationMode);
+    return container;
+  }
+
+  private FixedHostPortGenericContainer setupTLSContainer() {
+    final FixedHostPortGenericContainer container =
+        new FixedHostPortGenericContainer("memcached:" + MEMCACHED_VERSION);
+
+    container.withClasspathResourceMapping(
+        "/pki/test.pem", "/test-certs/test.pem", BindMode.READ_ONLY);
+    container.withClasspathResourceMapping(
+        "/pki/test.key", "/test-certs/test.key", BindMode.READ_ONLY);
+
+    container.withCommand(
+        "memcached",
+        "--enable-ssl",
+        "-o",
+        "ssl_verify_mode=3",
+        "-o",
+        "ssl_chain_cert=/test-certs/test.pem",
+        "-o",
+        "ssl_key=/test-certs/test.key",
+        "-o",
+        "ssl_ca_cert=/test-certs/test.pem");
+    return container;
   }
 
   public void stop() {
