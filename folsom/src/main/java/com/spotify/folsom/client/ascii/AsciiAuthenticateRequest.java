@@ -25,6 +25,10 @@ public class AsciiAuthenticateRequest extends SetRequest {
       case CLIENT_ERROR:
         succeed(UNAUTHORIZED);
         return;
+      case VALUE_TOO_LARGE:
+      case OUT_OF_MEMORY:
+        fail(new AsciiResponseException(response.type.name()), server);
+        return;
       default:
         final IOException exception =
             new IOException(

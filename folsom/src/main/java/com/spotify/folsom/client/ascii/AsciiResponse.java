@@ -28,7 +28,6 @@ public class AsciiResponse {
   public static final AsciiResponse VALUE_TOO_LARGE = new AsciiResponse(Type.VALUE_TOO_LARGE);
   public static final AsciiResponse OUT_OF_MEMORY = new AsciiResponse(Type.OUT_OF_MEMORY);
   public static final AsciiResponse CLIENT_ERROR = new AsciiResponse(Type.CLIENT_ERROR);
-
   public final Type type;
 
   protected AsciiResponse(Type type) {
@@ -50,6 +49,7 @@ public class AsciiResponse {
     ERROR,
     VALUE_TOO_LARGE,
     OUT_OF_MEMORY,
-    CLIENT_ERROR
+    CLIENT_ERROR,
+    SERVER_ERROR
   }
 }

@@ -151,10 +151,8 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
         succeed(MemcacheStatus.ITEM_NOT_STORED);
         return;
       case VALUE_TOO_LARGE:
-        succeed(MemcacheStatus.VALUE_TOO_LARGE);
-        return;
       case OUT_OF_MEMORY:
-        succeed(MemcacheStatus.OUT_OF_MEMORY);
+        fail(new AsciiResponseException(response.type.name()), server);
         return;
       case EXISTS:
         succeed(MemcacheStatus.KEY_EXISTS);
@@ -171,7 +169,6 @@ public class SetRequest extends AsciiRequest<MemcacheStatus>
             new MemcacheAuthenticationException(
                 "Authentication required by server. Client not authenticated.");
         fail(exception, server);
-        return;
       default:
         throw new IOException("Unexpected line: " + response.type);
     }

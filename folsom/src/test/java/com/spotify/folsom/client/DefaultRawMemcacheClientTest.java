@@ -19,6 +19,7 @@ import static com.spotify.folsom.client.Utils.unwrap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -42,6 +43,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -50,6 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -135,6 +138,49 @@ public class DefaultRawMemcacheClientTest {
       asciiClient.shutdown();
       asciiClient.awaitDisconnected(10, TimeUnit.SECONDS);
     }
+  }
+
+  @Test
+  public void testServerError() throws ExecutionException, InterruptedException, TimeoutException {
+    RawMemcacheClient rawClient =
+        DefaultRawMemcacheClient.connect(
+                HostAndPort.fromParts(server.getHost(), server.getPort()),
+                5000,
+                BATCH_SIZE,
+                false,
+                null,
+                3000,
+                StandardCharsets.UTF_8,
+                new NoopMetrics(),
+                1024 * 1024,
+                null,
+                null)
+            .toCompletableFuture()
+            .get();
+
+    DefaultAsciiMemcacheClient<String> asciiClient =
+        new DefaultAsciiMemcacheClient<>(
+            rawClient,
+            new NoopMetrics(),
+            NoopTracer.INSTANCE,
+            new StringTranscoder(StandardCharsets.UTF_8),
+            StandardCharsets.UTF_8,
+            MemcacheEncoder.MAX_KEY_LEN);
+    asciiClient.awaitConnected(5, TimeUnit.SECONDS);
+    final AtomicInteger connectionChanges = new AtomicInteger(0);
+    rawClient.registerForConnectionChanges(client -> connectionChanges.incrementAndGet());
+
+    byte[] bytes = new byte[1024 * 1024 - 5];
+    Arrays.fill(bytes, (byte) 33);
+    final String val = new String(bytes);
+    final ExecutionException exception =
+        assertThrows(
+            ExecutionException.class,
+            () -> asciiClient.set("mykey", val, 5000).toCompletableFuture().get());
+    final Throwable cause = exception.getCause();
+    assertTrue(cause instanceof IOException);
+    assertEquals("SERVER_ERROR: object too large for cache", cause.getMessage());
+    assertEquals(1, connectionChanges.get());
   }
 
   private void sendFailRequest(final String exceptionString, RawMemcacheClient rawClient)
