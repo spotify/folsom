@@ -95,7 +95,7 @@ public class MemcachedServer {
   private FixedHostPortGenericContainer setupContainer(
       String username, String password, AuthenticationMode authenticationMode) {
     final FixedHostPortGenericContainer container =
-        new FixedHostPortGenericContainer("bitnami/memcached" + ":" + MEMCACHED_VERSION);
+        new FixedHostPortGenericContainer("bitnami/memcached:" + MEMCACHED_VERSION);
 
     switch (authenticationMode) {
       case SASL:
