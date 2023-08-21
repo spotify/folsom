@@ -35,18 +35,7 @@ import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
@@ -59,8 +48,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -130,24 +117,17 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     final ChannelHandler initializer =
         new ChannelInitializer<Channel>() {
           @Override
-          protected void initChannel(final Channel ch) throws Exception {
-            final SSLEngine sslEngine;
+          protected void initChannel(final Channel ch) {
+            final ChannelPipeline channelPipeline = ch.pipeline();
+            channelPipeline.addLast(new TcpTuningHandler());
+
             if (sslEngineFactory != null) {
-              sslEngine =
+              final SSLEngine sslEngine =
                   sslEngineFactory.createSSLEngine(address.getHostText(), address.getPort());
-            } else {
-              sslEngine = null;
+              channelPipeline.addLast(new SslHandler(sslEngine));
             }
 
-            final List<ChannelHandler> handlersList = new ArrayList<>();
-            handlersList.add(new TcpTuningHandler());
-            if (sslEngine != null) {
-              handlersList.add(new SslHandler(sslEngine));
-            }
-            handlersList.add(decoder);
-            handlersList.add(new MemcacheEncoder()); // Downstream
-
-            ch.pipeline().addLast(handlersList.toArray(new ChannelHandler[handlersList.size()]));
+            channelPipeline.addLast(decoder, new MemcacheEncoder());
           }
         };
 
