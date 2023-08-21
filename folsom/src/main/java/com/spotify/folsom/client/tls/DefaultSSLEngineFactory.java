@@ -5,8 +5,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 public class DefaultSSLEngineFactory implements SSLEngineFactory {
-  final SSLContext sslContext;
-  final boolean reuseSession;
+  private final SSLContext sslContext;
+  private final boolean reuseSession;
 
   public DefaultSSLEngineFactory(final boolean reuseSession) throws NoSuchAlgorithmException {
     this(SSLContext.getDefault(), reuseSession);
@@ -18,7 +18,7 @@ public class DefaultSSLEngineFactory implements SSLEngineFactory {
   }
 
   @Override
-  public SSLEngine createSSLEngine(String hostname, int port) {
+  public SSLEngine createSSLEngine(final String hostname, final int port) {
     final SSLEngine sslEngine;
 
     if (reuseSession) {
