@@ -106,20 +106,32 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
   private final Metrics.OutstandingRequestsGauge pendingRequestGauge = this::numPendingRequests;
 
   public static CompletionStage<RawMemcacheClient> connect(
-          final HostAndPort address,
-          final int outstandingRequestLimit,
-          final int eventLoopThreadFlushMaxBatchSize,
-          final boolean binary,
-          final Executor executor,
-          final long connectionTimeoutMillis,
-          final Charset charset,
-          final Metrics metrics,
-          final int maxSetLength,
-          final EventLoopGroup eventLoopGroup,
-          final Class<? extends Channel> channelClass) {
-    return connect(address, outstandingRequestLimit, eventLoopThreadFlushMaxBatchSize, binary, executor, connectionTimeoutMillis, charset, metrics, maxSetLength, eventLoopGroup, channelClass, null);
-
+      final HostAndPort address,
+      final int outstandingRequestLimit,
+      final int eventLoopThreadFlushMaxBatchSize,
+      final boolean binary,
+      final Executor executor,
+      final long connectionTimeoutMillis,
+      final Charset charset,
+      final Metrics metrics,
+      final int maxSetLength,
+      final EventLoopGroup eventLoopGroup,
+      final Class<? extends Channel> channelClass) {
+    return connect(
+        address,
+        outstandingRequestLimit,
+        eventLoopThreadFlushMaxBatchSize,
+        binary,
+        executor,
+        connectionTimeoutMillis,
+        charset,
+        metrics,
+        maxSetLength,
+        eventLoopGroup,
+        channelClass,
+        null);
   }
+
   public static CompletionStage<RawMemcacheClient> connect(
       final HostAndPort address,
       final int outstandingRequestLimit,
