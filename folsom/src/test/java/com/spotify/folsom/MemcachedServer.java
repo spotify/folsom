@@ -15,9 +15,13 @@
  */
 package com.spotify.folsom;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Suppliers;
 import com.spotify.folsom.client.tls.SSLEngineFactory;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -72,16 +76,7 @@ public class MemcachedServer {
     this.password = password;
     this.useTLS = useTLS;
 
-    if (useTLS) {
-      if (authenticationMode != AuthenticationMode.NONE) {
-        throw new RuntimeException(
-            "Authentication is not currently supported with the TLS-enabled container");
-      }
-
-      container = setupTLSContainer();
-    } else {
-      container = setupContainer(username, password, authenticationMode);
-    }
+    container = setupContainer(username, password, authenticationMode, useTLS);
 
     if (port != DEFAULT_PORT) {
       container.withFixedExposedPort(DEFAULT_PORT, port);
@@ -93,9 +88,15 @@ public class MemcachedServer {
   }
 
   private FixedHostPortGenericContainer setupContainer(
-      String username, String password, AuthenticationMode authenticationMode) {
+      String username, String password, AuthenticationMode authenticationMode, boolean useTLS) {
+
+    final String dockerImageName =
+        authenticationMode == AuthenticationMode.SASL ? "bitnami/memcached" : "memcached";
+
     final FixedHostPortGenericContainer container =
-        new FixedHostPortGenericContainer("bitnami/memcached:" + MEMCACHED_VERSION);
+        new FixedHostPortGenericContainer(dockerImageName + ":" + MEMCACHED_VERSION);
+
+    List<String> commandOptions = new LinkedList<>();
 
     switch (authenticationMode) {
       case SASL:
@@ -106,33 +107,33 @@ public class MemcachedServer {
         break;
       case ASCII:
         container.withClasspathResourceMapping("/auth.file", "/tmp/auth.file", BindMode.READ_ONLY);
-        container.setCommand("/opt/bitnami/scripts/memcached/run.sh -Y /tmp/auth.file");
+        commandOptions.addAll(Arrays.asList("-Y", "/tmp/auth.file"));
         break;
     }
 
-    return container;
-  }
+    if (useTLS) {
+      container.withClasspathResourceMapping(
+          "/pki/test.pem", "/test-certs/test.pem", BindMode.READ_ONLY);
+      container.withClasspathResourceMapping(
+          "/pki/test.key", "/test-certs/test.key", BindMode.READ_ONLY);
+      commandOptions.addAll(
+          Arrays.asList(
+              "--enable-ssl",
+              "-o",
+              "ssl_verify_mode=3",
+              "-o",
+              "ssl_chain_cert=/test-certs/test.pem",
+              "-o",
+              "ssl_key=/test-certs/test.key",
+              "-o",
+              "ssl_ca_cert=/test-certs/test.pem"));
+    }
 
-  private FixedHostPortGenericContainer setupTLSContainer() {
-    final FixedHostPortGenericContainer container =
-        new FixedHostPortGenericContainer("memcached:" + MEMCACHED_VERSION);
+    if (!commandOptions.isEmpty()) {
+      String options = Joiner.on(" ").join(commandOptions);
+      container.withCommand("memcached ".concat(options));
+    }
 
-    container.withClasspathResourceMapping(
-        "/pki/test.pem", "/test-certs/test.pem", BindMode.READ_ONLY);
-    container.withClasspathResourceMapping(
-        "/pki/test.key", "/test-certs/test.key", BindMode.READ_ONLY);
-
-    container.withCommand(
-        "memcached",
-        "--enable-ssl",
-        "-o",
-        "ssl_verify_mode=3",
-        "-o",
-        "ssl_chain_cert=/test-certs/test.pem",
-        "-o",
-        "ssl_key=/test-certs/test.key",
-        "-o",
-        "ssl_ca_cert=/test-certs/test.pem");
     return container;
   }
 
