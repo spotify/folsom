@@ -16,7 +16,7 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
-import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -160,7 +160,7 @@ public class MemcachedServer {
 
       if (useTLS) {
         try {
-          builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
+          builder.withSSLEngineFactory(new SSLEngineFactory(false));
         } catch (NoSuchAlgorithmException e) {
           throw new RuntimeException(e);
         }

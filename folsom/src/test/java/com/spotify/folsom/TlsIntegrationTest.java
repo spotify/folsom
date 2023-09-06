@@ -17,7 +17,7 @@
 package com.spotify.folsom;
 
 import com.spotify.folsom.client.NoopMetrics;
-import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import org.junit.BeforeClass;
 
 public class TlsIntegrationTest extends AbstractIntegrationTestBase {
@@ -45,7 +45,7 @@ public class TlsIntegrationTest extends AbstractIntegrationTestBase {
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withSSLEngineFactory(new DefaultSSLEngineFactory(true))
+            .withSSLEngineFactory(new SSLEngineFactory(true))
             .withRequestTimeoutMillis(100);
     return builder;
   }
