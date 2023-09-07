@@ -45,8 +45,7 @@ public class TlsIntegrationTest extends AbstractIntegrationTestBase {
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
-            .withSSLEngineFactory(new DefaultSSLEngineFactory(true))
-            .withRequestTimeoutMillis(100);
+            .withSSLEngineFactory(new DefaultSSLEngineFactory(true));
     return builder;
   }
 }
