@@ -229,6 +229,17 @@ using MemcacheClientBuilder:
 builder.withMetrics(new YammerMetrics(metricsRegistry));
 ```
 
+#### OpenTelemetry metrics
+
+You can optionally choose to track performance using
+[OpenTelemetry metrics](https://opentelemetry.io/).
+You will need to include the `folsom-opentelemetry-metrics` dependency and initialize
+using MemcacheClientBuilder:
+
+```
+builder.withMetrics(new OpenTelemetryMetrics(metricsRegistry));
+```
+
 #### OpenCensus tracing
 
 You can optionally use [OpenCensus](https://opencensus.io/) to trace Folsom operations.
