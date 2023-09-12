@@ -136,7 +136,11 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
             if (sslEngineFactory != null) {
               final SSLEngine sslEngine =
                   sslEngineFactory.createSSLEngine(address.getHostText(), address.getPort());
-              channelPipeline.addLast(new SslHandler(sslEngine));
+              SslHandler sslHandler = new SslHandler(sslEngine);
+              // Disable SSL data aggregation
+              // it doesn't play well with memcached protocol and causes connection hangs
+              sslHandler.setWrapDataSize(0);
+              channelPipeline.addLast(sslHandler);
             }
 
             channelPipeline.addLast(decoder, new MemcacheEncoder());
@@ -466,6 +470,10 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       // Use the pending counter as a way of marking disconnected for performance reasons
       // Once we are disconnected we will not really decrease this value any more anyway.
       pendingCounter.set(pendingCounterLimit);
+      SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
+      if (sslHandler != null) {
+        sslHandler.closeOutbound();
+      }
       channel.close();
       GLOBAL_CONNECTION_COUNT.decrementAndGet();
       metrics.unregisterOutstandingRequestsGauge(pendingRequestGauge);
