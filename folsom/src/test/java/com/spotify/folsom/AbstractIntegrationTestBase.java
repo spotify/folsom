@@ -1,0 +1,665 @@
+/*
+ * Copyright (c) 2014-2015 Spotify AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.spotify.folsom;
+
+import static com.spotify.folsom.AbstractRawMemcacheClientTest.verifyClientNotifications;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.spotify.folsom.client.Utils;
+import com.spotify.futures.CompletableFutures;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import junit.framework.AssertionFailedError;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+@RunWith(Parameterized.class)
+public abstract class AbstractIntegrationTestBase {
+
+  protected static MemcachedServer server;
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<Object[]> data() throws Exception {
+    ArrayList<Object[]> res = new ArrayList<>();
+    res.add(new Object[] {"ascii"});
+    res.add(new Object[] {"binary"});
+    return res;
+  }
+
+  @Parameterized.Parameter(0)
+  public String protocol;
+
+  protected MemcacheClient<String> client;
+  protected AsciiMemcacheClient<String> asciiClient;
+  protected BinaryMemcacheClient<String> binaryClient;
+  protected int connectionCount;
+
+  @Before
+  public void setUp() throws Exception {
+    connectionCount = Utils.getGlobalConnectionCount();
+
+    boolean ascii;
+    if (protocol.equals("ascii")) {
+      ascii = true;
+    } else if (protocol.equals("binary")) {
+      ascii = false;
+    } else {
+      throw new IllegalArgumentException(protocol);
+    }
+
+    MemcacheClientBuilder<String> builder = createClientBuilder();
+
+    if (ascii) {
+      asciiClient = builder.connectAscii();
+      binaryClient = null;
+      client = asciiClient;
+    } else {
+      binaryClient = builder.connectBinary();
+      asciiClient = null;
+      client = binaryClient;
+    }
+    client.awaitConnected(10, TimeUnit.SECONDS);
+    cleanup();
+  }
+
+  protected abstract MemcacheClientBuilder<String> createClientBuilder() throws Exception;
+
+  private void cleanup() {
+    server.flush();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    cleanup();
+    client.shutdown();
+    client.awaitDisconnected(10, TimeUnit.SECONDS);
+
+    assertEquals(connectionCount, Utils.getGlobalConnectionCount());
+  }
+
+  protected static final String KEY1 = "folsomtest:key1";
+  protected static final String KEY2 = "folsomtest:key2";
+  protected static final String KEY3 = "folsomtest:key3";
+  protected static final String KEY4 = "folsomtest:keywithÅÄÖ";
+  protected static final String VALUE1 = "val1";
+  protected static final String VALUE2 = "val2";
+  protected static final String NUMERIC_VALUE = "123";
+
+  public static final List<String> ALL_KEYS = ImmutableList.of(KEY1, KEY2, KEY3, KEY4);
+
+  protected static final int TTL = (int) Duration.ofMinutes(10).getSeconds();
+
+  @Test
+  public void testRegisterAndUnregister() {
+    verifyClientNotifications(client);
+  }
+
+  @Test
+  public void testSetGet() throws Exception {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testSetGetWithUTF8() throws Exception {
+    client.set(KEY4, VALUE1, TTL).toCompletableFuture().get();
+
+    assertEquals(VALUE1, client.get(KEY4).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testLargeSet() throws Exception {
+    String value = createValue(100000);
+    client.set(KEY1, value, TTL).toCompletableFuture().get();
+    assertEquals(value, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testAppend() throws Exception {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.append(KEY1, VALUE2).toCompletableFuture().get();
+
+    assertEquals(VALUE1 + VALUE2, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testAppendMissing() throws Throwable {
+    checkStatus(client.append(KEY1, VALUE2), MemcacheStatus.ITEM_NOT_STORED);
+  }
+
+  @Test
+  public void testPrependMissing() throws Throwable {
+    checkStatus(client.prepend(KEY1, VALUE2), MemcacheStatus.ITEM_NOT_STORED);
+  }
+
+  @Test
+  public void testAppendCas() throws Exception {
+    assumeBinary();
+
+    binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
+    binaryClient.append(KEY1, VALUE2, cas).toCompletableFuture().get();
+
+    assertEquals(VALUE1 + VALUE2, binaryClient.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testAppendCasIncorrect() throws Throwable {
+    assumeBinary();
+
+    binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
+    checkStatus(binaryClient.append(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
+  }
+
+  @Test
+  public void testPrependCasIncorrect() throws Throwable {
+    assumeBinary();
+
+    binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
+    checkStatus(binaryClient.prepend(KEY1, VALUE2, cas + 666), MemcacheStatus.KEY_EXISTS);
+  }
+
+  @Test
+  public void testPrependCas() throws Exception {
+    assumeBinary();
+
+    binaryClient.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    final long cas = binaryClient.casGet(KEY1).toCompletableFuture().get().getCas();
+    binaryClient.prepend(KEY1, VALUE2, cas).toCompletableFuture().get();
+
+    assertEquals(VALUE2 + VALUE1, binaryClient.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testPrepend() throws Exception {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.prepend(KEY1, VALUE2).toCompletableFuture().get();
+
+    assertEquals(VALUE2 + VALUE1, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testSetDeleteGet() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    client.delete(KEY1).toCompletableFuture().get();
+
+    assertGetKeyNotFound(client.get(KEY1));
+  }
+
+  @Test
+  public void testAddGet() throws Exception {
+    client.add(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testAddKeyExists() throws Throwable {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    checkStatus(client.add(KEY1, VALUE1, TTL), MemcacheStatus.ITEM_NOT_STORED);
+  }
+
+  @Test
+  public void testReplaceGet() throws Exception {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    client.replace(KEY1, VALUE2, TTL).toCompletableFuture().get();
+
+    assertEquals(VALUE2, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testGetKeyNotExist() throws Throwable {
+    assumeBinary();
+
+    assertGetKeyNotFound(client.get(KEY1));
+  }
+
+  @Test
+  public void testBinaryFlush() throws Throwable {
+    assumeBinary();
+    client.set(KEY1, "value1", 10000);
+    client.set(KEY2, "value2", 10000);
+    assertEquals("value1", client.get(KEY1).toCompletableFuture().get(1, TimeUnit.SECONDS));
+    client.flushAll(0).toCompletableFuture().get();
+    assertGetKeyNotFound(client.get(KEY1));
+    assertGetKeyNotFound(client.get(KEY2));
+  }
+
+  @Test
+  public void testAsciiFlush() throws Throwable {
+    assumeAscii();
+    client.set(KEY1, "value1", 10000);
+    client.set(KEY2, "value2", 10000);
+    assertEquals("value1", client.get(KEY1).toCompletableFuture().get(1, TimeUnit.SECONDS));
+    client.flushAll(0).toCompletableFuture().get();
+    assertGetKeyNotFound(client.get(KEY1));
+    assertGetKeyNotFound(client.get(KEY2));
+  }
+
+  @Test
+  public void testPartitionMultiget() throws Exception {
+    final List<String> keys = new ArrayList<>();
+    for (int i = 0; i < 500; i++) {
+      keys.add("key-" + i);
+    }
+
+    final List<CompletionStage<MemcacheStatus>> futures = new ArrayList<>();
+    try {
+      for (final String key : keys) {
+        futures.add(client.set(key, key, TTL));
+      }
+
+      CompletableFutures.allAsList(futures).get();
+
+      final CompletionStage<List<String>> resultsFuture = client.get(keys);
+      final List<String> results = resultsFuture.toCompletableFuture().get();
+      assertEquals(keys, results);
+    } finally {
+      futures.clear();
+      for (final String key : keys) {
+        futures.add(client.delete(key));
+      }
+      CompletableFutures.allAsList(futures).get();
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testTooLongKey() throws Exception {
+    client.get(String.format("key-%300d", 1));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidKey() throws Exception {
+    client.get("key with spaces");
+  }
+
+  @Test
+  public void testMultiGetAllKeysExistsIterable() throws Throwable {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
+
+    assertEquals(
+        asList(VALUE1, VALUE2), client.get(asList(KEY1, KEY2)).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testMultiGetWithCas() throws Throwable {
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
+
+    long cas1 = client.casGet(KEY1).toCompletableFuture().get().getCas();
+    long cas2 = client.casGet(KEY2).toCompletableFuture().get().getCas();
+
+    List<GetResult<String>> expected =
+        asList(GetResult.success(VALUE1, cas1, 0), GetResult.success(VALUE2, cas2, 0));
+    assertEquals(expected, client.casGet(asList(KEY1, KEY2)).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testMultiGetKeyMissing() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    client.set(KEY2, VALUE2, TTL).toCompletableFuture().get();
+
+    assertEquals(
+        asList(VALUE1, null, VALUE2),
+        client.get(Arrays.asList(KEY1, KEY3, KEY2)).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDeleteKeyNotExist() throws Throwable {
+    checkKeyNotFound(client.delete(KEY1));
+  }
+
+  @Test
+  public void testIncr() throws Throwable {
+    assumeBinary();
+
+    assertEquals(Long.valueOf(3), binaryClient.incr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(5), binaryClient.incr(KEY1, 2, 7, TTL).toCompletableFuture().get());
+  }
+
+  private boolean isAscii() {
+    return protocol.equals("ascii");
+  }
+
+  private boolean isBinary() {
+    return protocol.equals("binary");
+  }
+
+  @Test
+  public void testDecr() throws Throwable {
+    assumeBinary();
+
+    assertEquals(Long.valueOf(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    assertEquals(Long.valueOf(1), binaryClient.decr(KEY1, 2, 5, TTL).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDecrBelowZero() throws Throwable {
+    assumeBinary();
+
+    assertEquals(Long.valueOf(3), binaryClient.decr(KEY1, 2, 3, TTL).toCompletableFuture().get());
+    // should not go below 0
+    assertEquals(Long.valueOf(0), binaryClient.decr(KEY1, 4, 5, TTL).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testIncrDefaults() throws Throwable {
+    assumeBinary();
+
+    // Ascii client behaves differently for this use case
+    assertEquals(Long.valueOf(0), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
+    // memcached will intermittently cause this test to fail due to the value not being set
+    // correctly when incr with initial=0 is used, this works around that
+    binaryClient.set(KEY1, "0", TTL).toCompletableFuture().get();
+    assertEquals(Long.valueOf(2), binaryClient.incr(KEY1, 2, 0, 0).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testIncrDefaultsAscii() throws Throwable {
+    assumeAscii();
+
+    // Ascii client behaves differently for this use case
+    assertEquals(null, asciiClient.incr(KEY1, 2).toCompletableFuture().get());
+    // memcached will intermittently cause this test to fail due to the value not being set
+    // correctly when incr with initial=0 is used, this works around that
+    asciiClient.set(KEY1, "0", TTL).toCompletableFuture().get();
+    assertEquals(Long.valueOf(2), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testIncrAscii() throws Throwable {
+    assumeAscii();
+
+    asciiClient.set(KEY1, NUMERIC_VALUE, TTL).toCompletableFuture().get();
+    assertEquals(Long.valueOf(125), asciiClient.incr(KEY1, 2).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDecrAscii() throws Throwable {
+    assumeAscii();
+
+    asciiClient.set(KEY1, NUMERIC_VALUE, TTL).toCompletableFuture().get();
+    assertEquals(Long.valueOf(121), asciiClient.decr(KEY1, 2).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testCas() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    final GetResult<String> getResult1 = client.casGet(KEY1).toCompletableFuture().get();
+    assertNotNull(getResult1.getCas());
+    assertEquals(VALUE1, getResult1.getValue());
+
+    client.set(KEY1, VALUE2, TTL, getResult1.getCas()).toCompletableFuture().get();
+    final long newCas = client.casGet(KEY1).toCompletableFuture().get().getCas();
+
+    assertNotEquals(0, newCas);
+
+    final GetResult<String> getResult2 = client.casGet(KEY1).toCompletableFuture().get();
+
+    assertEquals(newCas, getResult2.getCas());
+    assertEquals(VALUE2, getResult2.getValue());
+  }
+
+  @Test
+  public void testCasNotMatchingSet() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+
+    checkStatus(client.set(KEY1, VALUE2, TTL, 666L), MemcacheStatus.KEY_EXISTS);
+  }
+
+  @Test
+  public void testTouchNotFound() throws Throwable {
+
+    MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, result);
+  }
+
+  @Test
+  public void testTouchFound() throws Throwable {
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    MemcacheStatus result = client.touch(KEY1, TTL).toCompletableFuture().get();
+    assertEquals(MemcacheStatus.OK, result);
+  }
+
+  @Test
+  public void testTouchAndGetFound() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    assertEquals(VALUE1, binaryClient.getAndTouch(KEY1, TTL).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testTouchAndGetNotFound() throws Throwable {
+    assumeBinary();
+
+    assertNull(binaryClient.getAndTouch(KEY1, TTL).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testCasTouchAndGetFound() throws Throwable {
+    assumeBinary();
+
+    client.set(KEY1, VALUE1, TTL).toCompletableFuture().get();
+    long cas = client.casGet(KEY1).toCompletableFuture().get().getCas();
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).toCompletableFuture().get();
+    assertEquals(cas, result.getCas());
+    assertEquals(VALUE1, result.getValue());
+  }
+
+  @Test
+  public void testCasTouchAndGetNotFound() throws Throwable {
+    assumeBinary();
+
+    GetResult<String> result = binaryClient.casGetAndTouch(KEY1, TTL).toCompletableFuture().get();
+    assertNull(result);
+  }
+
+  @Test
+  public void testNoop() throws Throwable {
+    assumeBinary();
+
+    binaryClient.noop().toCompletableFuture().get();
+  }
+
+  @Test
+  public void testAlmostTooLargeValues() throws Exception {
+    String value = createValue(1024 * 1024 - 1000);
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, value, TTL).toCompletableFuture().get());
+    assertEquals(value, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testTooLargeValues() throws Exception {
+    String value = createValue(2 * 1024 * 1024);
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, "", TTL).toCompletableFuture().get());
+    assertEquals(
+        MemcacheStatus.VALUE_TOO_LARGE, client.set(KEY1, value, TTL).toCompletableFuture().get());
+    assertEquals("", client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testTooLargeValueDoesNotCorruptConnection() throws Exception {
+    String largeValue = createValue(2 * 1024 * 1024);
+    client.set(KEY1, largeValue, TTL).toCompletableFuture().get();
+
+    String smallValue = createValue(1000);
+    for (int i = 0; i < 1000; i++) {
+      assertEquals(
+          MemcacheStatus.OK, client.set(KEY1, smallValue, TTL).toCompletableFuture().get());
+      assertEquals(smallValue, client.get(KEY1).toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void testExpiredKey() throws Exception {
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 5).toCompletableFuture().get());
+    Thread.sleep(6000);
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testStats() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("version", "time", "uptime", "evictions");
+    verifyStats("", expectedKeys);
+  }
+
+  @Test
+  public void testStatsSlabs() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmutableSet<String> expectedKeys = ImmutableSet.of("total_malloced", "active_slabs");
+    verifyStats("slabs", expectedKeys);
+  }
+
+  @Test
+  public void testStatsInvalidKey()
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> statsMap =
+        client.getStats("invalidkey").toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+    assertEquals(1, statsMap.size());
+    MemcachedStats stats = statsMap.values().iterator().next();
+
+    assertEquals(ImmutableSet.of(), stats.getStats().keySet());
+  }
+
+  @Test
+  public void testDeleteWithCasHappyPath() throws Exception {
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(VALUE1, v.getValue());
+    assertEquals(MemcacheStatus.OK, client.delete(KEY1, v.getCas()).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDeleteWithCasMissingKey() throws Exception {
+    assertEquals(MemcacheStatus.KEY_NOT_FOUND, client.delete(KEY1, 1).toCompletableFuture().get());
+    assertNull(client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testDeleteWithCasWrongCas() throws Exception {
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().get());
+    GetResult<String> v = client.casGet(KEY1).toCompletableFuture().get();
+    assertEquals(VALUE1, v.getValue());
+    assertEquals(
+        MemcacheStatus.KEY_EXISTS, client.delete(KEY1, v.getCas() + 1).toCompletableFuture().get());
+    assertEquals(VALUE1, client.get(KEY1).toCompletableFuture().get());
+  }
+
+  @Test
+  public void testGetAllNodes() {
+    final Map<String, ? extends MemcacheClient<String>> nodes = client.getAllNodes();
+    assertEquals(1, nodes.size());
+    final MemcacheClient<String> client2 = nodes.get(server.getHost() + ":" + server.getPort());
+    assertNotNull(client2);
+
+    assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().join());
+    assertEquals(VALUE1, client2.get(KEY1).toCompletableFuture().join());
+  }
+
+  private void verifyStats(String statsKey, ImmutableSet<String> expectedKeys)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    Map<String, MemcachedStats> statsMap =
+        client.getStats(statsKey).toCompletableFuture().get(1, TimeUnit.SECONDS);
+
+    assertEquals(1, statsMap.size());
+    MemcachedStats stats = statsMap.values().iterator().next();
+
+    ImmutableSet<String> diff =
+        ImmutableSet.copyOf(Sets.difference(expectedKeys, stats.getStats().keySet()));
+    assertEquals(ImmutableSet.of(), diff);
+  }
+
+  private String createValue(int size) {
+    StringBuilder sb = new StringBuilder(size);
+    for (int i = 0; i < size; i++) {
+      sb.append('.');
+    }
+    return sb.toString();
+  }
+
+  private void assumeAscii() {
+    assumeTrue(isAscii());
+  }
+
+  private void assumeBinary() {
+    assumeTrue(isBinary());
+  }
+
+  static void assertGetKeyNotFound(CompletionStage<String> future) throws Throwable {
+    checkKeyNotFound(future);
+  }
+
+  static void checkKeyNotFound(final CompletionStage<?> future) throws Throwable {
+    checkStatus(future, MemcacheStatus.KEY_NOT_FOUND);
+  }
+
+  static void checkStatus(final CompletionStage<?> future, final MemcacheStatus... expected)
+      throws Throwable {
+    final Set<MemcacheStatus> expectedSet = Sets.newHashSet(expected);
+    try {
+      Object v = future.toCompletableFuture().get();
+      if (v instanceof MemcacheStatus) {
+        final MemcacheStatus status = (MemcacheStatus) v;
+        if (!expectedSet.contains(status)) {
+          throw new AssertionFailedError(status + " not in " + expectedSet);
+        }
+      } else {
+        if (v == null && expectedSet.contains(MemcacheStatus.KEY_NOT_FOUND)) {
+          // ok
+        } else if (v != null && expectedSet.contains(MemcacheStatus.OK)) {
+          // ok
+        } else {
+          throw new AssertionFailedError();
+        }
+      }
+    } catch (final ExecutionException e) {
+      throw e.getCause();
+    }
+  }
+}

@@ -26,6 +26,7 @@ import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.client.DefaultRawMemcacheClient;
 import com.spotify.folsom.client.NotConnectedClient;
 import com.spotify.folsom.client.Request;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import io.netty.channel.Channel;
@@ -74,7 +75,8 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       final Metrics metrics,
       final int maxSetLength,
       final EventLoopGroup eventLoopGroup,
-      final Class<? extends Channel> channelClass) {
+      final Class<? extends Channel> channelClass,
+      final SSLEngineFactory sslEngineFactory) {
     this(
         backoffFunction,
         scheduledExecutorService,
@@ -90,7 +92,8 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                 metrics,
                 maxSetLength,
                 eventLoopGroup,
-                channelClass),
+                channelClass,
+                sslEngineFactory),
         authenticator,
         address);
   }
