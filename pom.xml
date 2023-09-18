@@ -4,7 +4,7 @@
 
   <groupId>com.spotify</groupId>
   <artifactId>folsom-parent</artifactId>
-  <version>1.15.1-SNAPSHOT</version>
+  <version>1.16.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>folsom-parent</name>
 
@@ -24,6 +24,7 @@
     <module>folsom-semantic-metrics</module>
     <module>folsom-yammer-metrics</module>
     <module>folsom-micrometer-metrics</module>
+    <module>folsom-opentelemetry-metrics</module>
     <module>folsom-opencensus</module>
     <module>folsom-elasticache</module>
     <module>bom</module>

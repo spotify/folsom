@@ -26,15 +26,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.spotify.dns.DnsSrvResolver;
 import com.spotify.folsom.authenticate.AsciiAuthenticationValidator;
+import com.spotify.folsom.authenticate.AsciiAuthenticator;
 import com.spotify.folsom.authenticate.Authenticator;
 import com.spotify.folsom.authenticate.BinaryAuthenticationValidator;
 import com.spotify.folsom.authenticate.MultiAuthenticator;
 import com.spotify.folsom.authenticate.NoAuthenticationValidation;
 import com.spotify.folsom.authenticate.PlaintextAuthenticator;
+import com.spotify.folsom.authenticate.UsernamePasswordPair;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.NoopTracer;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
@@ -58,6 +61,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class MemcacheClientBuilder<V> {
 
@@ -115,8 +119,10 @@ public class MemcacheClientBuilder<V> {
   private EventLoopGroup eventLoopGroup;
   private Class<? extends Channel> channelClass;
 
-  private final List<PlaintextAuthenticator> passwords = new ArrayList<>();
+  private final List<UsernamePasswordPair> passwords = new ArrayList<>();
   private boolean skipAuth = false;
+
+  private SSLEngineFactory sslEngineFactory = null;
 
   /**
    * Create a client builder for byte array values.
@@ -538,7 +544,7 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder<V> withUsernamePassword(
       final String username, final String password) {
-    passwords.add(new PlaintextAuthenticator(username, password));
+    passwords.add(new UsernamePasswordPair(username, password));
     return this;
   }
 
@@ -550,6 +556,11 @@ public class MemcacheClientBuilder<V> {
    */
   MemcacheClientBuilder<V> withoutAuthenticationValidation() {
     skipAuth = true;
+    return this;
+  }
+
+  public MemcacheClientBuilder<V> withSSLEngineFactory(final SSLEngineFactory sslEngineFactory) {
+    this.sslEngineFactory = sslEngineFactory;
     return this;
   }
 
@@ -577,7 +588,23 @@ public class MemcacheClientBuilder<V> {
     if (passwords.isEmpty()) {
       return defaultValue;
     }
-    return new MultiAuthenticator(passwords);
+
+    if (defaultValue instanceof BinaryAuthenticationValidator) {
+      List<PlaintextAuthenticator> authenticatorList =
+          passwords
+              .stream()
+              .map(UsernamePasswordPair::getPlainTextAuthenticator)
+              .collect(Collectors.toList());
+      return new MultiAuthenticator(authenticatorList);
+    } else if (defaultValue instanceof AsciiAuthenticationValidator) {
+      List<AsciiAuthenticator> authenticatorList =
+          passwords
+              .stream()
+              .map(UsernamePasswordPair::getAsciiAuthenticator)
+              .collect(Collectors.toList());
+      return new MultiAuthenticator(authenticatorList);
+    }
+    throw new IllegalStateException("Only ASCII and binary protocols support authentication.");
   }
 
   /**
@@ -689,6 +716,7 @@ public class MemcacheClientBuilder<V> {
         metrics,
         maxSetLength,
         eventLoopGroup,
-        channelClass);
+        channelClass,
+        sslEngineFactory);
   }
 }

@@ -1,5 +1,8 @@
-### 1.15.1
-* Override AsciiResponse#toString() to include type information
+### 1.16.1
+* Add non-authenticated errors for all ASCII operations
+
+### 1.16.0
+* Add support for ASCII authentication
 
 ### 1.15.0
 * Expose opcode and withCas in SetRequest

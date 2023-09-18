@@ -10,7 +10,7 @@
 
   <groupId>com.spotify</groupId>
   <artifactId>folsom-bom</artifactId>
-  <version>1.15.1-SNAPSHOT</version>
+  <version>1.16.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Folsom BOM</name>
@@ -55,6 +55,11 @@
       <dependency>
         <groupId>com.spotify</groupId>
         <artifactId>folsom-yammer-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.spotify</groupId>
+        <artifactId>folsom-opentelemetry-metrics</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>
