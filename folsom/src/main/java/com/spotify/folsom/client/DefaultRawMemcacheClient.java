@@ -30,7 +30,6 @@ import com.spotify.folsom.Metrics;
 import com.spotify.folsom.RawMemcacheClient;
 import com.spotify.folsom.client.ascii.AsciiMemcacheDecoder;
 import com.spotify.folsom.client.binary.BinaryMemcacheDecoder;
-import com.spotify.folsom.client.tls.SSLEngineFactory;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.futures.CompletableFutures;
@@ -44,7 +43,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoopGroup;
@@ -54,7 +52,6 @@ import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DecoderException;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -69,7 +66,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,8 +112,7 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       final Metrics metrics,
       final int maxSetLength,
       final EventLoopGroup eventLoopGroup,
-      final Class<? extends Channel> channelClass,
-      final SSLEngineFactory sslEngineFactory) {
+      final Class<? extends Channel> channelClass) {
 
     final ChannelInboundHandler decoder;
     if (binary) {
@@ -129,21 +124,14 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
     final ChannelHandler initializer =
         new ChannelInitializer<Channel>() {
           @Override
-          protected void initChannel(final Channel ch) {
-            final ChannelPipeline channelPipeline = ch.pipeline();
-            channelPipeline.addLast(new TcpTuningHandler());
+          protected void initChannel(final Channel ch) throws Exception {
+            ch.pipeline()
+                .addLast(
+                    new TcpTuningHandler(),
+                    decoder,
 
-            if (sslEngineFactory != null) {
-              final SSLEngine sslEngine =
-                  sslEngineFactory.createSSLEngine(address.getHostText(), address.getPort());
-              SslHandler sslHandler = new SslHandler(sslEngine);
-              // Disable SSL data aggregation
-              // it doesn't play well with memcached protocol and causes connection hangs
-              sslHandler.setWrapDataSize(0);
-              channelPipeline.addLast(sslHandler);
-            }
-
-            channelPipeline.addLast(decoder, new MemcacheEncoder());
+                    // Downstream
+                    new MemcacheEncoder());
           }
         };
 
@@ -470,10 +458,6 @@ public class DefaultRawMemcacheClient extends AbstractRawMemcacheClient {
       // Use the pending counter as a way of marking disconnected for performance reasons
       // Once we are disconnected we will not really decrease this value any more anyway.
       pendingCounter.set(pendingCounterLimit);
-      SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
-      if (sslHandler != null) {
-        sslHandler.closeOutbound();
-      }
       channel.close();
       GLOBAL_CONNECTION_COUNT.decrementAndGet();
       metrics.unregisterOutstandingRequestsGauge(pendingRequestGauge);
