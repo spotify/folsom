@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -213,7 +214,7 @@ public class MisbehavingServerTest {
     server = new Server(response);
     MemcacheClient<String> client =
         MemcacheClientBuilder.newStringClient()
-            .withAddress("127.0.0.8", server.port)
+            .withAddress(server.inetAddress.getHostAddress(), server.port)
             .withRequestTimeoutMillis(100L)
             .withRetry(false)
             .connectAscii();
@@ -222,6 +223,7 @@ public class MisbehavingServerTest {
   }
 
   private static class Server {
+    private final InetAddress inetAddress;
     private final int port;
     private final ServerSocket serverSocket;
     private final Thread thread;
@@ -232,6 +234,7 @@ public class MisbehavingServerTest {
     private Server(String responseString) throws IOException {
       final byte[] response = responseString.getBytes(StandardCharsets.UTF_8);
       serverSocket = new ServerSocket(0);
+      inetAddress = serverSocket.getInetAddress();
       port = serverSocket.getLocalPort();
       thread =
           new Thread(
