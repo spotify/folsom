@@ -41,6 +41,7 @@ import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
 import com.spotify.folsom.ketama.ResolvingKetamaClient;
+import com.spotify.folsom.reconnect.CatchingReconnectionListener;
 import com.spotify.folsom.reconnect.ReconnectingClient;
 import com.spotify.folsom.reconnect.ReconnectionListener;
 import com.spotify.folsom.retry.RetryingClient;
@@ -316,13 +317,16 @@ public class MemcacheClientBuilder<V> {
    * implementation} whatsoever, meaning you would need to either delegate to it, or reimplement its
    * behaviour.
    *
+   * <p>This method will implicitly wrap your listener in a {@link CatchingReconnectionListener}.
+   * This is to ensure they cannot break the client returned if they throw.
+   *
    * @param reconnectionListener the listener for reconnections
    * @return itself
    */
   public MemcacheClientBuilder<V> withReconnectionListener(
       final ReconnectionListener reconnectionListener) {
-    this.reconnectionListener =
-        requireNonNull(reconnectionListener, "reconnectionListener cannot be null");
+    requireNonNull(reconnectionListener, "reconnectionListener cannot be null");
+    this.reconnectionListener = new CatchingReconnectionListener(reconnectionListener);
     return this;
   }
 

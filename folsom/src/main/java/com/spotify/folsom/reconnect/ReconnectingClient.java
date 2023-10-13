@@ -160,7 +160,7 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
     this.backoffFunction = backoffFunction;
     this.scheduledExecutorService = scheduledExecutorService;
     this.connector = connector;
-    this.reconnectionListener = new CatchingReconnectionListener(reconnectionListener);
+    this.reconnectionListener = reconnectionListener;
 
     this.address = address;
     retry();
