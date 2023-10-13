@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2023 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,17 +49,55 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
           1,
           new ThreadFactoryBuilder().setDaemon(true).setNameFormat("folsom-reconnecter").build());
 
-  private final Logger log = LoggerFactory.getLogger(ReconnectingClient.class);
+  private static final Logger log = LoggerFactory.getLogger(ReconnectingClient.class);
 
   private final BackoffFunction backoffFunction;
   private final ScheduledExecutorService scheduledExecutorService;
   private final com.spotify.folsom.reconnect.Connector connector;
   private final HostAndPort address;
+  private final ReconnectionListener reconnectionListener;
 
   private volatile RawMemcacheClient client = NotConnectedClient.INSTANCE;
   private volatile int reconnectCount = 0;
   private volatile boolean stayConnected = true;
   private volatile Throwable connectionFailure;
+
+  public ReconnectingClient(
+      final BackoffFunction backoffFunction,
+      final ScheduledExecutorService scheduledExecutorService,
+      final HostAndPort address,
+      final ReconnectionListener reconnectionListener,
+      final int outstandingRequestLimit,
+      final int eventLoopThreadFlushMaxBatchSize,
+      final boolean binary,
+      final Authenticator authenticator,
+      final Executor executor,
+      final long connectionTimeoutMillis,
+      final Charset charset,
+      final Metrics metrics,
+      final int maxSetLength,
+      final EventLoopGroup eventLoopGroup,
+      final Class<? extends Channel> channelClass) {
+    this(
+        backoffFunction,
+        scheduledExecutorService,
+        () ->
+            DefaultRawMemcacheClient.connect(
+                address,
+                outstandingRequestLimit,
+                eventLoopThreadFlushMaxBatchSize,
+                binary,
+                executor,
+                connectionTimeoutMillis,
+                charset,
+                metrics,
+                maxSetLength,
+                eventLoopGroup,
+                channelClass),
+        authenticator,
+        address,
+        reconnectionListener);
+  }
 
   public ReconnectingClient(
       final BackoffFunction backoffFunction,
@@ -92,7 +131,8 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
                 eventLoopGroup,
                 channelClass),
         authenticator,
-        address);
+        address,
+        new StandardReconnectionListener());
   }
 
   private ReconnectingClient(
@@ -100,23 +140,27 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       final ScheduledExecutorService scheduledExecutorService,
       final Connector connector,
       final Authenticator authenticator,
-      final HostAndPort address) {
+      final HostAndPort address,
+      final ReconnectionListener reconnectionListener) {
     this(
         backoffFunction,
         scheduledExecutorService,
         () -> AuthenticatingClient.authenticate(connector, authenticator),
-        address);
+        address,
+        reconnectionListener);
   }
 
   ReconnectingClient(
       final BackoffFunction backoffFunction,
       final ScheduledExecutorService scheduledExecutorService,
       final com.spotify.folsom.reconnect.Connector connector,
-      final HostAndPort address) {
+      final HostAndPort address,
+      final ReconnectionListener reconnectionListener) {
     super();
     this.backoffFunction = backoffFunction;
     this.scheduledExecutorService = scheduledExecutorService;
     this.connector = connector;
+    this.reconnectionListener = new CatchingReconnectionListener(reconnectionListener);
 
     this.address = address;
     retry();
@@ -170,21 +214,24 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
       future.whenComplete(
           (newClient, t) -> {
             if (t != null) {
+              this.reconnectionListener.connectionFailure(t);
+
               if (t instanceof CompletionException
                   && t.getCause() instanceof MemcacheAuthenticationException) {
                 connectionFailure = t.getCause();
                 shutdown();
                 return;
               }
-              ReconnectingClient.this.onFailure();
+              ReconnectingClient.this.onFailure(t);
             } else {
-              log.info("Successfully connected to {}", address);
+              reconnectionListener.reconnectionSuccessful(address, reconnectCount, stayConnected);
               reconnectCount = 0;
               client.shutdown();
               client = newClient;
 
               // Protection against races with shutdown()
               if (!stayConnected) {
+                reconnectionListener.reconnectionCancelled();
                 newClient.shutdown();
                 notifyConnectionChange();
                 return;
@@ -193,9 +240,11 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
               notifyConnectionChange();
               newClient
                   .disconnectFuture()
+                  .whenComplete(
+                      (unused, throwable) ->
+                          reconnectionListener.connectionLost(throwable, address))
                   .thenRun(
                       () -> {
-                        log.info("Lost connection to {}", address);
                         notifyConnectionChange();
                         if (stayConnected) {
                           retry();
@@ -204,20 +253,20 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
             }
           });
     } catch (final Exception e) {
-      ReconnectingClient.this.onFailure();
+      ReconnectingClient.this.onFailure(e);
     }
   }
 
-  private void onFailure() {
+  private void onFailure(final Throwable cause) {
     if (!stayConnected) {
+      this.reconnectionListener.reconnectionCancelled();
       return;
     }
 
     final long backOff = backoffFunction.getBackoffTimeMillis(reconnectCount);
-    log.warn(
-        "Attempting reconnect to {} in {} ms (retry number {})", address, backOff, reconnectCount);
 
     reconnectCount++;
+    this.reconnectionListener.reconnectionQueuedFromError(cause, address, backOff, reconnectCount);
 
     scheduledExecutorService.schedule(
         () -> {
@@ -236,5 +285,37 @@ public class ReconnectingClient extends AbstractRawMemcacheClient {
   @Override
   public String toString() {
     return "Reconnecting(" + client + ")";
+  }
+
+  /**
+   * This class should be regarded as <b>internal API</b>. We recognise it may be useful outside
+   * internals, to which end it is exposed. All methods are <b>unstable</b> and can change with
+   * breakage in patch versions. If you just want your own listener with a stable API, you could
+   * extend {@link AbstractReconnectionListener} yourself and delegate calls to this.
+   */
+  public static class StandardReconnectionListener extends AbstractReconnectionListener {
+
+    public StandardReconnectionListener() {}
+
+    @Override
+    public void connectionLost(final @Nullable Throwable cause, final HostAndPort address) {
+      log.info("Lost connection to {}", address);
+    }
+
+    @Override
+    public void reconnectionSuccessful(
+        final HostAndPort address, final int attempt, final boolean willStayConnected) {
+      log.info("Successfully connected to {}", address);
+    }
+
+    @Override
+    public void reconnectionQueuedFromError(
+        final Throwable cause,
+        final HostAndPort address,
+        final long backOffMillis,
+        final int attempt) {
+      log.warn(
+          "Attempting reconnect to {} in {} ms (retry number {})", address, backOffMillis, attempt);
+    }
   }
 }

@@ -1,3 +1,7 @@
+### Unreleased
+* feat: introduce a `ReconnectionListener` which the `ReconnectingClient` will call when trying to reconnect. This is
+  called more often than registered `ConnectionChangeListener`s, and is mostly useful for logging purposes.
+
 ### 1.16.1
 * Add non-authenticated errors for all ASCII operations
 
