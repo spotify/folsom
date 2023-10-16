@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2023 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,7 +86,8 @@ public class ReconnectingClientTest {
             backoffFunction,
             scheduledExecutorService,
             connector,
-            HostAndPort.fromString("localhost:123"));
+            HostAndPort.fromString("localhost:123"),
+            new ReconnectingClient.StandardReconnectionListener());
 
     verify(connector, times(3)).connect();
     verify(scheduledExecutorService, times(1))
@@ -122,7 +123,8 @@ public class ReconnectingClientTest {
             backoffFunction,
             scheduledExecutorService,
             connector,
-            HostAndPort.fromString("localhost:123"));
+            HostAndPort.fromString("localhost:123"),
+            new ReconnectingClient.StandardReconnectionListener());
 
     verify(connector, times(4)).connect();
     verify(scheduledExecutorService, times(1))
@@ -153,7 +155,8 @@ public class ReconnectingClientTest {
             backoffFunction,
             scheduledExecutorService,
             connector,
-            HostAndPort.fromString("localhost:123"));
+            HostAndPort.fromString("localhost:123"),
+            new ReconnectingClient.StandardReconnectionListener());
 
     assertTrue(client.isConnected());
     client.shutdown();

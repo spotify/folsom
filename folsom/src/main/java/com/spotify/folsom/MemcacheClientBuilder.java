@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Spotify AB
+ * Copyright (c) 2014-2023 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,9 @@ import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
 import com.spotify.folsom.ketama.ResolvingKetamaClient;
+import com.spotify.folsom.reconnect.CatchingReconnectionListener;
 import com.spotify.folsom.reconnect.ReconnectingClient;
+import com.spotify.folsom.reconnect.ReconnectionListener;
 import com.spotify.folsom.retry.RetryingClient;
 import com.spotify.folsom.roundrobin.RoundRobinMemcacheClient;
 import com.spotify.folsom.transcoder.ByteArrayTranscoder;
@@ -98,6 +100,8 @@ public class MemcacheClientBuilder<V> {
   private final Transcoder<V> valueTranscoder;
   private Metrics metrics = NoopMetrics.INSTANCE;
   private Tracer tracer = NoopTracer.INSTANCE;
+  private ReconnectionListener reconnectionListener =
+      new ReconnectingClient.StandardReconnectionListener();
 
   private BackoffFunction backoffFunction = new ExponentialBackoff(10L, 60 * 1000L, 2.5);
 
@@ -304,6 +308,25 @@ public class MemcacheClientBuilder<V> {
    */
   public MemcacheClientBuilder<V> withTracer(final Tracer tracer) {
     this.tracer = requireNonNull(tracer);
+    return this;
+  }
+
+  /**
+   * Specify how to handle reconnections. This does not retain the {@linkplain
+   * com.spotify.folsom.reconnect.ReconnectingClient.StandardReconnectionListener standard
+   * implementation} whatsoever, meaning you would need to either delegate to it, or reimplement its
+   * behaviour.
+   *
+   * <p>This method will implicitly wrap your listener in a {@link CatchingReconnectionListener}.
+   * This is to ensure they cannot break the client returned if they throw.
+   *
+   * @param reconnectionListener the listener for reconnections
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withReconnectionListener(
+      final ReconnectionListener reconnectionListener) {
+    requireNonNull(reconnectionListener, "reconnectionListener cannot be null");
+    this.reconnectionListener = new CatchingReconnectionListener(reconnectionListener);
     return this;
   }
 
@@ -698,6 +721,7 @@ public class MemcacheClientBuilder<V> {
         backoffFunction,
         ReconnectingClient.singletonExecutor(),
         address,
+        reconnectionListener,
         maxOutstandingRequests,
         eventLoopThreadFlushMaxBatchSize,
         binary,
