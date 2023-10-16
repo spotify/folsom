@@ -1,4 +1,4 @@
-### Unreleased
+### 1.17.0
 * feat: introduce a `ReconnectionListener` which the `ReconnectingClient` will call when trying to reconnect. This is
   called more often than registered `ConnectionChangeListener`s, and is mostly useful for logging purposes.
 
