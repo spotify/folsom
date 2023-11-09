@@ -39,7 +39,9 @@ import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
+import com.spotify.folsom.ketama.Continuum;
 import com.spotify.folsom.ketama.KetamaMemcacheClient;
+import com.spotify.folsom.ketama.NodeLocator;
 import com.spotify.folsom.ketama.ResolvingKetamaClient;
 import com.spotify.folsom.reconnect.CatchingReconnectionListener;
 import com.spotify.folsom.reconnect.ReconnectingClient;
@@ -55,12 +57,14 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -124,6 +128,8 @@ public class MemcacheClientBuilder<V> {
 
   private final List<UsernamePasswordPair> passwords = new ArrayList<>();
   private boolean skipAuth = false;
+
+  private Function<Collection<AddressAndClient>, NodeLocator> nodeLocator = Continuum::new;
 
   /**
    * Create a client builder for byte array values.
@@ -569,6 +575,20 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
+   * When using ketama client use provided NodeLocator to find client for given key.
+   * NodeLocator will be recreated when clients appear and disappear when using dynamic resolver.
+   *
+   * <p> This option can be used to change default hashing algorithm or vnode_ratio in consistent hashing algorithm.
+   *
+   * @param nodeLocator mapper from client collection to NodeLocator
+   * @return itself
+   */
+  public MemcacheClientBuilder<V> withNodeLocator(Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
+    this.nodeLocator = nodeLocator;
+    return this;
+  }
+
+  /**
    * Disable authentication validation - only useful for tests against jmemcached which does not
    * support binary NOOP
    *
@@ -665,7 +685,7 @@ public class MemcacheClientBuilder<V> {
           aac.add(new AddressAndClient(address, clients.get(i)));
         }
 
-        client = new KetamaMemcacheClient(aac);
+        client = new KetamaMemcacheClient(aac, nodeLocator.apply(aac));
       } else {
         client = clients.get(0);
       }
@@ -697,7 +717,8 @@ public class MemcacheClientBuilder<V> {
             TimeUnit.MILLISECONDS,
             input -> createClient(input, binary, authenticator),
             shutdownDelay,
-            TimeUnit.MILLISECONDS);
+            TimeUnit.MILLISECONDS,
+                nodeLocator);
 
     client.start();
     return client;

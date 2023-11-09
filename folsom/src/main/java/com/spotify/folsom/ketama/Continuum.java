@@ -24,25 +24,28 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-public class Continuum {
+public class Continuum implements NodeLocator {
 
   private static final int VNODE_RATIO = 100;
 
   private final TreeMap<Integer, RawMemcacheClient> ringOfFire;
 
   public Continuum(final Collection<AddressAndClient> clients) {
-    this.ringOfFire = buildRing(clients);
+    this(clients, VNODE_RATIO);
+  }
+  public Continuum(final Collection<AddressAndClient> clients, int vnodeRatio) {
+    this.ringOfFire = buildRing(clients, vnodeRatio);
   }
 
   private TreeMap<Integer, RawMemcacheClient> buildRing(
-      final Collection<AddressAndClient> clients) {
+      final Collection<AddressAndClient> clients, int vnodeRatio) {
 
     final TreeMap<Integer, RawMemcacheClient> r = new TreeMap<>();
     for (final AddressAndClient client : clients) {
       final String address = client.getAddress().toString();
 
       byte[] hash = addressToBytes(address);
-      for (int i = 0; i < VNODE_RATIO; i++) {
+      for (int i = 0; i < vnodeRatio; i++) {
         final HashCode hashCode = Hasher.hash(hash);
         hash = hashCode.asBytes();
         r.put(hashCode.asInt(), client.getClient());
@@ -51,6 +54,7 @@ public class Continuum {
     return r;
   }
 
+  @Override
   public RawMemcacheClient findClient(final byte[] key) {
     final int keyHash = Hasher.hash(key).asInt();
 

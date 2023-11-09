@@ -47,19 +47,19 @@ public class KetamaMemcacheClient extends AbstractMultiMemcacheClient {
     return clients;
   }
 
-  private final Continuum continuum;
+  private final NodeLocator nodeLocator;
 
-  public KetamaMemcacheClient(final Collection<AddressAndClient> clients) {
+  public KetamaMemcacheClient(final Collection<AddressAndClient> clients, NodeLocator nodeLocator) {
     super(clientsOnly(clients));
     if (clients.isEmpty()) {
       throw new IllegalArgumentException("Can not create ketama client from empty list");
     }
 
-    this.continuum = new Continuum(clients);
+    this.nodeLocator = nodeLocator;
   }
 
   private RawMemcacheClient getClient(final byte[] key) {
-    return continuum.findClient(key);
+    return nodeLocator.findClient(key);
   }
 
   @Override
