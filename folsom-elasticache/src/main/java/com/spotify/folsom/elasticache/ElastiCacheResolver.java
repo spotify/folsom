@@ -27,7 +27,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Implement support for AWS ElastiCache node auto-discovery <a
@@ -53,7 +52,6 @@ public class ElastiCacheResolver implements Resolver {
     private int configPort = 11211;
     private long ttl = MINUTES.toMillis(1);
     private int timeout = 5000; // ms
-    private boolean useTls = false;
 
     private Builder(final String configHost) {
       this.configHost = configHost;
@@ -98,23 +96,12 @@ public class ElastiCacheResolver implements Resolver {
     }
 
     /**
-     * Configure TLS usage for connection. Default: false
-     *
-     * @param useTls whether resolver should use TLS connection
-     * @return The builder
-     */
-    public Builder withTls(final boolean useTls) {
-      this.useTls = useTls;
-      return this;
-    }
-
-    /**
      * Build the resolver
      *
      * @return The resolver
      */
     public ElastiCacheResolver build() {
-      final Resolver resolver = new SocketResolver(configHost, configPort, timeout, useTls);
+      final Resolver resolver = new SocketResolver(configHost, configPort, timeout);
 
       return new ElastiCacheResolver(resolver, ttl);
     }
@@ -170,22 +157,20 @@ public class ElastiCacheResolver implements Resolver {
   }
 
   public static class SocketResolver implements Resolver {
+
     private final String configHost;
     private final int configPort;
     private final int timeout;
-    private final boolean useTls;
     private final ResponseParser parser = new ResponseParser();
 
-    public SocketResolver(
-        final String configHost, final int configPort, final int timeout, final boolean useTls) {
+    public SocketResolver(final String configHost, final int configPort, final int timeout) {
       this.configHost = configHost;
       this.configPort = configPort;
       this.timeout = timeout;
-      this.useTls = useTls;
     }
 
     public Response resolve() {
-      try (final Socket socket = createSocket()) {
+      try (final Socket socket = new Socket()) {
         socket.setSoTimeout(timeout);
         socket.connect(new InetSocketAddress(configHost, configPort), timeout);
 
@@ -194,14 +179,6 @@ public class ElastiCacheResolver implements Resolver {
         return parser.parse(socket.getInputStream());
       } catch (IOException e) {
         throw new RuntimeException("ElastiCache auto-discovery failed", e);
-      }
-    }
-
-    private Socket createSocket() throws IOException {
-      if (useTls) {
-        return SSLSocketFactory.getDefault().createSocket();
-      } else {
-        return new Socket();
       }
     }
   }
