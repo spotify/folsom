@@ -80,7 +80,6 @@ public class DefaultRawMemcacheClientTest {
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
-                null,
                 null)
             .toCompletableFuture()
             .get();
@@ -183,7 +182,6 @@ public class DefaultRawMemcacheClientTest {
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
-                null,
                 null)
             .toCompletableFuture()
             .get();
@@ -222,7 +220,6 @@ public class DefaultRawMemcacheClientTest {
                 StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 maxSetLength,
-                null,
                 null,
                 null)
             .toCompletableFuture()
@@ -268,7 +265,6 @@ public class DefaultRawMemcacheClientTest {
                 new NoopMetrics(),
                 maxSetLength,
                 null,
-                null,
                 null)
             .toCompletableFuture()
             .get();
@@ -305,7 +301,6 @@ public class DefaultRawMemcacheClientTest {
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
-                null,
                 null)
             .toCompletableFuture()
             .get();
@@ -332,7 +327,6 @@ public class DefaultRawMemcacheClientTest {
                 StandardCharsets.UTF_8,
                 new NoopMetrics(),
                 1024 * 1024,
-                null,
                 null,
                 null)
             .toCompletableFuture()
@@ -382,7 +376,6 @@ public class DefaultRawMemcacheClientTest {
                 new NoopMetrics(),
                 1024 * 1024,
                 null,
-                null,
                 null)
             .toCompletableFuture()
             .get();
@@ -422,7 +415,6 @@ public class DefaultRawMemcacheClientTest {
                   charset,
                   metrics,
                   1024 * 1024,
-                  null,
                   null,
                   null)
               .toCompletableFuture()

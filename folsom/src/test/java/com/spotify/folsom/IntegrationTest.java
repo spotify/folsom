@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.Utils;
-import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
 import com.spotify.futures.CompletableFutures;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -54,23 +53,17 @@ import org.junit.runners.Parameterized;
 public class IntegrationTest {
 
   private static MemcachedServer server;
-  private static MemcachedServer tlsServer;
 
-  @Parameterized.Parameters(name = "{0},useTls={1}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() throws Exception {
     ArrayList<Object[]> res = new ArrayList<>();
-    res.add(new Object[] {"ascii", false});
-    res.add(new Object[] {"ascii", true});
-    res.add(new Object[] {"binary", false});
-    res.add(new Object[] {"binary", true});
+    res.add(new Object[] {"ascii"});
+    res.add(new Object[] {"binary"});
     return res;
   }
 
   @Parameterized.Parameter(0)
   public String protocol;
-
-  @Parameterized.Parameter(1)
-  public Boolean useTls;
 
   private MemcacheClient<String> client;
   private AsciiMemcacheClient<String> asciiClient;
@@ -80,19 +73,6 @@ public class IntegrationTest {
   @BeforeClass
   public static void setUpClass() throws Exception {
     server = MemcachedServer.SIMPLE_INSTANCE.get();
-
-    // Use self-signed test certs
-    String currentDirectory = System.getProperty("user.dir");
-    System.setProperty(
-        "javax.net.ssl.keyStore", currentDirectory + "/src/test/resources/pki/test.p12");
-    System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
-    System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
-    System.setProperty(
-        "javax.net.ssl.trustStore", currentDirectory + "/src/test/resources/pki/test.p12");
-    System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
-    System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-
-    tlsServer = new MemcachedServer(true);
   }
 
   @Before
@@ -109,16 +89,12 @@ public class IntegrationTest {
     }
     MemcacheClientBuilder<String> builder =
         MemcacheClientBuilder.newStringClient()
-            .withAddress(server().getHost(), server().getPort())
+            .withAddress(server.getHost(), server.getPort())
             .withConnections(1)
             .withMaxOutstandingRequests(1000)
             .withMetrics(NoopMetrics.INSTANCE)
             .withRetry(false)
             .withRequestTimeoutMillis(100);
-
-    if (useTls) {
-      builder.withSSLEngineFactory(new DefaultSSLEngineFactory(true));
-    }
 
     if (ascii) {
       asciiClient = builder.connectAscii();
@@ -134,7 +110,7 @@ public class IntegrationTest {
   }
 
   private void cleanup() {
-    server().flush();
+    server.flush();
   }
 
   @After
@@ -638,7 +614,7 @@ public class IntegrationTest {
   public void testGetAllNodes() {
     final Map<String, ? extends MemcacheClient<String>> nodes = client.getAllNodes();
     assertEquals(1, nodes.size());
-    final MemcacheClient<String> client2 = nodes.get(server().getHost() + ":" + server().getPort());
+    final MemcacheClient<String> client2 = nodes.get(server.getHost() + ":" + server.getPort());
     assertNotNull(client2);
 
     assertEquals(MemcacheStatus.OK, client.set(KEY1, VALUE1, 0).toCompletableFuture().join());
@@ -664,14 +640,6 @@ public class IntegrationTest {
       sb.append('.');
     }
     return sb.toString();
-  }
-
-  private MemcachedServer server() {
-    if (useTls) {
-      return tlsServer;
-    } else {
-      return server;
-    }
   }
 
   private void assumeAscii() {
