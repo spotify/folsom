@@ -41,7 +41,7 @@ public class MemcachedServer {
 
   public static int DEFAULT_PORT = 11211;
 
-  private static final String MEMCACHED_VERSION = "1.6.21";
+  private static final String MEMCACHED_VERSION = "1.6.22";
   private final String username;
   private final String password;
   private final boolean useTLS;
@@ -117,7 +117,7 @@ public class MemcachedServer {
 
   private FixedHostPortGenericContainer setupTLSContainer() {
     final FixedHostPortGenericContainer container =
-        new FixedHostPortGenericContainer("memcached:" + MEMCACHED_VERSION);
+        new FixedHostPortGenericContainer("bitnami/memcached:" + MEMCACHED_VERSION);
 
     container.withClasspathResourceMapping(
         "/pki/test.pem", "/test-certs/test.pem", BindMode.READ_ONLY);
