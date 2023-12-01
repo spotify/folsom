@@ -75,7 +75,7 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
       final Connector connector,
       long shutdownDelay,
       TimeUnit shutdownUnit,
-          Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
+      Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
     this.resolver = resolver;
     this.connector = connector;
     this.shutdownDelay = shutdownDelay;
@@ -220,7 +220,8 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
 
     // This may invalidate an existing pendingClient but should be fine since it doesn't have any
     // important state of its own.
-    final KetamaMemcacheClient newClient = new KetamaMemcacheClient(addressAndClients, nodeLocator.apply(addressAndClients));
+    final KetamaMemcacheClient newClient =
+        new KetamaMemcacheClient(addressAndClients, nodeLocator.apply(addressAndClients));
     this.pendingClient = newClient;
 
     newClient

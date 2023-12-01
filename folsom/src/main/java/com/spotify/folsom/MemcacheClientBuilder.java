@@ -575,15 +575,17 @@ public class MemcacheClientBuilder<V> {
   }
 
   /**
-   * When using ketama client use provided NodeLocator to find client for given key.
-   * NodeLocator will be recreated when clients appear and disappear when using dynamic resolver.
+   * When using ketama client use provided NodeLocator to find client for given key. NodeLocator
+   * will be recreated when clients appear and disappear when using dynamic resolver.
    *
-   * <p> This option can be used to change default hashing algorithm or vnode_ratio in consistent hashing algorithm.
+   * <p>This option can be used to change default hashing algorithm or vnode_ratio in consistent
+   * hashing algorithm.
    *
    * @param nodeLocator mapper from client collection to NodeLocator
    * @return itself
    */
-  public MemcacheClientBuilder<V> withNodeLocator(Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
+  public MemcacheClientBuilder<V> withNodeLocator(
+      Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
     this.nodeLocator = nodeLocator;
     return this;
   }
@@ -718,7 +720,7 @@ public class MemcacheClientBuilder<V> {
             input -> createClient(input, binary, authenticator),
             shutdownDelay,
             TimeUnit.MILLISECONDS,
-                nodeLocator);
+            nodeLocator);
 
     client.start();
     return client;

@@ -4,5 +4,5 @@ import com.spotify.folsom.RawMemcacheClient;
 
 public interface NodeLocator {
 
-    RawMemcacheClient findClient(final byte[] key);
+  RawMemcacheClient findClient(final byte[] key);
 }

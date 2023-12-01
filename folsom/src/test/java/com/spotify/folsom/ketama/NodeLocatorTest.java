@@ -21,19 +21,17 @@ import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
+import com.spotify.folsom.RawMemcacheClient;
+import com.spotify.folsom.guava.HostAndPort;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.google.common.collect.ImmutableList;
-import com.spotify.folsom.RawMemcacheClient;
-import com.spotify.folsom.guava.HostAndPort;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NodeLocatorTest {
@@ -192,32 +190,32 @@ public class NodeLocatorTest {
   public void testPrefixNodeLocator() {
     final List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
     final Continuum c = new Continuum(clients);
-    final NodeLocator nodeLocator = key -> {
-      String[] keyParts = new String(key, StandardCharsets.US_ASCII).split("-");
-      if (keyParts.length > 1) {
-        return  clients.get(Integer.parseInt(keyParts[0])-1).getClient();
-      } else {
-        return c.findClient(key);
-      }
-    };
-
+    final NodeLocator nodeLocator =
+        key -> {
+          String[] keyParts = new String(key, StandardCharsets.US_ASCII).split("-");
+          if (keyParts.length > 1) {
+            return clients.get(Integer.parseInt(keyParts[0]) - 1).getClient();
+          } else {
+            return c.findClient(key);
+          }
+        };
 
     List<RawMemcacheClient> actual =
-            Arrays.asList(
-                    nodeLocator.findClient(bytes("1-key1")),
-                    nodeLocator.findClient(bytes("1-key2")),
-                    nodeLocator.findClient(bytes("1-key3")),
-                    nodeLocator.findClient(bytes("2-key1")),
-                    nodeLocator.findClient(bytes("3-key1")),
-                    nodeLocator.findClient(bytes(KEY1)),
-                    nodeLocator.findClient(bytes(KEY3)));
+        Arrays.asList(
+            nodeLocator.findClient(bytes("1-key1")),
+            nodeLocator.findClient(bytes("1-key2")),
+            nodeLocator.findClient(bytes("1-key3")),
+            nodeLocator.findClient(bytes("2-key1")),
+            nodeLocator.findClient(bytes("3-key1")),
+            nodeLocator.findClient(bytes(KEY1)),
+            nodeLocator.findClient(bytes(KEY3)));
 
     List<RawMemcacheClient> expected =
-            Arrays.asList(
-                    CLIENT1, CLIENT1, CLIENT1, // keys prefixed with 1
-                    CLIENT2, // keys prefixed with 2
-                    CLIENT3, // keys prefixed with 3
-                    CLIENT1, CLIENT2); // fallback to default NodeLocator
+        Arrays.asList(
+            CLIENT1, CLIENT1, CLIENT1, // keys prefixed with 1
+            CLIENT2, // keys prefixed with 2
+            CLIENT3, // keys prefixed with 3
+            CLIENT1, CLIENT2); // fallback to default NodeLocator
     assertEquals(expected, actual);
   }
 

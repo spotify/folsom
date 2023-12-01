@@ -33,6 +33,7 @@ public class Continuum implements NodeLocator {
   public Continuum(final Collection<AddressAndClient> clients) {
     this(clients, VNODE_RATIO);
   }
+
   public Continuum(final Collection<AddressAndClient> clients, int vnodeRatio) {
     this.ringOfFire = buildRing(clients, vnodeRatio);
   }
