@@ -16,6 +16,8 @@
 package com.spotify.folsom;
 
 import com.google.common.base.Suppliers;
+import com.spotify.folsom.client.tls.DefaultSSLEngineFactory;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,31 +40,63 @@ public class MemcachedServer {
       Suppliers.memoize(MemcachedServer::new)::get;
 
   public static int DEFAULT_PORT = 11211;
+
+  private static final String MEMCACHED_VERSION = "1.6.22";
   private final String username;
   private final String password;
+  private final boolean useTLS;
 
   public MemcachedServer() {
     this(null, null);
   }
 
   public MemcachedServer(String username, String password) {
-    this(username, password, DEFAULT_PORT, AuthenticationMode.NONE);
+    this(username, password, DEFAULT_PORT, AuthenticationMode.NONE, false);
   }
 
   public MemcachedServer(String username, String password, AuthenticationMode authenticationMode) {
-    this(username, password, DEFAULT_PORT, authenticationMode);
+    this(username, password, DEFAULT_PORT, authenticationMode, false);
+  }
+
+  public MemcachedServer(boolean useTLS) {
+    this(null, null, DEFAULT_PORT, AuthenticationMode.NONE, useTLS);
   }
 
   public MemcachedServer(
-      String username, String password, int port, AuthenticationMode authenticationMode) {
+      String username,
+      String password,
+      int port,
+      AuthenticationMode authenticationMode,
+      boolean useTLS) {
     this.username = username;
     this.password = password;
-    container = new FixedHostPortGenericContainer("bitnami/memcached:1.6.21");
+    this.useTLS = useTLS;
+
+    if (useTLS) {
+      if (authenticationMode != AuthenticationMode.NONE) {
+        throw new RuntimeException(
+            "Authentication is not currently supported with the TLS-enabled container");
+      }
+
+      container = setupTLSContainer();
+    } else {
+      container = setupContainer(username, password, authenticationMode);
+    }
+
     if (port != DEFAULT_PORT) {
       container.withFixedExposedPort(DEFAULT_PORT, port);
     } else {
       container.withExposedPorts(DEFAULT_PORT);
     }
+
+    start(authenticationMode);
+  }
+
+  private FixedHostPortGenericContainer setupContainer(
+      String username, String password, AuthenticationMode authenticationMode) {
+    final FixedHostPortGenericContainer container =
+        new FixedHostPortGenericContainer("bitnami/memcached:" + MEMCACHED_VERSION);
+
     switch (authenticationMode) {
       case NONE:
         break;
@@ -78,7 +112,30 @@ public class MemcachedServer {
         break;
     }
 
-    start(authenticationMode);
+    return container;
+  }
+
+  private FixedHostPortGenericContainer setupTLSContainer() {
+    final FixedHostPortGenericContainer container =
+        new FixedHostPortGenericContainer("bitnami/memcached:" + MEMCACHED_VERSION);
+
+    container.withClasspathResourceMapping(
+        "/pki/test.pem", "/test-certs/test.pem", BindMode.READ_ONLY);
+    container.withClasspathResourceMapping(
+        "/pki/test.key", "/test-certs/test.key", BindMode.READ_ONLY);
+
+    container.withCommand(
+        "memcached",
+        "--enable-ssl",
+        "-o",
+        "ssl_verify_mode=3",
+        "-o",
+        "ssl_chain_cert=/test-certs/test.pem",
+        "-o",
+        "ssl_key=/test-certs/test.key",
+        "-o",
+        "ssl_ca_cert=/test-certs/test.pem");
+    return container;
   }
 
   public void stop() {
@@ -102,6 +159,15 @@ public class MemcachedServer {
       if (username != null && password != null) {
         builder.withUsernamePassword(username, password);
       }
+
+      if (useTLS) {
+        try {
+          builder.withSSLEngineFactory(new DefaultSSLEngineFactory(false));
+        } catch (NoSuchAlgorithmException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
       switch (authenticationMode) {
         case NONE:
         case SASL:
