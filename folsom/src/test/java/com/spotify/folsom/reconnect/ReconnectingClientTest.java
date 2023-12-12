@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
@@ -57,7 +57,7 @@ public class ReconnectingClientTest {
   @Before
   public void setUp() throws Exception {
     when(scheduledExecutorService.schedule(
-            Mockito.<Runnable>any(), anyLong(), Matchers.<TimeUnit>any()))
+            Mockito.<Runnable>any(), anyLong(), ArgumentMatchers.<TimeUnit>any()))
         .thenAnswer(
             (Answer<Object>)
                 invocationOnMock -> {
