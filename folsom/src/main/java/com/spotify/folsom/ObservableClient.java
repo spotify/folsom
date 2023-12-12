@@ -50,22 +50,30 @@ public interface ObservableClient {
    */
   boolean isConnected();
 
-  /** @return completes when at least one underlying client is connected */
+  /**
+   * @return completes when at least one underlying client is connected
+   */
   default CompletionStage<Void> connectFuture() {
     return ConnectFuture.connectFuture(this);
   }
 
-  /** @return completes when at least one underlying client is disconnected */
+  /**
+   * @return completes when at least one underlying client is disconnected
+   */
   default CompletionStage<Void> disconnectFuture() {
     return ConnectFuture.disconnectFuture(this);
   }
 
-  /** @return completes when all underlying clients are connected */
+  /**
+   * @return completes when all underlying clients are connected
+   */
   default CompletionStage<Void> fullyConnectedFuture() {
     return ConnectFuture.fullyConnectedFuture(this);
   }
 
-  /** @return completes when all underlying clients are disconnected */
+  /**
+   * @return completes when all underlying clients are disconnected
+   */
   default CompletionStage<Void> fullyDisconnectFuture() {
     return ConnectFuture.fullyDisconnectedFuture(this);
   }

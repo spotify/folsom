@@ -618,9 +618,7 @@ public class OpenTelemetryMetricsTest {
   }
 
   private GaugeData<DoublePointData> getGaugeByName(String gaugeName) {
-    return otelTesting
-        .getMetrics()
-        .stream()
+    return otelTesting.getMetrics().stream()
         .filter(metricData -> Objects.equals(gaugeName, metricData.getName()))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("gauge not found"))
@@ -630,9 +628,7 @@ public class OpenTelemetryMetricsTest {
   private <T extends PointData> T findMetric(
       String metricName, String key, String value, Class<T> targetClass) {
     PointData pointData =
-        otelTesting
-            .getMetrics()
-            .stream()
+        otelTesting.getMetrics().stream()
             .filter(metricData -> Objects.equals(metricName, metricData.getName()))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("metric not found"))

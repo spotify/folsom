@@ -470,10 +470,7 @@ public class DefaultBinaryMemcacheClient<V> implements BinaryMemcacheClient<V> {
 
   @Override
   public Map<String, BinaryMemcacheClient<V>> getAllNodes() {
-    return rawMemcacheClient
-        .getAllNodes()
-        .entrySet()
-        .stream()
+    return rawMemcacheClient.getAllNodes().entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, entry -> withClient(entry.getValue())));
   }
 

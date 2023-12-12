@@ -18,7 +18,7 @@ package com.spotify.folsom.transcoder;
 
 import com.spotify.folsom.Transcoder;
 import java.io.Serializable;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 
 public final class SerializableObjectTranscoder<T extends Serializable> implements Transcoder<T> {
 

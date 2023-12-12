@@ -85,8 +85,7 @@ public class OpenTelemetryMetrics implements Metrics {
 
   private void outstandingRequestsObservable(final ObservableDoubleMeasurement measurement) {
     measurement.record(
-        outstandingRequests
-            .stream()
+        outstandingRequests.stream()
             .mapToLong(value -> (long) value.getOutstandingRequests())
             .sum());
   }

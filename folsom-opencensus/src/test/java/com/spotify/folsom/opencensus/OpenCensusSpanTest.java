@@ -20,7 +20,7 @@ import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.Span;
@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OpenCensusSpanTest {
@@ -82,6 +82,6 @@ public class OpenCensusSpanTest {
     final Span span = new OpenCensusSpan(wrapped, true);
     span.value(null);
 
-    verifyZeroInteractions(wrapped);
+    verifyNoInteractions(wrapped);
   }
 }
