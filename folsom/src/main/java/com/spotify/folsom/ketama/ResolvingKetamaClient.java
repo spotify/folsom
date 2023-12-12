@@ -103,12 +103,14 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
         }
 
         final Set<HostAndPort> newAddresses =
-            lookupResults.stream()
+            lookupResults
+                .stream()
                 .map(result -> HostAndPort.fromParts(result.getHost(), result.getPort()))
                 .collect(Collectors.toSet());
 
         final long resolvedTtl =
-            lookupResults.stream()
+            lookupResults
+                .stream()
                 .mapToLong(Resolver.ResolveResult::getTtl)
                 .min()
                 .orElse(Long.MAX_VALUE);
@@ -206,7 +208,9 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
     shutdownQueue.addAll(removedClients.build());
 
     final List<AddressAndClient> addressAndClients =
-        clients.entrySet().stream()
+        clients
+            .entrySet()
+            .stream()
             .map(e -> new AddressAndClient(e.getKey(), e.getValue()))
             .collect(Collectors.toList());
 

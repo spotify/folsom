@@ -60,7 +60,8 @@ public class ResolveKetamaIntegrationTest {
   }
 
   public static List<LookupResult> toResult(List<MemcachedServer> servers) {
-    return servers.stream()
+    return servers
+        .stream()
         .map(server -> LookupResult.create(server.getHost(), server.getPort(), 100, 100, 100))
         .collect(Collectors.toList());
   }

@@ -80,7 +80,9 @@ public class SrvResolver implements Resolver {
 
   @Override
   public List<ResolveResult> resolve() {
-    return dnsSrvResolver.resolve(srvRecord).stream()
+    return dnsSrvResolver
+        .resolve(srvRecord)
+        .stream()
         .map(result -> new ResolveResult(result.host(), result.port(), result.ttl()))
         .collect(Collectors.toList());
   }

@@ -145,7 +145,9 @@ public class ElastiCacheResolver implements Resolver {
               }
             });
 
-    return effective.getHosts().stream()
+    return effective
+        .getHosts()
+        .stream()
         .map(hap -> new ResolveResult(hap.getHostText(), hap.getPort(), ttl))
         .collect(toList());
   }

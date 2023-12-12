@@ -31,7 +31,8 @@ public interface AllRequest<T> extends Request<T> {
   T merge(List<T> results);
 
   static MemcacheStatus mergeMemcacheStatus(final List<MemcacheStatus> results) {
-    return results.stream()
+    return results
+        .stream()
         .filter(status -> status != MemcacheStatus.OK)
         .findFirst()
         .orElse(MemcacheStatus.OK);

@@ -175,7 +175,8 @@ public class OpenCensusTest {
   }
 
   private List<SpanData> getByParent(final List<SpanData> spans, final SpanData parent) {
-    return spans.stream()
+    return spans
+        .stream()
         .filter(data -> parent.getContext().getSpanId().equals(data.getParentSpanId()))
         .collect(Collectors.toList());
   }

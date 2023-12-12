@@ -56,9 +56,7 @@ public class MicrometerMetrics implements Metrics {
 
   private final Set<OutstandingRequestsGauge> gauges = new CopyOnWriteArraySet<>();
 
-  /**
-   * @param registry MeterRegistry
-   */
+  /** @param registry MeterRegistry */
   public MicrometerMetrics(final MeterRegistry registry) {
     this(registry, Tags.empty());
   }

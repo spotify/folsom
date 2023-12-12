@@ -379,7 +379,10 @@ public class DefaultAsciiMemcacheClient<V> implements AsciiMemcacheClient<V> {
 
   @Override
   public Map<String, AsciiMemcacheClient<V>> getAllNodes() {
-    return rawMemcacheClient.getAllNodes().entrySet().stream()
+    return rawMemcacheClient
+        .getAllNodes()
+        .entrySet()
+        .stream()
         .collect(Collectors.toMap(Map.Entry::getKey, entry -> withClient(entry.getValue())));
   }
 
