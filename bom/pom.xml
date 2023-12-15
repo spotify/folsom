@@ -10,7 +10,7 @@
 
   <groupId>com.spotify</groupId>
   <artifactId>folsom-bom</artifactId>
-  <version>1.18.1-SNAPSHOT</version>
+  <version>1.18.0</version>
   <packaging>pom</packaging>
 
   <name>Folsom BOM</name>
