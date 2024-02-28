@@ -1,3 +1,6 @@
+### 1.21.0
+* Added support for custom node locators in the Ketama continuum
+
 ### 1.20.0
 * Added TLS support
 
