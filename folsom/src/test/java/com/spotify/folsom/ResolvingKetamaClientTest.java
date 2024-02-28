@@ -24,6 +24,7 @@ import com.spotify.dns.DnsSrvResolver;
 import com.spotify.dns.LookupResult;
 import com.spotify.folsom.client.test.FakeRawMemcacheClient;
 import com.spotify.folsom.guava.HostAndPort;
+import com.spotify.folsom.ketama.Continuum;
 import com.spotify.folsom.ketama.ResolvingKetamaClient;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,7 +66,8 @@ public class ResolvingKetamaClientTest {
             TimeUnit.MILLISECONDS,
             connector,
             1000,
-            TimeUnit.MILLISECONDS);
+            TimeUnit.MILLISECONDS,
+            Continuum::new);
     executor.tick(1000, TimeUnit.SECONDS);
 
     assertFalse(ketamaClient.isConnected());
@@ -141,7 +143,8 @@ public class ResolvingKetamaClientTest {
             TimeUnit.MILLISECONDS,
             connector,
             1000,
-            TimeUnit.MILLISECONDS);
+            TimeUnit.MILLISECONDS,
+            Continuum::new);
     executor.tick(1000, TimeUnit.SECONDS);
 
     assertFalse(ketamaClient.isConnected());

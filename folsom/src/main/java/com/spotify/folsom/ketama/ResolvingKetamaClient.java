@@ -36,6 +36,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -64,6 +65,7 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
   private volatile RawMemcacheClient currentClient;
   private volatile RawMemcacheClient pendingClient = null;
   private boolean shutdown = false;
+  private final Function<Collection<AddressAndClient>, NodeLocator> nodeLocator;
 
   public ResolvingKetamaClient(
       Resolver resolver,
@@ -72,7 +74,8 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
       TimeUnit periodUnit,
       final Connector connector,
       long shutdownDelay,
-      TimeUnit shutdownUnit) {
+      TimeUnit shutdownUnit,
+      Function<Collection<AddressAndClient>, NodeLocator> nodeLocator) {
     this.resolver = resolver;
     this.connector = connector;
     this.shutdownDelay = shutdownDelay;
@@ -80,6 +83,7 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
     this.executor = executor;
     this.currentClient = NotConnectedClient.INSTANCE;
     this.ttl = TimeUnit.SECONDS.convert(period, periodUnit);
+    this.nodeLocator = nodeLocator;
   }
 
   public void start() {
@@ -216,7 +220,8 @@ public class ResolvingKetamaClient extends AbstractRawMemcacheClient {
 
     // This may invalidate an existing pendingClient but should be fine since it doesn't have any
     // important state of its own.
-    final KetamaMemcacheClient newClient = new KetamaMemcacheClient(addressAndClients);
+    final KetamaMemcacheClient newClient =
+        new KetamaMemcacheClient(addressAndClients, nodeLocator.apply(addressAndClients));
     this.pendingClient = newClient;
 
     newClient

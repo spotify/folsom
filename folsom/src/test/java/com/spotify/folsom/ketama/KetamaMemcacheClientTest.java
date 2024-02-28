@@ -73,7 +73,8 @@ public class KetamaMemcacheClientTest {
       }
     }
 
-    final KetamaMemcacheClient ketamaMemcacheClient = new KetamaMemcacheClient(clients);
+    final KetamaMemcacheClient ketamaMemcacheClient =
+        new KetamaMemcacheClient(clients, new Continuum(clients));
     final MemcacheClient<String> memcacheClient = buildClient(ketamaMemcacheClient, binary);
 
     final List<String> requestedKeys = new ArrayList<>();

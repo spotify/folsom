@@ -29,9 +29,12 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
-public class ContinuumTest {
+@RunWith(MockitoJUnitRunner.class)
+public class NodeLocatorTest {
 
   private static final HostAndPort ADDRESS1 = HostAndPort.fromParts("127.0.0.1", 11211);
   private static final HostAndPort ADDRESS2 = HostAndPort.fromParts("127.0.0.1", 11212);
@@ -181,6 +184,39 @@ public class ContinuumTest {
 
     when(CLIENT1.isConnected()).thenReturn(false);
     assertSame(CLIENT2, c.findClient(bytes("key1561")));
+  }
+
+  @Test
+  public void testPrefixNodeLocator() {
+    final List<AddressAndClient> clients = ImmutableList.of(AAC1, AAC2, AAC3);
+    final Continuum c = new Continuum(clients);
+    final NodeLocator nodeLocator =
+        key -> {
+          String[] keyParts = new String(key, StandardCharsets.US_ASCII).split("-");
+          if (keyParts.length > 1) {
+            return clients.get(Integer.parseInt(keyParts[0]) - 1).getClient();
+          } else {
+            return c.findClient(key);
+          }
+        };
+
+    List<RawMemcacheClient> actual =
+        Arrays.asList(
+            nodeLocator.findClient(bytes("1-key1")),
+            nodeLocator.findClient(bytes("1-key2")),
+            nodeLocator.findClient(bytes("1-key3")),
+            nodeLocator.findClient(bytes("2-key1")),
+            nodeLocator.findClient(bytes("3-key1")),
+            nodeLocator.findClient(bytes(KEY1)),
+            nodeLocator.findClient(bytes(KEY3)));
+
+    List<RawMemcacheClient> expected =
+        Arrays.asList(
+            CLIENT1, CLIENT1, CLIENT1, // keys prefixed with 1
+            CLIENT2, // keys prefixed with 2
+            CLIENT3, // keys prefixed with 3
+            CLIENT1, CLIENT2); // fallback to default NodeLocator
+    assertEquals(expected, actual);
   }
 
   private static byte[] bytes(String key) {
