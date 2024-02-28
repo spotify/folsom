@@ -52,4 +52,9 @@ public class AsciiResponse {
     OUT_OF_MEMORY,
     CLIENT_ERROR
   }
+
+  @Override
+  public String toString() {
+    return "AsciiResponse{type=" + this.type + "}";
+  }
 }

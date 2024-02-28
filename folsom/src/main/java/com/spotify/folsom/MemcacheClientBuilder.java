@@ -37,6 +37,7 @@ import com.spotify.folsom.client.NoopMetrics;
 import com.spotify.folsom.client.NoopTracer;
 import com.spotify.folsom.client.ascii.DefaultAsciiMemcacheClient;
 import com.spotify.folsom.client.binary.DefaultBinaryMemcacheClient;
+import com.spotify.folsom.client.tls.SSLEngineFactory;
 import com.spotify.folsom.guava.HostAndPort;
 import com.spotify.folsom.ketama.AddressAndClient;
 import com.spotify.folsom.ketama.Continuum;
@@ -130,6 +131,7 @@ public class MemcacheClientBuilder<V> {
   private boolean skipAuth = false;
 
   private Function<Collection<AddressAndClient>, NodeLocator> nodeLocator = Continuum::new;
+  private SSLEngineFactory sslEngineFactory = null;
 
   /**
    * Create a client builder for byte array values.
@@ -601,6 +603,11 @@ public class MemcacheClientBuilder<V> {
     return this;
   }
 
+  public MemcacheClientBuilder<V> withSSLEngineFactory(final SSLEngineFactory sslEngineFactory) {
+    this.sslEngineFactory = sslEngineFactory;
+    return this;
+  }
+
   /**
    * Create a client that uses the binary memcache protocol.
    *
@@ -755,6 +762,7 @@ public class MemcacheClientBuilder<V> {
         metrics,
         maxSetLength,
         eventLoopGroup,
-        channelClass);
+        channelClass,
+        sslEngineFactory);
   }
 }
