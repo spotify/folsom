@@ -29,8 +29,12 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   private static final int MAX_RESPONSE_LINE = 500;
 
   private final ByteBuffer line = ByteBuffer.allocate(MAX_RESPONSE_LINE);
-  private final ByteBuffer token = ByteBuffer.allocate(MAX_RESPONSE_LINE);
   private final Charset charset;
+
+  // Token positions refer to the current line rather than a copied token buffer.
+  private int tokenStart;
+  private int tokenPosition;
+  private int tokenEnd;
 
   private boolean valueMode = false;
 
@@ -86,16 +90,16 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           return;
         }
         readNextToken();
-        int tokenLength = token.remaining();
+        int tokenLength = tokenRemaining();
         if (tokenLength < 1) {
           throw fail();
         }
 
-        final byte firstChar = token.get();
+        final byte firstChar = nextTokenByte();
 
         if (Character.isDigit(firstChar)) {
           try {
-            long numeric = parseLong(firstChar, token);
+            long numeric = parseLong(firstChar);
             out.add(new NumericAsciiResponse(numeric));
           } catch (NumberFormatException e) {
             throw new IOException("Unexpected line: " + line, e);
@@ -123,16 +127,16 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
           expect(firstChar, "STAT");
 
           readNextToken();
-          if (token.remaining() < 1) {
+          if (tokenRemaining() < 1) {
             throw fail();
           }
-          final String statName = toString(token);
+          final String statName = tokenAsString();
 
           readNextToken();
-          if (token.remaining() < 1) {
+          if (tokenRemaining() < 1) {
             throw fail();
           }
-          final String statValue = toString(token);
+          final String statValue = tokenAsString();
 
           statsAsciiResponse.addStat(statName, statValue);
         } else if (tokenLength == 5) {
@@ -147,35 +151,35 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
 
             // key
             readNextToken();
-            int keyLen = token.remaining();
+            int keyLen = tokenRemaining();
             if (keyLen <= 0) {
               throw fail();
             }
-            byte[] key = new byte[token.remaining()];
-            token.get(key);
+            byte[] key = new byte[keyLen];
+            System.arraycopy(line.array(), tokenPosition, key, 0, keyLen);
 
             // flags
             readNextToken();
-            int flagLen = token.remaining();
+            int flagLen = tokenRemaining();
             if (flagLen <= 0) {
               throw fail();
             }
-            int flags = (int) parseLong(token.get(), token);
+            int flags = (int) parseLong(nextTokenByte());
 
             // size
             readNextToken();
-            int sizeLen = token.remaining();
+            int sizeLen = tokenRemaining();
             if (sizeLen <= 0) {
               throw fail();
             }
-            final int size = (int) parseLong(token.get(), token);
+            final int size = (int) parseLong(nextTokenByte());
 
             // cas
             readNextToken();
-            int casLen = token.remaining();
+            int casLen = tokenRemaining();
             long cas = 0;
             if (casLen > 0) {
-              cas = parseLong(token.get(), token);
+              cas = parseLong(nextTokenByte());
             }
 
             this.key = key;
@@ -241,15 +245,26 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   }
 
   private void readNextToken() {
-    token.clear();
-    while (line.hasRemaining()) {
-      byte b = line.get();
-      if (b == ' ') {
-        break;
-      }
-      token.put(b);
+    tokenStart = line.position();
+    tokenEnd = tokenStart;
+    final byte[] bytes = line.array();
+    while (tokenEnd < line.limit() && bytes[tokenEnd] != ' ') {
+      tokenEnd++;
     }
-    token.flip();
+    tokenPosition = tokenStart;
+    line.position(tokenEnd < line.limit() ? tokenEnd + 1 : tokenEnd);
+  }
+
+  private int tokenRemaining() {
+    return tokenEnd - tokenPosition;
+  }
+
+  private byte nextTokenByte() {
+    return line.array()[tokenPosition++];
+  }
+
+  private String tokenAsString() {
+    return new String(line.array(), tokenStart, tokenEnd - tokenStart, charset);
   }
 
   private IOException fail() {
@@ -257,8 +272,7 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
   }
 
   private String toString(final ByteBuffer buf) {
-    buf.rewind();
-    return new String(buf.array(), 0, buf.remaining(), charset);
+    return new String(buf.array(), 0, buf.limit(), charset);
   }
 
   private void expect(byte firstChar, final String compareTo) throws IOException {
@@ -266,24 +280,24 @@ public class AsciiMemcacheDecoder extends ByteToMessageDecoder {
       throw fail();
     }
     final int length = compareTo.length();
-    if (length != token.remaining() + 1) {
+    if (length != tokenRemaining() + 1) {
       throw fail();
     }
     for (int i = 1; i < length; i++) {
-      if (token.get() != compareTo.charAt(i)) {
+      if (nextTokenByte() != compareTo.charAt(i)) {
         throw fail();
       }
     }
   }
 
-  private long parseLong(byte firstChar, ByteBuffer token) throws IOException {
+  private long parseLong(byte firstChar) throws IOException {
     // firstChar must be guarantee to be a digit.
     long res = firstChar - '0';
     if (res < 0 || res > 9) {
       throw fail();
     }
-    while (token.hasRemaining()) {
-      final int digit = token.get() - '0';
+    while (tokenRemaining() > 0) {
+      final int digit = nextTokenByte() - '0';
       if (digit < 0 || digit > 9) {
         throw fail();
       }
