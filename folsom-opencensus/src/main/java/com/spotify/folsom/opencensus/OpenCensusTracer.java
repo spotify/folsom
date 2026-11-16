@@ -23,17 +23,31 @@ import static java.util.Objects.requireNonNull;
 import com.spotify.folsom.GetResult;
 import com.spotify.folsom.Span;
 import com.spotify.folsom.Tracer;
+import io.opencensus.trace.BlankSpan;
 import io.opencensus.trace.Tracing;
 import java.util.concurrent.CompletionStage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class OpenCensusTracer implements Tracer {
 
-  private static final io.opencensus.trace.Tracer TRACER = Tracing.getTracer();
+  private static final Logger LOGGER = LoggerFactory.getLogger(OpenCensusTracer.class);
 
+  private static final Span NOOP_SPAN = new OpenCensusSpan(BlankSpan.INSTANCE, false);
+
+  private final io.opencensus.trace.Tracer tracer;
   private final boolean includeKeys;
   private final boolean includeValues;
 
   OpenCensusTracer(final boolean includeKeys, final boolean includeValues) {
+    this(Tracing.getTracer(), includeKeys, includeValues);
+  }
+
+  OpenCensusTracer(
+      final io.opencensus.trace.Tracer tracer,
+      final boolean includeKeys,
+      final boolean includeValues) {
+    this.tracer = requireNonNull(tracer);
     this.includeKeys = includeKeys;
     this.includeValues = includeValues;
   }
@@ -76,20 +90,31 @@ class OpenCensusTracer implements Tracer {
     requireNonNull(future);
     requireNonNull(operation);
 
-    final io.opencensus.trace.Span ocSpan =
-        TRACER.spanBuilder(name).setSpanKind(CLIENT).startSpan();
+    final Span span;
+    io.opencensus.trace.Span ocSpan = null;
+    try {
+      ocSpan = tracer.spanBuilder(name).setSpanKind(CLIENT).startSpan();
 
-    ocSpan.putAttribute("component", stringAttributeValue("folsom"));
-    ocSpan.putAttribute("peer.service", stringAttributeValue("memcache"));
-    ocSpan.putAttribute("operation", stringAttributeValue(operation));
-    if (key != null && includeKeys) {
-      ocSpan.putAttribute("key", stringAttributeValue(key));
-    }
+      ocSpan.putAttribute("component", stringAttributeValue("folsom"));
+      ocSpan.putAttribute("peer.service", stringAttributeValue("memcache"));
+      ocSpan.putAttribute("operation", stringAttributeValue(operation));
+      if (key != null && includeKeys) {
+        ocSpan.putAttribute("key", stringAttributeValue(key));
+      }
 
-    final Span span = new OpenCensusSpan(ocSpan, includeValues);
+      span = new OpenCensusSpan(ocSpan, includeValues);
 
-    if (value != null) {
-      span.value(value);
+      if (value != null) {
+        span.value(value);
+      }
+    } catch (final RuntimeException e) {
+      // Tracing is best effort: a span that cannot be created, for example because an ambient
+      // OpenTelemetry tracestate holds a key OpenCensus rejects, must not fail the cache operation.
+      LOGGER.debug("Failed to create span {} for operation {}", name, operation, e);
+      if (ocSpan != null) {
+        ocSpan.end();
+      }
+      return NOOP_SPAN;
     }
 
     future.whenComplete(
