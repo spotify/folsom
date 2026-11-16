@@ -20,12 +20,14 @@ import static io.opencensus.trace.AttributeValue.longAttributeValue;
 import static io.opencensus.trace.AttributeValue.stringAttributeValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import com.google.common.io.BaseEncoding;
 import com.spotify.folsom.Span;
 import io.opencensus.common.Scope;
 import io.opencensus.testing.export.TestHandler;
 import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.SpanBuilder;
 import io.opencensus.trace.SpanContext;
 import io.opencensus.trace.Status;
 import io.opencensus.trace.Tracer;
@@ -122,6 +124,57 @@ public class OpenCensusTracerTest {
     assertEquals(longAttributeValue(VALUE.length), attributes.get("value_size_bytes"));
     assertEquals(stringAttributeValue(HEX.encode(VALUE)), attributes.get("value_hex"));
     assertEquals(expectedStatus, inner.getStatus());
+  }
+
+  @Test
+  public void spanCreationFailureIsNotFatal() {
+    final IllegalArgumentException failure =
+        new IllegalArgumentException("Invalid tracestate key: 2487701@nr");
+    final FailingTracer failingTracer = new FailingTracer(failure);
+
+    try {
+      failingTracer.spanBuilder("span");
+      fail("FailingTracer should throw");
+    } catch (final IllegalArgumentException e) {
+      assertSame(failure, e);
+    }
+
+    final com.spotify.folsom.Tracer tracer = new OpenCensusTracer(failingTracer, true, true);
+
+    final CompletableFuture<String> future = new CompletableFuture<>();
+
+    final Span span = tracer.span("span", future, OPERATION);
+    tracer.span("span", future, OPERATION, KEY);
+    tracer.span("span", future, OPERATION, KEY, VALUE);
+
+    future.complete("value");
+
+    assertEquals("value", future.join());
+
+    // the returned span is still usable
+    assertSame(span, span.value(VALUE).success());
+    span.close();
+  }
+
+  private static final class FailingTracer extends Tracer {
+
+    private final RuntimeException failure;
+
+    FailingTracer(final RuntimeException failure) {
+      this.failure = failure;
+    }
+
+    @Override
+    public SpanBuilder spanBuilderWithExplicitParent(
+        final String spanName, final io.opencensus.trace.Span parent) {
+      throw failure;
+    }
+
+    @Override
+    public SpanBuilder spanBuilderWithRemoteParent(
+        final String spanName, final SpanContext parentContext) {
+      throw failure;
+    }
   }
 
   private SpanData findSpan(final List<SpanData> spans, final String name) {
